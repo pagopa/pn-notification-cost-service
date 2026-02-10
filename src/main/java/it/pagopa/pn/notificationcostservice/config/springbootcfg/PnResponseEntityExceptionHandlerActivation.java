@@ -1,7 +1,5 @@
 package it.pagopa.pn.notificationcostservice.config.springbootcfg;
 
-
-import com.fasterxml.jackson.databind.ObjectMapper;
 import it.pagopa.pn.commons.exceptions.ExceptionHelper;
 import it.pagopa.pn.commons.exceptions.PnResponseEntityExceptionHandler;
 import org.springframework.context.annotation.Import;
