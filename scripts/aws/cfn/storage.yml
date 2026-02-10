@@ -20,15 +20,33 @@ Parameters:
     Type: String
     Description: 'keep track of used projects commitIds'
   
+  #Log
+  LogRetention:
+    Type: Number
+    Default: 14
+  
+  LogsKinesisSourceStreamArn:
+    Type: String
+    Description: 'Where to send Logs'
+  
   CdcKinesisSourceStreamArn:
     Type: String
     Description: 'Where to send CDC'
 
 Resources:
-    NullResource:
-        Type: AWS::CloudFormation::WaitConditionHandle
+  #Log Group
+  PnNotificationCostServiceLogGroup:
+    Type: AWS::CloudFormation::Stack
+    UpdateReplacePolicy: Retain
+    DeletionPolicy: Retain
+    Properties:
+      TemplateURL: !Sub "${TemplateBucketBaseUrl}/fragments/log-group.yaml"
+      Parameters:
+        LogGroupName: !Sub '${ProjectName}-notification-cost-service'
+        LogsKinesisSourceStreamArn: !Ref LogsKinesisSourceStreamArn
+        LogGroupRetention: !Ref LogRetention
 
 Outputs:
-    SampleOutput:
-      Description: A Sample Output
-      Value: 'na'
+  # Log group exports
+  EcsNotificationCostServiceLogGroup:
+    Value: !GetAtt PnNotificationCostServiceLogGroup.Outputs.LogGroupName
