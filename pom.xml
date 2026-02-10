@@ -133,7 +133,7 @@
 				<groupId>org.openapitools</groupId>
 				<artifactId>openapi-generator-maven-plugin</artifactId>
 				<version>7.15.0</version>
-				<executions>					
+<!--				<executions>					-->
 <!--					<execution>-->
 <!--						<id>generate-mandate-server</id>-->
 <!--						<goals>-->
@@ -165,7 +165,7 @@
 <!--							</configOptions>-->
 <!--						</configuration>-->
 <!--					</execution>-->
-				</executions>
+<!--				</executions>-->
 			</plugin>			 		 
 		</plugins>
 	</build>
