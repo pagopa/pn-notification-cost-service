@@ -34,6 +34,31 @@ Parameters:
     Description: 'Where to send CDC'
 
 Resources:
+  #DynamoDB tables
+  NotificationDeliveryCostTable:
+    Type: AWS::DynamoDB::Table
+    UpdateReplacePolicy: Retain
+    DeletionPolicy: Retain
+    Properties:
+      TableName: !Sub '${ProjectName}-NotificationDeliveryCost'
+      AttributeDefinitions:
+        - AttributeName: "pk"
+          AttributeType: "S"
+        - AttributeName: "sk"
+          AttributeType: "S"
+      KeySchema:
+        - AttributeName: "pk"
+          KeyType: "HASH"
+        - AttributeName: "sk"
+          KeyType: "RANGE"
+      Projection:
+        ProjectionType: "ALL"
+      BillingMode: "PAY_PER_REQUEST"
+      TimeToLiveSpecification:
+        AttributeName: "i_ttl"
+        Enabled: true
+      PointInTimeRecoverySpecification:
+        PointInTimeRecoveryEnabled: true
   #Log Group
   PnNotificationCostServiceLogGroup:
     Type: AWS::CloudFormation::Stack
@@ -47,6 +72,14 @@ Resources:
         LogGroupRetention: !Ref LogRetention
 
 Outputs:
+  # DynamoDB tables
+  NotificationDeliveryCostTableName:
+    Description: Name of dynamodb table containing cost of notification delivery
+    Value: !Ref NotificationDeliveryCostTable
+  
+  NotificationDeliveryCostTableArn:
+    Description: ARN of dynamodb table containing cost of notification delivery
+    Value: !Sub '${NotificationDeliveryCostTable.Arn}'
   # Log group exports
   EcsNotificationCostServiceLogGroup:
     Value: !GetAtt PnNotificationCostServiceLogGroup.Outputs.LogGroupName
