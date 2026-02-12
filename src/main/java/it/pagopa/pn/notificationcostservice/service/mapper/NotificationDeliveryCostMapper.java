@@ -62,7 +62,7 @@ public class NotificationDeliveryCostMapper {
     private AnalogCostDto mapSecondAnalogCost(NotificationDeliveryCostDto dto){
         return AnalogCostDto.builder()
 //                .productType()
-                .cost(getCostWithVat(dto.getFirstAnalogCost(), dto.getVat()))
+                .cost(getCostWithVat(dto.getSecondAnalogCost(), dto.getVat()))
                 .build();
     }
 
