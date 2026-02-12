@@ -48,9 +48,9 @@ public class NotificationDeliveryCostDaoDynamo extends BaseDao implements Notifi
                 .key(getKeyBuild(iun, recIndex))
                 .build();
         return Mono.defer(() -> Mono.fromFuture(notificationDeliveryCostTable.getItem(getItemEnhancedRequest)))
-                .doOnNext(entity -> log.info("Retrieved item with iun {}:", entity.getPk()))
-                .switchIfEmpty(Mono.error(new PnNotFoundException("Not Found", "No item found with iun{} and recIndex:{}" + iun + recIndex, ERROR_CODE_NOTIFICATIONDELIVERYCOST_NOTFOUND)))
-                .doOnError(e -> log.error("Error retrieving item with iun {}:", iun))
+                .doOnNext(entity -> log.info("Retrieved item with iun: {}", entity.getPk()))
+                .switchIfEmpty(Mono.error(new PnNotFoundException("Not Found", "No item found with iun: {} and recIndex: {}" + iun + recIndex, ERROR_CODE_NOTIFICATIONDELIVERYCOST_NOTFOUND)))
+                .doOnError(e -> log.error("Error retrieving item with iun: {}", iun))
                 .map(entityToDto::entity2Dto);
     }
 
