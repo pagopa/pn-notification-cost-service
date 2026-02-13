@@ -16,7 +16,9 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.context.annotation.Import;
 import software.amazon.awssdk.enhanced.dynamodb.DynamoDbEnhancedAsyncClient;
+
 import java.time.Instant;
+
 import static org.junit.jupiter.api.Assertions.fail;
 
 @SpringBootTest
@@ -52,7 +54,7 @@ public class NotificationDeliveryCostDaoDynamoTestIT {
             fail(e);
         } finally {
             try {
-                testDao.delete(notificationDeliveryCostEntity.getPk(), notificationDeliveryCostEntity.getSk());
+                testDao.delete(notificationDeliveryCostEntity.getIun(), notificationDeliveryCostEntity.getRecIndex());
             } catch (Exception e) {
                 System.out.println("Nothing to remove");
             }
@@ -73,8 +75,8 @@ public class NotificationDeliveryCostDaoDynamoTestIT {
 
     public static NotificationDeliveryCostEntity newNotificationDeliveryCostEntity(String iun, Integer recIndex) {
         return NotificationDeliveryCostEntity.builder()
-                .pk(iun)
-                .sk(recIndex)
+                .iun(iun)
+                .recIndex(recIndex)
                 .pagoPaIntMode(PagoPaIntMode.ASYNC)
                 .baseCost(12)
                 .vat(0)

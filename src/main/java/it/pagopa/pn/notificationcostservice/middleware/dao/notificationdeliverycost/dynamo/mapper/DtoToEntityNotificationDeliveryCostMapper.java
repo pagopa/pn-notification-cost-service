@@ -8,8 +8,8 @@ import org.springframework.stereotype.Component;
 public class DtoToEntityNotificationDeliveryCostMapper {
     public NotificationDeliveryCostEntity dto2Entity(NotificationDeliveryCostDto notificationDeliveryCostDto){
         return NotificationDeliveryCostEntity.builder()
-                .pk(notificationDeliveryCostDto.getIun())
-                .sk(notificationDeliveryCostDto.getRecIndex())
+                .iun(notificationDeliveryCostDto.getIun())
+                .recIndex(notificationDeliveryCostDto.getRecIndex())
                 .recipientInternalId(notificationDeliveryCostDto.getRecipientInternalId())
                 .notificationFeePolicy(notificationDeliveryCostDto.getNotificationFeePolicy())
                 .notificationViewDate(notificationDeliveryCostDto.getNotificationViewDate())

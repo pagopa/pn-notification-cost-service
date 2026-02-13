@@ -23,8 +23,8 @@ class EntityToDtoNotificationDeliveryCostDaoMapperTest {
     void entity2Dto() {
         Instant now = Instant.now();
         NotificationDeliveryCostEntity entity = NotificationDeliveryCostEntity.builder()
-                .pk("IUN123")
-                .sk(0)
+                .iun("IUN123")
+                .recIndex(0)
                 .recipientInternalId("recipientId")
                 .baseCost(100)
                 .firstAnalogCost(10)
@@ -45,8 +45,8 @@ class EntityToDtoNotificationDeliveryCostDaoMapperTest {
 
         NotificationDeliveryCostDto dto = mapper.entity2Dto(entity);
 
-        assertEquals(entity.getPk(), dto.getIun());
-        assertEquals(entity.getSk(), dto.getRecIndex());
+        assertEquals(entity.getIun(), dto.getIun());
+        assertEquals(entity.getRecIndex(), dto.getRecIndex());
         assertEquals(entity.getRecipientInternalId(), dto.getRecipientInternalId());
         assertEquals(entity.getBaseCost(), dto.getBaseCost());
         assertEquals(entity.getFirstAnalogCost(), dto.getFirstAnalogCost());
