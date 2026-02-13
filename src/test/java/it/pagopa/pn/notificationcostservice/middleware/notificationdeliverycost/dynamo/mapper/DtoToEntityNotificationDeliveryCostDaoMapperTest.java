@@ -46,8 +46,8 @@ public class DtoToEntityNotificationDeliveryCostDaoMapperTest {
 
         NotificationDeliveryCostEntity entity = mapper.dto2Entity(dto);
 
-        assertEquals(entity.getPk(), dto.getIun());
-        assertEquals(entity.getSk(), dto.getRecIndex());
+        assertEquals(entity.getIun(), dto.getIun());
+        assertEquals(entity.getRecIndex(), dto.getRecIndex());
         assertEquals(entity.getRecipientInternalId(), dto.getRecipientInternalId());
         assertEquals(entity.getBaseCost(), dto.getBaseCost());
         assertEquals(entity.getFirstAnalogCost(), dto.getFirstAnalogCost());

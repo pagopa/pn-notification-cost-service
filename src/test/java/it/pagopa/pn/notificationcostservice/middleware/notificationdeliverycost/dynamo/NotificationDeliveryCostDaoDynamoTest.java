@@ -19,7 +19,6 @@ import software.amazon.awssdk.enhanced.dynamodb.DynamoDbAsyncTable;
 import software.amazon.awssdk.enhanced.dynamodb.DynamoDbEnhancedAsyncClient;
 import software.amazon.awssdk.enhanced.dynamodb.TableSchema;
 import software.amazon.awssdk.enhanced.dynamodb.model.GetItemEnhancedRequest;
-import software.amazon.awssdk.services.dynamodb.DynamoDbAsyncClient;
 
 import java.time.Instant;
 import java.util.concurrent.CompletableFuture;
@@ -32,9 +31,6 @@ public class NotificationDeliveryCostDaoDynamoTest {
 
     @Mock
     private DynamoDbEnhancedAsyncClient dynamoDbEnhancedAsyncClient;
-
-    @Mock
-    private DynamoDbAsyncClient dynamoDbAsyncClient;
 
     @Mock
     private PnNotificationCostServiceConfigs configs;
@@ -61,7 +57,6 @@ public class NotificationDeliveryCostDaoDynamoTest {
 
         dao = new NotificationDeliveryCostDaoDynamo(
                 dynamoDbEnhancedAsyncClient,
-                dynamoDbAsyncClient,
                 configs,
                 entityToDtoMapper
         );
@@ -155,8 +150,8 @@ public class NotificationDeliveryCostDaoDynamoTest {
 
     private static NotificationDeliveryCostEntity newNotificationDeliveryCostEntity(String iun, Integer recIndex) {
         return NotificationDeliveryCostEntity.builder()
-                .pk(iun)
-                .sk(recIndex)
+                .iun(iun)
+                .recIndex(recIndex)
                 .pagoPaIntMode(PagoPaIntMode.ASYNC)
                 .baseCost(12)
                 .vat(0)
