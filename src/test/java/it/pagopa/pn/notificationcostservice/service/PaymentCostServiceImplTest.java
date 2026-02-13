@@ -4,6 +4,7 @@ import it.pagopa.pn.notificationcostservice.dto.notificationdeliverycost.Notific
 import it.pagopa.pn.notificationcostservice.dto.notificationdeliverycost.NotificationDeliveryCostDto;
 import it.pagopa.pn.notificationcostservice.dto.notificationdeliverycost.NotificationFeePolicy;
 import it.pagopa.pn.notificationcostservice.dto.notificationdeliverycost.PagoPaIntMode;
+import it.pagopa.pn.notificationcostservice.exception.PnNotFoundException;
 import it.pagopa.pn.notificationcostservice.exception.PnNotificationDeliveryCostBadRequestException;
 import it.pagopa.pn.notificationcostservice.middleware.dao.notificationdeliverycost.NotificationDeliveryCostDao;
 import it.pagopa.pn.notificationcostservice.service.impl.PaymentCostServiceImpl;
@@ -55,6 +56,8 @@ class PaymentCostServiceImplTest {
                 .vat(VAT)
                 .notificationFeePolicy(NotificationFeePolicy.DELIVERY_MODE)
                 .pagoPaIntMode(PagoPaIntMode.SYNC)
+                .isCancelled(false)
+                .isRefused(false)
                 .build();
 
         expectedResponse = NotificationCostRecipientResponseDto.builder()
@@ -227,5 +230,74 @@ class PaymentCostServiceImplTest {
 
         verify(notificationDeliveryCostDao, times(1)).getNotificationDeliveryCostItem(IUN, REC_INDEX);
         verify(notificationDeliveryCostMapper, times(1)).mapDtoToResponseDto(eq(dtoWithZeroCosts), eq(0));
+    }
+
+    @Test
+    void getNotificationCostRecipient_Error_WhenNotificationIsCancelled() {
+        // Given
+        NotificationDeliveryCostDto cancelledDto = notificationDeliveryCostDto.toBuilder()
+                .isCancelled(true)
+                .isRefused(false)
+                .build();
+
+        when(notificationDeliveryCostDao.getNotificationDeliveryCostItem(IUN, REC_INDEX))
+                .thenReturn(Mono.just(cancelledDto));
+
+        // When
+        Mono<NotificationCostRecipientResponseDto> result = paymentCostService.getNotificationCostRecipient(IUN, REC_INDEX);
+
+        // Then
+        StepVerifier.create(result)
+                .expectError(PnNotFoundException.class)
+                .verify();
+
+        verify(notificationDeliveryCostDao, times(1)).getNotificationDeliveryCostItem(IUN, REC_INDEX);
+        verify(notificationDeliveryCostMapper, never()).mapDtoToResponseDto(any(), anyInt());
+    }
+
+    @Test
+    void getNotificationCostRecipient_Error_WhenNotificationIsRefused() {
+        // Given
+        NotificationDeliveryCostDto refusedDto = notificationDeliveryCostDto.toBuilder()
+                .isCancelled(false)
+                .isRefused(true)
+                .build();
+
+        when(notificationDeliveryCostDao.getNotificationDeliveryCostItem(IUN, REC_INDEX))
+                .thenReturn(Mono.just(refusedDto));
+
+        // When
+        Mono<NotificationCostRecipientResponseDto> result = paymentCostService.getNotificationCostRecipient(IUN, REC_INDEX);
+
+        // Then
+        StepVerifier.create(result)
+                .expectError(PnNotFoundException.class)
+                .verify();
+
+        verify(notificationDeliveryCostDao, times(1)).getNotificationDeliveryCostItem(IUN, REC_INDEX);
+        verify(notificationDeliveryCostMapper, never()).mapDtoToResponseDto(any(), anyInt());
+    }
+
+    @Test
+    void getNotificationCostRecipient_Error_WhenNotificationIsCancelledAndRefused() {
+        // Given
+        NotificationDeliveryCostDto cancelledAndRefusedDto = notificationDeliveryCostDto.toBuilder()
+                .isCancelled(true)
+                .isRefused(true)
+                .build();
+
+        when(notificationDeliveryCostDao.getNotificationDeliveryCostItem(IUN, REC_INDEX))
+                .thenReturn(Mono.just(cancelledAndRefusedDto));
+
+        // When
+        Mono<NotificationCostRecipientResponseDto> result = paymentCostService.getNotificationCostRecipient(IUN, REC_INDEX);
+
+        // Then
+        StepVerifier.create(result)
+                .expectError(PnNotFoundException.class)
+                .verify();
+
+        verify(notificationDeliveryCostDao, times(1)).getNotificationDeliveryCostItem(IUN, REC_INDEX);
+        verify(notificationDeliveryCostMapper, never()).mapDtoToResponseDto(any(), anyInt());
     }
 }

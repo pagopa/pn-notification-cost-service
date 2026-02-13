@@ -1,6 +1,7 @@
 package it.pagopa.pn.notificationcostservice.service.impl;
 
 import it.pagopa.pn.notificationcostservice.dto.notificationdeliverycost.NotificationCostRecipientResponseDto;
+import it.pagopa.pn.notificationcostservice.exception.PnNotFoundException;
 import it.pagopa.pn.notificationcostservice.exception.PnNotificationDeliveryCostBadRequestException;
 import it.pagopa.pn.notificationcostservice.middleware.dao.notificationdeliverycost.NotificationDeliveryCostDao;
 import it.pagopa.pn.notificationcostservice.service.PaymentCostService;
@@ -12,6 +13,7 @@ import org.springframework.stereotype.Service;
 import reactor.core.publisher.Mono;
 
 import static it.pagopa.pn.notificationcostservice.exception.PnNotificationCostServiceExceptionCodes.ERROR_CODE_NOTIFICATIONDELIVERYCOST_BADREQUEST;
+import static it.pagopa.pn.notificationcostservice.exception.PnNotificationCostServiceExceptionCodes.ERROR_CODE_NOTIFICATIONDELIVERYCOST_NOTFOUND;
 import static it.pagopa.pn.notificationcostservice.utils.CostUtils.getTotalCost;
 
 @Slf4j
@@ -24,16 +26,21 @@ public class PaymentCostServiceImpl implements PaymentCostService {
 
     @Override
     public Mono<NotificationCostRecipientResponseDto> getNotificationCostRecipient(String iun, Integer recIndex) {
-        log.info("Start to get notification cost recipient for iun: {} e RecIndex: {}", iun, recIndex);
-
+        log.info("Start to get notification cost recipient for iun: {} and RecIndex: {}", iun, recIndex);
         if (Strings.isBlank(iun) || recIndex == null) {
             log.error("Bad Request: Iun and RecIndex must not be null");
             return Mono.error(new PnNotificationDeliveryCostBadRequestException(
                     "Bad Request", "Iun and RecIndex must not be null", ERROR_CODE_NOTIFICATIONDELIVERYCOST_BADREQUEST));
         }
         return notificationDeliveryCostDao.getNotificationDeliveryCostItem(iun, recIndex)
-                .map(dto -> {
-                    log.info("Item retrieved from DB for iun: {} and RecIndex: {}", iun, recIndex);
+                .flatMap(dto -> {
+                    if (Boolean.TRUE.equals(dto.getIsCancelled()) || Boolean.TRUE.equals(dto.getIsRefused())) {
+                        log.info("Notification with iun: {} and RecIndex: {} is cancelled or refused", iun, recIndex);
+                        return Mono.error(new PnNotFoundException("Not Found",
+                                "Notification with iun: " + dto.getIun() + " and RecIndex: " + dto.getRecIndex() + " is cancelled or refused",
+                                ERROR_CODE_NOTIFICATIONDELIVERYCOST_NOTFOUND));
+                    }
+                    log.info("Item retrieved for iun: {} and RecIndex: {}", iun, recIndex);
                     Integer totalCost = getTotalCost(
                             dto.getBaseCost(),
                             dto.getFirstAnalogCost(),
@@ -42,8 +49,8 @@ public class PaymentCostServiceImpl implements PaymentCostService {
                             dto.getVat(),
                             dto.getNotificationFeePolicy()
                     );
-                    log.info("End process for iun: {} with totalCost: {}", iun, totalCost);
-                    return notificationDeliveryCostMapper.mapDtoToResponseDto(dto, totalCost);
+                    log.info("End process to get notification cost recipient for iun:{} and RecIndex: {}", iun, recIndex);
+                    return Mono.just(notificationDeliveryCostMapper.mapDtoToResponseDto(dto, totalCost));
                 })
                 .doOnError(e -> log.error("Error processing cost recipient for iun: {} - Error: {}", iun, e.getMessage()));
     }
