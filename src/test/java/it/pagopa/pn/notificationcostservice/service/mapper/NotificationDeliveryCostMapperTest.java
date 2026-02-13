@@ -60,7 +60,7 @@ class NotificationDeliveryCostMapperTest {
         // Verify SecondAnalogCost (300 * 1.22 = 366)
         AnalogCostDto secondAnalogCost = details.getSecondAnalogCost();
         assertNotNull(secondAnalogCost);
-        assertEquals(244, secondAnalogCost.getCost()); // BUG: usa getFirstAnalogCost invece di getSecondAnalogCost
+        assertEquals(366, secondAnalogCost.getCost());
 
         // Verify SimpleRegisteredLetterCost (150 * 1.22 = 183)
         AnalogCostDto simpleRegisteredLetterCost = details.getSimpleRegisteredLetterCost();
@@ -106,7 +106,7 @@ class NotificationDeliveryCostMapperTest {
                 .recIndex(0)
                 .baseCost(100)
                 .firstAnalogCost(200)
-                .secondAnalogCost(300)
+                .secondAnalogCost(200)
                 .simpleRegisteredLetterCost(150)
                 .sendFee(50)
                 .paFee(50)
@@ -125,7 +125,7 @@ class NotificationDeliveryCostMapperTest {
         assertEquals(0, details.getVat());
         // With 0% VAT, costs should remain unchanged
         assertEquals(200, details.getFirstAnalogCost().getCost());
-        assertEquals(200, details.getSecondAnalogCost().getCost()); // BUG: usa getFirstAnalogCost
+        assertEquals(200, details.getSecondAnalogCost().getCost());
         assertEquals(150, details.getSimpleRegisteredLetterCost().getCost());
     }
 
@@ -179,9 +179,9 @@ class NotificationDeliveryCostMapperTest {
         assertNotNull(result);
         TotalCostDetailsDto details = result.getTotalCost().getDetails();
 
-        assertEquals(532, details.getFirstAnalogCost().getCost()); // Round up
-        assertEquals(532, details.getSecondAnalogCost().getCost()); // BUG: usa getFirstAnalogCost, dovrebbe essere 484
-        assertEquals(1182, details.getSimpleRegisteredLetterCost().getCost()); // Round down
+        assertEquals(532, details.getFirstAnalogCost().getCost());
+        assertEquals(484, details.getSecondAnalogCost().getCost());
+        assertEquals(1182, details.getSimpleRegisteredLetterCost().getCost());
     }
 
     @Test
@@ -209,7 +209,7 @@ class NotificationDeliveryCostMapperTest {
         TotalCostDetailsDto details = result.getTotalCost().getDetails();
 
         assertEquals(244, details.getFirstAnalogCost().getCost());
-        assertEquals(244, details.getSecondAnalogCost().getCost()); // BUG: usa getFirstAnalogCost, dovrebbe essere 0
+        assertEquals(0, details.getSecondAnalogCost().getCost());
         assertEquals(183, details.getSimpleRegisteredLetterCost().getCost());
     }
 
@@ -278,7 +278,7 @@ class NotificationDeliveryCostMapperTest {
         assertEquals(75, details.getBaseCost().getDetails().getSendFee());
         assertEquals(75, details.getBaseCost().getDetails().getPaFee());
         assertEquals(305, details.getFirstAnalogCost().getCost()); // 250 * 1.22 = 305
-        assertEquals(305, details.getSecondAnalogCost().getCost()); // BUG: dovrebbe essere 427 (350 * 1.22)
+        assertEquals(427, details.getSecondAnalogCost().getCost()); // 350 * 1.22 = 427
         assertEquals(214, details.getSimpleRegisteredLetterCost().getCost()); // 175 * 1.22 = 213.5 -> 214
         assertEquals(22, details.getVat());
         assertEquals(NotificationFeePolicy.DELIVERY_MODE, details.getNotificationFeePolicy());

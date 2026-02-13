@@ -11,8 +11,6 @@ import org.apache.logging.log4j.util.Strings;
 import org.springframework.stereotype.Service;
 import reactor.core.publisher.Mono;
 
-import java.util.Objects;
-
 import static it.pagopa.pn.notificationcostservice.exception.PnNotificationCostServiceExceptionCodes.ERROR_CODE_NOTIFICATIONDELIVERYCOST_BADREQUEST;
 import static it.pagopa.pn.notificationcostservice.utils.CostUtils.getTotalCost;
 
@@ -27,18 +25,26 @@ public class PaymentCostServiceImpl implements PaymentCostService {
     @Override
     public Mono<NotificationCostRecipientResponseDto> getNotificationCostRecipient(String iun, Integer recIndex) {
         log.info("Start to get notification cost recipient for iun: {} e RecIndex: {}", iun, recIndex);
-        if (Strings.isNotBlank(iun) && recIndex != null) {
-            return notificationDeliveryCostDao.getNotificationDeliveryCostItem(iun, recIndex)
-                    .map(dto -> {
-                        log.info("Item retrieved from DB for iun: {} and RecIndex: {}", iun, recIndex);
-                        //Calcolo Totale: Base + Costi Analogici con IVA
-                        Integer totalCost = getTotalCost(Objects.requireNonNull(dto).getBaseCost(), dto.getFirstAnalogCost(), dto.getSecondAnalogCost(), dto.getSimpleRegisteredLetterCost(), dto.getVat(), dto.getNotificationFeePolicy());
-                        log.info("End to get notification cost recipient for iun: {} and RecIndex: {} with totalCost: {}", iun, recIndex, totalCost);
-                        return notificationDeliveryCostMapper.mapDtoToResponseDto(dto, totalCost);
-                    });
-        } else {
+
+        if (Strings.isBlank(iun) || recIndex == null) {
             log.error("Bad Request: Iun and RecIndex must not be null");
-            return Mono.error(new PnNotificationDeliveryCostBadRequestException("Bad Request", "Iun and RecIndex must not be null", ERROR_CODE_NOTIFICATIONDELIVERYCOST_BADREQUEST));
+            return Mono.error(new PnNotificationDeliveryCostBadRequestException(
+                    "Bad Request", "Iun and RecIndex must not be null", ERROR_CODE_NOTIFICATIONDELIVERYCOST_BADREQUEST));
         }
+        return notificationDeliveryCostDao.getNotificationDeliveryCostItem(iun, recIndex)
+                .map(dto -> {
+                    log.info("Item retrieved from DB for iun: {} and RecIndex: {}", iun, recIndex);
+                    Integer totalCost = getTotalCost(
+                            dto.getBaseCost(),
+                            dto.getFirstAnalogCost(),
+                            dto.getSecondAnalogCost(),
+                            dto.getSimpleRegisteredLetterCost(),
+                            dto.getVat(),
+                            dto.getNotificationFeePolicy()
+                    );
+                    log.info("End process for iun: {} with totalCost: {}", iun, totalCost);
+                    return notificationDeliveryCostMapper.mapDtoToResponseDto(dto, totalCost);
+                })
+                .doOnError(e -> log.error("Error processing cost recipient for iun: {} - Error: {}", iun, e.getMessage()));
     }
 }
