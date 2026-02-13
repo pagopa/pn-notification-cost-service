@@ -17,6 +17,7 @@ public class NotificationDeliveryCostMapper {
     public NotificationCostRecipientResponseDto mapDtoToResponseDto(NotificationDeliveryCostDto dto,Integer totalCost){
         return NotificationCostRecipientResponseDto.builder()
                 .totalCost(mapTotalCost(dto,totalCost))
+                .pagoPaIntMode(dto.getPagoPaIntMode())
                 .build();
     }
 

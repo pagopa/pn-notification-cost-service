@@ -41,7 +41,11 @@
 		<dependency>
 			<groupId>software.amazon.awssdk</groupId>
 			<artifactId>dynamodb-enhanced</artifactId>
-			<version>2.17.174</version>
+		</dependency>
+
+		<dependency>
+			<groupId>software.amazon.awssdk</groupId>
+			<artifactId>s3</artifactId>
 		</dependency>
 
 		<dependency>
@@ -139,39 +143,39 @@
 				<groupId>org.openapitools</groupId>
 				<artifactId>openapi-generator-maven-plugin</artifactId>
 				<version>7.15.0</version>
-<!--				<executions>					-->
-<!--					<execution>-->
-<!--						<id>generate-mandate-server</id>-->
-<!--						<goals>-->
-<!--							<goal>generate</goal>-->
-<!--						</goals>-->
-<!--						<phase>process-resources</phase>-->
-<!--						<configuration>-->
-<!--							<inputSpec>${project.basedir}/docs/openapi/pn-notification-cost-service-internal.yaml</inputSpec>-->
-<!--							<generatorName>spring</generatorName>-->
-<!--							<library>spring-boot</library>-->
-<!--							<generateApiDocumentation>false</generateApiDocumentation>-->
-<!--							<generateApiTests>false</generateApiTests>-->
-<!--							<generateModelTests>false</generateModelTests>-->
-<!--							<configOptions>-->
-<!--								<useSpringBoot3>true</useSpringBoot3>-->
-<!--								<dateLibrary>java11</dateLibrary>-->
-<!--								<delegatePattern>true</delegatePattern>-->
-<!--								<interfaceOnly>true</interfaceOnly>-->
-<!--								<annotationLibrary>none</annotationLibrary>-->
-<!--								<documentationProvider>source</documentationProvider>-->
-<!--								<openApiNullable>false</openApiNullable>-->
-<!--								<reactive>true</reactive>-->
-<!--								<skipDefaultInterface>false</skipDefaultInterface>-->
-<!--								<useTags>true</useTags>-->
-<!--								<basePackage>${project.groupId}.notification-cost-service.generated.openapi.server.v1</basePackage>-->
-<!--								<modelPackage>${project.groupId}.notification-cost-service.generated.openapi.server.v1.dto</modelPackage>-->
-<!--								<apiPackage>${project.groupId}.notification-cost-service.generated.openapi.server.v1.api</apiPackage>-->
-<!--								<configPackage>${project.groupId}.notification-cost-service.generated.openapi.server.v1.config</configPackage>-->
-<!--							</configOptions>-->
-<!--						</configuration>-->
-<!--					</execution>-->
-<!--				</executions>-->
+				<executions>
+					<execution>
+						<id>generate-notification-cost-service-server</id>
+						<goals>
+							<goal>generate</goal>
+						</goals>
+						<phase>process-resources</phase>
+						<configuration>
+							<inputSpec>${project.basedir}/docs/openapi/pn-notification-cost-service-internal.yaml</inputSpec>
+							<generatorName>spring</generatorName>
+							<library>spring-boot</library>
+							<generateApiDocumentation>false</generateApiDocumentation>
+							<generateApiTests>false</generateApiTests>
+							<generateModelTests>false</generateModelTests>
+							<configOptions>
+								<useSpringBoot3>true</useSpringBoot3>
+								<dateLibrary>java11</dateLibrary>
+								<delegatePattern>true</delegatePattern>
+								<interfaceOnly>true</interfaceOnly>
+								<annotationLibrary>none</annotationLibrary>
+								<documentationProvider>source</documentationProvider>
+								<openApiNullable>false</openApiNullable>
+								<reactive>true</reactive>
+								<skipDefaultInterface>false</skipDefaultInterface>
+								<useTags>true</useTags>
+								<basePackage>${project.groupId}.notification-cost-service.generated.openapi.server.v1</basePackage>
+								<modelPackage>${project.groupId}.notification-cost-service.generated.openapi.server.v1.dto</modelPackage>
+								<apiPackage>${project.groupId}.notification-cost-service.generated.openapi.server.v1.api</apiPackage>
+								<configPackage>${project.groupId}.notification-cost-service.generated.openapi.server.v1.config</configPackage>
+							</configOptions>
+						</configuration>
+					</execution>
+				</executions>
 			</plugin>			 		 
 		</plugins>
 	</build>
