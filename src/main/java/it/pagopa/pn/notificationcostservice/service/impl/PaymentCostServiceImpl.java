@@ -1,5 +1,6 @@
 package it.pagopa.pn.notificationcostservice.service.impl;
 
+
 import it.pagopa.pn.notificationcostservice.dto.notificationdeliverycost.NotificationCostRecipientResponseDto;
 import it.pagopa.pn.notificationcostservice.exception.PnNotFoundException;
 import it.pagopa.pn.notificationcostservice.exception.PnNotificationDeliveryCostBadRequestException;
@@ -34,10 +35,10 @@ public class PaymentCostServiceImpl implements PaymentCostService {
         }
         return notificationDeliveryCostDao.getNotificationDeliveryCostItem(iun, recIndex)
                 .flatMap(dto -> {
-                    if (Boolean.TRUE.equals(dto.getIsCancelled()) || Boolean.TRUE.equals(dto.getIsRefused())) {
-                        log.info("Notification with iun: {} and RecIndex: {} is cancelled or refused", iun, recIndex);
+                    if (Boolean.TRUE.equals(dto.getIsDeleted())) {
+                        log.info("Notification with iun: {} and RecIndex: {} is deleted", iun, recIndex);
                         return Mono.error(new PnNotFoundException("Not Found",
-                                "Notification with iun: " + dto.getIun() + " and RecIndex: " + dto.getRecIndex() + " is cancelled or refused",
+                                "Notification with iun: " + dto.getIun() + " and RecIndex: " + dto.getRecIndex() + " is deleted",
                                 ERROR_CODE_NOTIFICATIONDELIVERYCOST_NOTFOUND));
                     }
                     log.info("Item retrieved for iun: {} and RecIndex: {}", iun, recIndex);

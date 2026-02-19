@@ -1,31 +1,64 @@
 package it.pagopa.pn.notificationcostservice.middleware.dao.notificationdeliverycost.dynamo.mapper;
 
+import it.pagopa.pn.notificationcostservice.dto.notificationdeliverycost.BaseCostDto;
+import it.pagopa.pn.notificationcostservice.dto.notificationdeliverycost.analogcost.FirstAnalogCostDto;
+import it.pagopa.pn.notificationcostservice.dto.notificationdeliverycost.analogcost.SecondAnalogCostDto;
+import it.pagopa.pn.notificationcostservice.dto.notificationdeliverycost.analogcost.SimpleRegisteredLetterCostDto;
 import it.pagopa.pn.notificationcostservice.dto.notificationdeliverycost.NotificationDeliveryCostDto;
-import it.pagopa.pn.notificationcostservice.middleware.dao.notificationdeliverycost.dynamo.entity.NotificationDeliveryCostEntity;
+import it.pagopa.pn.notificationcostservice.middleware.dao.notificationdeliverycost.dynamo.entity.notificationdeliverycost.*;
+import it.pagopa.pn.notificationcostservice.middleware.dao.notificationdeliverycost.dynamo.entity.notificationdeliverycost.analogcost.FirstAnalogCost;
+import it.pagopa.pn.notificationcostservice.middleware.dao.notificationdeliverycost.dynamo.entity.notificationdeliverycost.analogcost.SecondAnalogCost;
+import it.pagopa.pn.notificationcostservice.middleware.dao.notificationdeliverycost.dynamo.entity.notificationdeliverycost.analogcost.SimpleRegisteredLetterCost;
 import org.springframework.stereotype.Component;
 
 @Component
 public class DtoToEntityNotificationDeliveryCostMapper {
-    public NotificationDeliveryCostEntity dto2Entity(NotificationDeliveryCostDto notificationDeliveryCostDto){
+    public NotificationDeliveryCostEntity dto2Entity(NotificationDeliveryCostDto notificationDeliveryCostDto) {
         return NotificationDeliveryCostEntity.builder()
                 .iun(notificationDeliveryCostDto.getIun())
                 .recIndex(notificationDeliveryCostDto.getRecIndex())
                 .recipientInternalId(notificationDeliveryCostDto.getRecipientInternalId())
                 .notificationFeePolicy(notificationDeliveryCostDto.getNotificationFeePolicy())
-                .notificationViewDate(notificationDeliveryCostDto.getNotificationViewDate())
                 .paFee(notificationDeliveryCostDto.getPaFee())
-                .isCancelled(notificationDeliveryCostDto.getIsCancelled())
+                .isDeleted(notificationDeliveryCostDto.getIsDeleted())
                 .lastUpdate(notificationDeliveryCostDto.getLastUpdate())
                 .ttl(notificationDeliveryCostDto.getTtl())
-                .refinementDate(notificationDeliveryCostDto.getRefinementDate())
+                .senderInternalId(notificationDeliveryCostDto.getSenderInternalId())
                 .sendFee(notificationDeliveryCostDto.getSendFee())
                 .pagoPaIntMode(notificationDeliveryCostDto.getPagoPaIntMode())
                 .vat(notificationDeliveryCostDto.getVat())
-                .firstAnalogCost(notificationDeliveryCostDto.getFirstAnalogCost())
-                .baseCost(notificationDeliveryCostDto.getBaseCost())
-                .secondAnalogCost(notificationDeliveryCostDto.getSecondAnalogCost())
-                .simpleRegisteredLetterCost(notificationDeliveryCostDto.getSimpleRegisteredLetterCost())
-                .isRefused(notificationDeliveryCostDto.getIsRefused())
+                .firstAnalogCost(mapFirstAnalogCost(notificationDeliveryCostDto.getFirstAnalogCost()))
+                .baseCost(mapBaseCost(notificationDeliveryCostDto.getBaseCost()))
+                .secondAnalogCost(mapSecondAnalogCost(notificationDeliveryCostDto.getSecondAnalogCost()))
+                .simpleRegisteredLetterCost(mapSimpleRegisteredLetterCost(notificationDeliveryCostDto.getSimpleRegisteredLetterCost()))
+                .build();
+    }
+
+    private FirstAnalogCost mapFirstAnalogCost(FirstAnalogCostDto dto) {
+        return FirstAnalogCost.builder()
+                .cost(dto.getCost())
+                .productType(dto.getProductType())
+                .build();
+    }
+
+    private BaseCost mapBaseCost(BaseCostDto dto){
+        return BaseCost.builder()
+                .paFee(dto.getPaFee())
+                .sendFee(dto.getSendFee())
+                .build();
+    }
+
+    private SecondAnalogCost mapSecondAnalogCost(SecondAnalogCostDto dto) {
+        return SecondAnalogCost.builder()
+                .cost(dto.getCost())
+                .productType(dto.getProductType())
+                .build();
+    }
+
+    private SimpleRegisteredLetterCost mapSimpleRegisteredLetterCost(SimpleRegisteredLetterCostDto dto) {
+        return SimpleRegisteredLetterCost.builder()
+                .cost(dto.getCost())
+                .productType(dto.getProductType())
                 .build();
     }
 }

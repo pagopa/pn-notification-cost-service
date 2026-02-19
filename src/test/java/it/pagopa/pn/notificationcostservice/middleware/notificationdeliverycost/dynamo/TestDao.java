@@ -1,7 +1,7 @@
 package it.pagopa.pn.notificationcostservice.middleware.notificationdeliverycost.dynamo;
 
 import it.pagopa.pn.notificationcostservice.middleware.dao.notificationdeliverycost.dynamo.BaseDao;
-import it.pagopa.pn.notificationcostservice.middleware.dao.notificationdeliverycost.dynamo.entity.NotificationDeliveryCostEntity;
+import it.pagopa.pn.notificationcostservice.middleware.dao.notificationdeliverycost.dynamo.entity.notificationdeliverycost.NotificationDeliveryCostEntity;
 import org.springframework.boot.test.context.SpringBootTest;
 import software.amazon.awssdk.enhanced.dynamodb.DynamoDbAsyncTable;
 import software.amazon.awssdk.enhanced.dynamodb.DynamoDbEnhancedAsyncClient;
