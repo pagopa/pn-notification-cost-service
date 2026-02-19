@@ -1,11 +1,15 @@
 package it.pagopa.pn.notificationcostservice.service;
 
+import it.pagopa.pn.notificationcostservice.dto.notificationdeliverycost.BaseCostDto;
 import it.pagopa.pn.notificationcostservice.dto.notificationdeliverycost.NotificationCostRecipientResponseDto;
 import it.pagopa.pn.notificationcostservice.dto.notificationdeliverycost.NotificationDeliveryCostDto;
 import it.pagopa.pn.notificationcostservice.dto.notificationdeliverycost.NotificationFeePolicy;
 import it.pagopa.pn.notificationcostservice.dto.notificationdeliverycost.PagoPaIntMode;
-import it.pagopa.pn.notificationcostservice.exception.PnNotFoundException;
+import it.pagopa.pn.notificationcostservice.dto.notificationdeliverycost.analogcost.FirstAnalogCostDto;
+import it.pagopa.pn.notificationcostservice.dto.notificationdeliverycost.analogcost.SecondAnalogCostDto;
+import it.pagopa.pn.notificationcostservice.dto.notificationdeliverycost.analogcost.SimpleRegisteredLetterCostDto;
 import it.pagopa.pn.notificationcostservice.exception.PnNotificationDeliveryCostBadRequestException;
+import it.pagopa.pn.notificationcostservice.exception.PnNotFoundException;
 import it.pagopa.pn.notificationcostservice.middleware.dao.notificationdeliverycost.NotificationDeliveryCostDao;
 import it.pagopa.pn.notificationcostservice.service.impl.PaymentCostServiceImpl;
 import it.pagopa.pn.notificationcostservice.service.mapper.NotificationDeliveryCostMapper;
@@ -35,10 +39,6 @@ class PaymentCostServiceImplTest {
 
     private static final String IUN = "TEST-IUN-12345";
     private static final Integer REC_INDEX = 0;
-    private static final Integer BASE_COST = 100;
-    private static final Integer FIRST_ANALOG_COST = 200;
-    private static final Integer SECOND_ANALOG_COST = 150;
-    private static final Integer SIMPLE_REGISTERED_LETTER_COST = 50;
     private static final Integer VAT = 22;
 
     private NotificationDeliveryCostDto notificationDeliveryCostDto;
@@ -49,15 +49,22 @@ class PaymentCostServiceImplTest {
         notificationDeliveryCostDto = NotificationDeliveryCostDto.builder()
                 .iun(IUN)
                 .recIndex(REC_INDEX)
-                .baseCost(BASE_COST)
-                .firstAnalogCost(FIRST_ANALOG_COST)
-                .secondAnalogCost(SECOND_ANALOG_COST)
-                .simpleRegisteredLetterCost(SIMPLE_REGISTERED_LETTER_COST)
+                .baseCost(BaseCostDto.builder()
+                        .sendFee(50)
+                        .paFee(50)
+                        .build())
+                .firstAnalogCost(FirstAnalogCostDto.builder()
+                        .cost(200)
+                        .build())
+                .secondAnalogCost(SecondAnalogCostDto.builder()
+                        .cost(150)
+                        .build())
+                .simpleRegisteredLetterCost(SimpleRegisteredLetterCostDto.builder()
+                        .cost(50)
+                        .build())
                 .vat(VAT)
                 .notificationFeePolicy(NotificationFeePolicy.DELIVERY_MODE)
                 .pagoPaIntMode(PagoPaIntMode.SYNC)
-                .isCancelled(false)
-                .isRefused(false)
                 .build();
 
         expectedResponse = NotificationCostRecipientResponseDto.builder()
@@ -120,19 +127,17 @@ class PaymentCostServiceImplTest {
 
         when(notificationDeliveryCostDao.getNotificationDeliveryCostItem(IUN, REC_INDEX))
                 .thenReturn(Mono.just(dtoWithNullCosts));
-        when(notificationDeliveryCostMapper.mapDtoToResponseDto(any(NotificationDeliveryCostDto.class), eq(BASE_COST)))
-                .thenReturn(expectedResponse);
 
         // When
         Mono<NotificationCostRecipientResponseDto> result = paymentCostService.getNotificationCostRecipient(IUN, REC_INDEX);
 
         // Then
         StepVerifier.create(result)
-                .expectNext(expectedResponse)
-                .verifyComplete();
+                .expectError(NullPointerException.class)
+                .verify();
 
         verify(notificationDeliveryCostDao, times(1)).getNotificationDeliveryCostItem(IUN, REC_INDEX);
-        verify(notificationDeliveryCostMapper, times(1)).mapDtoToResponseDto(eq(dtoWithNullCosts), eq(BASE_COST));
+        verify(notificationDeliveryCostMapper, never()).mapDtoToResponseDto(any(), anyInt());
     }
 
     @Test
@@ -209,10 +214,19 @@ class PaymentCostServiceImplTest {
     void getNotificationCostRecipient_Success_WithZeroCosts() {
         // Given
         NotificationDeliveryCostDto dtoWithZeroCosts = notificationDeliveryCostDto.toBuilder()
-                .baseCost(0)
-                .firstAnalogCost(0)
-                .secondAnalogCost(0)
-                .simpleRegisteredLetterCost(0)
+                .baseCost(BaseCostDto.builder()
+                        .sendFee(0)
+                        .paFee(0)
+                        .build())
+                .firstAnalogCost(FirstAnalogCostDto.builder()
+                        .cost(0)
+                        .build())
+                .secondAnalogCost(SecondAnalogCostDto.builder()
+                        .cost(0)
+                        .build())
+                .simpleRegisteredLetterCost(SimpleRegisteredLetterCostDto.builder()
+                        .cost(0)
+                        .build())
                 .build();
 
         when(notificationDeliveryCostDao.getNotificationDeliveryCostItem(IUN, REC_INDEX))
@@ -233,61 +247,14 @@ class PaymentCostServiceImplTest {
     }
 
     @Test
-    void getNotificationCostRecipient_Error_WhenNotificationIsCancelled() {
+    void getNotificationCostRecipient_Error_WhenIsDeletedTrue() {
         // Given
-        NotificationDeliveryCostDto cancelledDto = notificationDeliveryCostDto.toBuilder()
-                .isCancelled(true)
-                .isRefused(false)
+        NotificationDeliveryCostDto deletedDto = notificationDeliveryCostDto.toBuilder()
+                .isDeleted(true)
                 .build();
 
         when(notificationDeliveryCostDao.getNotificationDeliveryCostItem(IUN, REC_INDEX))
-                .thenReturn(Mono.just(cancelledDto));
-
-        // When
-        Mono<NotificationCostRecipientResponseDto> result = paymentCostService.getNotificationCostRecipient(IUN, REC_INDEX);
-
-        // Then
-        StepVerifier.create(result)
-                .expectError(PnNotFoundException.class)
-                .verify();
-
-        verify(notificationDeliveryCostDao, times(1)).getNotificationDeliveryCostItem(IUN, REC_INDEX);
-        verify(notificationDeliveryCostMapper, never()).mapDtoToResponseDto(any(), anyInt());
-    }
-
-    @Test
-    void getNotificationCostRecipient_Error_WhenNotificationIsRefused() {
-        // Given
-        NotificationDeliveryCostDto refusedDto = notificationDeliveryCostDto.toBuilder()
-                .isCancelled(false)
-                .isRefused(true)
-                .build();
-
-        when(notificationDeliveryCostDao.getNotificationDeliveryCostItem(IUN, REC_INDEX))
-                .thenReturn(Mono.just(refusedDto));
-
-        // When
-        Mono<NotificationCostRecipientResponseDto> result = paymentCostService.getNotificationCostRecipient(IUN, REC_INDEX);
-
-        // Then
-        StepVerifier.create(result)
-                .expectError(PnNotFoundException.class)
-                .verify();
-
-        verify(notificationDeliveryCostDao, times(1)).getNotificationDeliveryCostItem(IUN, REC_INDEX);
-        verify(notificationDeliveryCostMapper, never()).mapDtoToResponseDto(any(), anyInt());
-    }
-
-    @Test
-    void getNotificationCostRecipient_Error_WhenNotificationIsCancelledAndRefused() {
-        // Given
-        NotificationDeliveryCostDto cancelledAndRefusedDto = notificationDeliveryCostDto.toBuilder()
-                .isCancelled(true)
-                .isRefused(true)
-                .build();
-
-        when(notificationDeliveryCostDao.getNotificationDeliveryCostItem(IUN, REC_INDEX))
-                .thenReturn(Mono.just(cancelledAndRefusedDto));
+                .thenReturn(Mono.just(deletedDto));
 
         // When
         Mono<NotificationCostRecipientResponseDto> result = paymentCostService.getNotificationCostRecipient(IUN, REC_INDEX);

@@ -35,7 +35,6 @@ public class DtoToEntityNotificationDeliveryCostMapper {
     }
 
     private FirstAnalogCost mapFirstAnalogCost(FirstAnalogCostDto dto) {
-        if (dto == null) return null;
         return FirstAnalogCost.builder()
                 .cost(dto.getCost())
                 .productType(dto.getProductType())
@@ -43,7 +42,6 @@ public class DtoToEntityNotificationDeliveryCostMapper {
     }
 
     private BaseCost mapBaseCost(BaseCostDto dto){
-        if (dto == null) return null;
         return BaseCost.builder()
                 .paFee(dto.getPaFee())
                 .sendFee(dto.getSendFee())
@@ -51,7 +49,6 @@ public class DtoToEntityNotificationDeliveryCostMapper {
     }
 
     private SecondAnalogCost mapSecondAnalogCost(SecondAnalogCostDto dto) {
-        if (dto == null) return null;
         return SecondAnalogCost.builder()
                 .cost(dto.getCost())
                 .productType(dto.getProductType())
@@ -59,7 +56,6 @@ public class DtoToEntityNotificationDeliveryCostMapper {
     }
 
     private SimpleRegisteredLetterCost mapSimpleRegisteredLetterCost(SimpleRegisteredLetterCostDto dto) {
-        if (dto == null) return null;
         return SimpleRegisteredLetterCost.builder()
                 .cost(dto.getCost())
                 .productType(dto.getProductType())
