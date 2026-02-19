@@ -1,12 +1,18 @@
 package it.pagopa.pn.notificationcostservice.middleware.notificationdeliverycost.dynamo;
 
 import it.pagopa.pn.notificationcostservice.config.PnNotificationCostServiceConfigs;
+import it.pagopa.pn.notificationcostservice.dto.notificationdeliverycost.BaseCostDto;
+import it.pagopa.pn.notificationcostservice.dto.notificationdeliverycost.analogcost.FirstAnalogCostDto;
+import it.pagopa.pn.notificationcostservice.dto.notificationdeliverycost.analogcost.SecondAnalogCostDto;
 import it.pagopa.pn.notificationcostservice.dto.notificationdeliverycost.NotificationDeliveryCostDto;
 import it.pagopa.pn.notificationcostservice.dto.notificationdeliverycost.NotificationFeePolicy;
 import it.pagopa.pn.notificationcostservice.dto.notificationdeliverycost.PagoPaIntMode;
 import it.pagopa.pn.notificationcostservice.exception.PnNotFoundException;
 import it.pagopa.pn.notificationcostservice.middleware.dao.notificationdeliverycost.dynamo.NotificationDeliveryCostDaoDynamo;
-import it.pagopa.pn.notificationcostservice.middleware.dao.notificationdeliverycost.dynamo.entity.NotificationDeliveryCostEntity;
+import it.pagopa.pn.notificationcostservice.middleware.dao.notificationdeliverycost.dynamo.entity.notificationdeliverycost.BaseCost;
+import it.pagopa.pn.notificationcostservice.middleware.dao.notificationdeliverycost.dynamo.entity.notificationdeliverycost.analogcost.FirstAnalogCost;
+import it.pagopa.pn.notificationcostservice.middleware.dao.notificationdeliverycost.dynamo.entity.notificationdeliverycost.NotificationDeliveryCostEntity;
+import it.pagopa.pn.notificationcostservice.middleware.dao.notificationdeliverycost.dynamo.entity.notificationdeliverycost.analogcost.SecondAnalogCost;
 import it.pagopa.pn.notificationcostservice.middleware.dao.notificationdeliverycost.dynamo.mapper.EntityToDtoNotificationDeliveryCostMapper;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -68,22 +74,32 @@ public class NotificationDeliveryCostDaoDynamoTest {
         String iun = "test-iun-123";
         Integer recIndex = 0;
 
+        BaseCostDto baseCostDto = BaseCostDto.builder()
+                .paFee(2)
+                .sendFee(10)
+                .build();
+
         NotificationDeliveryCostEntity entity = newNotificationDeliveryCostEntity(iun, recIndex);
         NotificationDeliveryCostDto expectedDto = NotificationDeliveryCostDto.builder()
                 .iun(iun)
                 .recIndex(recIndex)
-                .baseCost(12)
+                .baseCost(baseCostDto)
                 .vat(0)
                 .sendFee(10)
                 .paFee(2)
                 .notificationFeePolicy(NotificationFeePolicy.DELIVERY_MODE)
                 .pagoPaIntMode(PagoPaIntMode.ASYNC)
-                .isRefused(false)
-                .isCancelled(false)
-                .firstAnalogCost(0)
-                .secondAnalogCost(0)
+                .isDeleted(false)
+                .firstAnalogCost(FirstAnalogCostDto.builder()
+                        .cost(50)
+                        .productType("AR")
+                        .build())
+                .secondAnalogCost(SecondAnalogCostDto.builder()
+                        .cost(30)
+                        .productType("890")
+                        .build())
+                .simpleRegisteredLetterCost(null)
                 .recipientInternalId("recipientInternalId")
-                .notificationViewDate(entity.getNotificationViewDate())
                 .lastUpdate(entity.getLastUpdate())
                 .ttl(10000L)
                 .build();
@@ -153,20 +169,31 @@ public class NotificationDeliveryCostDaoDynamoTest {
                 .iun(iun)
                 .recIndex(recIndex)
                 .pagoPaIntMode(PagoPaIntMode.ASYNC)
-                .baseCost(12)
+                .baseCost(newBaseCost())
                 .vat(0)
                 .sendFee(10)
                 .paFee(2)
                 .notificationFeePolicy(NotificationFeePolicy.DELIVERY_MODE)
-                .isRefused(false)
-                .isCancelled(false)
-                .notificationViewDate(Instant.now())
+                .isDeleted(false)
                 .lastUpdate(Instant.now())
                 .ttl(10000L)
-                .firstAnalogCost(0)
-                .secondAnalogCost(0)
+                .firstAnalogCost(FirstAnalogCost.builder()
+                        .cost(50)
+                        .productType("AR")
+                        .build())
+                .secondAnalogCost(SecondAnalogCost.builder()
+                        .cost(30)
+                        .productType("890")
+                        .build())
+                .simpleRegisteredLetterCost(null)
                 .recipientInternalId("recipientInternalId")
                 .build();
     }
 
+    private static BaseCost newBaseCost() {
+        return BaseCost.builder()
+                .paFee(2)
+                .sendFee(10)
+                .build();
+    }
 }

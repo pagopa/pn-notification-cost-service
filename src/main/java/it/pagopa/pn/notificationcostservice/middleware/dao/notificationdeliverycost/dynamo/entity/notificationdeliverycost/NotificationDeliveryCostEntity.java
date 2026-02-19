@@ -1,7 +1,10 @@
-package it.pagopa.pn.notificationcostservice.middleware.dao.notificationdeliverycost.dynamo.entity;
+package it.pagopa.pn.notificationcostservice.middleware.dao.notificationdeliverycost.dynamo.entity.notificationdeliverycost;
 
 import it.pagopa.pn.notificationcostservice.dto.notificationdeliverycost.NotificationFeePolicy;
 import it.pagopa.pn.notificationcostservice.dto.notificationdeliverycost.PagoPaIntMode;
+import it.pagopa.pn.notificationcostservice.middleware.dao.notificationdeliverycost.dynamo.entity.notificationdeliverycost.analogcost.FirstAnalogCost;
+import it.pagopa.pn.notificationcostservice.middleware.dao.notificationdeliverycost.dynamo.entity.notificationdeliverycost.analogcost.SecondAnalogCost;
+import it.pagopa.pn.notificationcostservice.middleware.dao.notificationdeliverycost.dynamo.entity.notificationdeliverycost.analogcost.SimpleRegisteredLetterCost;
 import lombok.*;
 import software.amazon.awssdk.enhanced.dynamodb.mapper.annotations.DynamoDbAttribute;
 import software.amazon.awssdk.enhanced.dynamodb.mapper.annotations.DynamoDbBean;
@@ -20,14 +23,12 @@ public class NotificationDeliveryCostEntity {
     public static final String COL_IUN = "iun";
     public static final String COL_REC_INDEX = "recIndex";
     public static final String COL_RECIPIENT_INTERNAL_ID = "recipientInternalId";
+    public static final String COL_SENDER_INTERNAL_ID = "senderInternalId";
     public static final String COL_BASE_COST = "baseCost";
     public static final String COL_FIRST_ANALOG_COST = "firstAnalogCost";
     public static final String COL_SECOND_ANALOG_COST = "secondAnalogCost";
     public static final String COL_SIMPLE_REGISTERED_LETTER_COST = "simpleRegisteredLetterCost";
-    public static final String COL_IS_REFUSED = "isRefused";
-    public static final String COL_IS_CANCELLED = "isCancelled";
-    public static final String COL_REFINEMENT_DATE = "refinementDate";
-    public static final String COL_NOTIFICATION_VIEW_DATE = "notificationViewDate";
+    public static final String COL_IS_DELETED = "isDeleted";
     public static final String COL_SEND_FEE = "sendFee";
     public static final String COL_PA_FEE = "paFee";
     public static final String COL_NOTIFICATION_FEE_POLICY = "notificationFeePolicy";
@@ -46,29 +47,23 @@ public class NotificationDeliveryCostEntity {
     @Getter(onMethod=@__({@DynamoDbAttribute(COL_RECIPIENT_INTERNAL_ID)}))
     private String recipientInternalId;
 
+    @Getter(onMethod=@__({@DynamoDbAttribute(COL_SENDER_INTERNAL_ID)}))
+    private String senderInternalId;
+
     @Getter(onMethod=@__({@DynamoDbAttribute(COL_BASE_COST)}))
-    private Integer baseCost;
+    private BaseCost baseCost;
 
     @Getter(onMethod=@__({@DynamoDbAttribute(COL_FIRST_ANALOG_COST)}))
-    private Integer firstAnalogCost;
+    private FirstAnalogCost firstAnalogCost;
 
     @Getter(onMethod=@__({@DynamoDbAttribute(COL_SECOND_ANALOG_COST)}))
-    private Integer secondAnalogCost;
+    private SecondAnalogCost secondAnalogCost;
 
     @Getter(onMethod=@__({@DynamoDbAttribute(COL_SIMPLE_REGISTERED_LETTER_COST)}))
-    private Integer simpleRegisteredLetterCost;
+    private SimpleRegisteredLetterCost simpleRegisteredLetterCost;
 
-    @Getter(onMethod=@__({@DynamoDbAttribute(COL_IS_REFUSED)}))
-    private Boolean isRefused;
-
-    @Getter(onMethod=@__({@DynamoDbAttribute(COL_IS_CANCELLED)}))
-    private Boolean isCancelled;
-
-    @Getter(onMethod=@__({@DynamoDbAttribute(COL_REFINEMENT_DATE)}))
-    private Instant refinementDate;
-
-    @Getter(onMethod=@__({@DynamoDbAttribute(COL_NOTIFICATION_VIEW_DATE)}))
-    private Instant notificationViewDate;
+    @Getter(onMethod=@__({@DynamoDbAttribute(COL_IS_DELETED)}))
+    private Boolean isDeleted;
 
     @Getter(onMethod=@__({@DynamoDbAttribute(COL_SEND_FEE)}))
     private Integer sendFee;
