@@ -66,6 +66,32 @@ Parameters:
   Version:
     Type: String
     Description: 'keep track of used projects commitIds'
+    
+    # Logging parameters
+    WireTapLogActivation:
+      Type: String
+      Default: false
+      Description: Activation of wire logs
+      AllowedValues:
+        - true
+        - false
+    
+    PnCronAnalyzer:
+      Type: String
+      Default: '-'
+      Description: Cron for which you send the metric to CloudWatch
+    
+    # EFS parameters
+    FargateEFSFileSystemID:
+      Type: String
+      Description: "EFS Filesystem"
+    
+    MountEfs:
+      Type: String
+      Default: false
+      AllowedValues:
+        - "true"
+        - "false"
 
 Resources:
 
@@ -79,8 +105,13 @@ Resources:
         CpuValue: 512
         MemoryAmount: 2GB
         AlarmSNSTopicArn: !Ref AlarmSNSTopicArn
+        EfsFilesystem: !Ref FargateEFSFileSystemID
+        WireTapLogActivation: !Ref WireTapLogActivation
+        MountEfs: !Ref MountEfs
         ContainerImageURI: !Sub '${ContainerImageUri}'
         ContainerEnvEntry1: !Sub 'AWS_REGIONCODE=${AWS::Region}'
+        ContainerEnvEntry2: !Sub 'PN_CRON_ANALYZER=${PnCronAnalyzer}'
+        ContainerEnvEntry3: !Sub 'WIRE_TAP_LOG=${WireTapLogActivation}'
         MappedPaths: '/template-ms-be/*'
         ECSClusterName: !Ref ECSClusterName
         Subnets: !Ref SubnetsIds
