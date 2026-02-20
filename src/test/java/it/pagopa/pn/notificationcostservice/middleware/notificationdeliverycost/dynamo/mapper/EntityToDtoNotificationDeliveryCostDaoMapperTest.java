@@ -16,6 +16,7 @@ import java.time.Instant;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
 
 class EntityToDtoNotificationDeliveryCostDaoMapperTest {
     private  EntityToDtoNotificationDeliveryCostMapper mapper;
@@ -102,5 +103,43 @@ class EntityToDtoNotificationDeliveryCostDaoMapperTest {
         assertEquals(entity.getVat(), dto.getVat());
         assertEquals(entity.getLastUpdate(), dto.getLastUpdate());
         assertEquals(entity.getTtl(), dto.getTtl());
+    }
+
+    @Test
+    void entity2DtoWithNullAnalogCosts() {
+        Instant now = Instant.now();
+
+        BaseCost baseCost = BaseCost.builder()
+                .paFee(50)
+                .sendFee(50)
+                .build();
+
+        NotificationDeliveryCostEntity entity = NotificationDeliveryCostEntity.builder()
+                .iun("IUN123")
+                .recIndex(0)
+                .recipientInternalId("recipientId")
+                .baseCost(baseCost)
+                .senderInternalId("sender")
+                .firstAnalogCost(null)
+                .secondAnalogCost(null)
+                .simpleRegisteredLetterCost(null)
+                .isDeleted(false)
+                .sendFee(50)
+                .paFee(50)
+                .notificationFeePolicy(NotificationFeePolicy.DELIVERY_MODE)
+                .pagoPaIntMode(PagoPaIntMode.SYNC)
+                .vat(22)
+                .lastUpdate(now)
+                .ttl(3600L)
+                .build();
+
+        NotificationDeliveryCostDto dto = mapper.entity2Dto(entity);
+
+        assertEquals(entity.getIun(), dto.getIun());
+        assertEquals(entity.getRecIndex(), dto.getRecIndex());
+        assertNotNull(dto.getBaseCost());
+        assertNull(dto.getFirstAnalogCost());
+        assertNull(dto.getSecondAnalogCost());
+        assertNull(dto.getSimpleRegisteredLetterCost());
     }
 }

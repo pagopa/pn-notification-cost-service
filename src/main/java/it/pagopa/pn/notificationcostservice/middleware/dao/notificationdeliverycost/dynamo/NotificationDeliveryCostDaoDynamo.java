@@ -43,7 +43,6 @@ public class NotificationDeliveryCostDaoDynamo extends BaseDao implements Notifi
     @Override
     public Mono<NotificationDeliveryCostDto> getNotificationDeliveryCostItem(String iun, Integer recIndex) {
         return Mono.fromFuture(retrieveItem(iun, recIndex))
-                .doOnNext(entity -> log.info("Retrieved item with iun: {}", entity.getIun()))
                 .switchIfEmpty(Mono.error(() -> new PnNotFoundException(
                         "Not Found",
                         "No item found with iun: " + iun + " and recIndex: " + recIndex,
