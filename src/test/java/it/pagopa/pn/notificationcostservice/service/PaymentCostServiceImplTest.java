@@ -127,17 +127,19 @@ class PaymentCostServiceImplTest {
 
         when(notificationDeliveryCostDao.getNotificationDeliveryCostItem(IUN, REC_INDEX))
                 .thenReturn(Mono.just(dtoWithNullCosts));
+        when(notificationDeliveryCostMapper.mapDtoToResponseDto(any(NotificationDeliveryCostDto.class), eq(100)))
+                .thenReturn(expectedResponse);
 
         // When
         Mono<NotificationCostRecipientResponseDto> result = paymentCostService.getNotificationCostRecipient(IUN, REC_INDEX);
 
         // Then
         StepVerifier.create(result)
-                .expectError(NullPointerException.class)
-                .verify();
+                .expectNext(expectedResponse)
+                .verifyComplete();
 
         verify(notificationDeliveryCostDao, times(1)).getNotificationDeliveryCostItem(IUN, REC_INDEX);
-        verify(notificationDeliveryCostMapper, never()).mapDtoToResponseDto(any(), anyInt());
+        verify(notificationDeliveryCostMapper, times(1)).mapDtoToResponseDto(eq(dtoWithNullCosts), eq(100));
     }
 
     @Test

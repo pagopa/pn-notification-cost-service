@@ -10,6 +10,8 @@ import it.pagopa.pn.notificationcostservice.dto.notificationdeliverycost.analogc
 import it.pagopa.pn.notificationcostservice.dto.notificationdeliverycost.analogcost.SimpleRegisteredLetterCostDto;
 import org.springframework.stereotype.Component;
 
+import java.util.Objects;
+
 import static it.pagopa.pn.notificationcostservice.utils.CostUtils.getCostWithVat;
 
 @Component
@@ -18,6 +20,8 @@ public class NotificationDeliveryCostMapper {
     public NotificationCostRecipientResponseDto mapDtoToResponseDto(NotificationDeliveryCostDto dto, Integer totalCost) {
         return NotificationCostRecipientResponseDto.builder()
                 .totalCost(mapTotalCost(dto, totalCost))
+                .lastUpdate(dto.getLastUpdate())
+                .pagoPaIntMode(dto.getPagoPaIntMode())
                 .build();
     }
 
@@ -48,7 +52,7 @@ public class NotificationDeliveryCostMapper {
 
 
     private FirstAnalogCostDto mapFirstAnalogCost(NotificationDeliveryCostDto dto) {
-        if (dto.getFirstAnalogCost() == null) {
+        if(Objects.isNull(dto.getFirstAnalogCost())){
             return null;
         }
         return FirstAnalogCostDto.builder()
@@ -58,7 +62,7 @@ public class NotificationDeliveryCostMapper {
     }
 
     private SecondAnalogCostDto mapSecondAnalogCost(NotificationDeliveryCostDto dto) {
-        if (dto.getSecondAnalogCost() == null) {
+        if(Objects.isNull(dto.getSecondAnalogCost())){
             return null;
         }
         return SecondAnalogCostDto.builder()
@@ -68,7 +72,7 @@ public class NotificationDeliveryCostMapper {
     }
 
     private SimpleRegisteredLetterCostDto mapSimpleRegisteredLetterCost(NotificationDeliveryCostDto dto) {
-        if (dto.getSimpleRegisteredLetterCost() == null) {
+        if(Objects.isNull(dto.getSimpleRegisteredLetterCost())){
             return null;
         }
         return SimpleRegisteredLetterCostDto.builder()
