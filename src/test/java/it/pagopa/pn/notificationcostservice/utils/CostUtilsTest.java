@@ -105,7 +105,7 @@ class CostUtilsTest {
 
     @Test
     void getTotalCostWithNullAnalogCosts() {
-        // Test con costi analogici null - deve lanciare un'eccezione
+        // Test con costi analogici null - deve calcolare solo il base cost
         BaseCostDto baseCostDto = BaseCostDto.builder()
                 .sendFee(50)
                 .paFee(50)
@@ -116,9 +116,9 @@ class CostUtilsTest {
         Integer vat = 22;
         NotificationFeePolicy policy = NotificationFeePolicy.DELIVERY_MODE;
 
-        Assertions.assertThrows(NullPointerException.class, () ->
-            CostUtils.getTotalCost(baseCostDto, firstAnalogCost, secondAnalogCost, simpleRegisteredLetterCost, vat, policy)
-        );
+        Integer totalCost = CostUtils.getTotalCost(baseCostDto, firstAnalogCost, secondAnalogCost, simpleRegisteredLetterCost, vat, policy);
+
+        Assertions.assertEquals(100, totalCost);
     }
 
     @Test
@@ -138,9 +138,9 @@ class CostUtilsTest {
         Integer vat = 22;
         NotificationFeePolicy policy = NotificationFeePolicy.DELIVERY_MODE;
 
-        Assertions.assertThrows(NullPointerException.class, () ->
-            CostUtils.getTotalCost(baseCostDto, firstAnalogCost, secondAnalogCost, simpleRegisteredLetterCost, vat, policy)
-        );
+        Integer totalCost = CostUtils.getTotalCost(baseCostDto, firstAnalogCost, secondAnalogCost, simpleRegisteredLetterCost, vat, policy);
+
+        Assertions.assertEquals(527, totalCost);
     }
 
     @Test
@@ -195,5 +195,29 @@ class CostUtilsTest {
         Integer totalCost = CostUtils.getTotalCost(baseCostDto, firstAnalogCost, secondAnalogCost, simpleRegisteredLetterCost, vat, policy);
 
         Assertions.assertEquals(expectedTotalCost, totalCost);
+    }
+
+    @Test
+    void getTotalCostWithNullBaseFees() {
+        // Test con paFee e sendFee null - deve lanciare un'eccezione
+        BaseCostDto baseCostDto = BaseCostDto.builder()
+                .sendFee(null)
+                .paFee(null)
+                .build();
+        FirstAnalogCostDto firstAnalogCost = FirstAnalogCostDto.builder()
+                .cost(200)
+                .build();
+        SecondAnalogCostDto secondAnalogCost = SecondAnalogCostDto.builder()
+                .cost(300)
+                .build();
+        SimpleRegisteredLetterCostDto simpleRegisteredLetterCost = SimpleRegisteredLetterCostDto.builder()
+                .cost(150)
+                .build();
+        Integer vat = 22;
+        NotificationFeePolicy policy = NotificationFeePolicy.DELIVERY_MODE;
+
+        Assertions.assertThrows(PnNotFoundException.class, () ->
+            CostUtils.getTotalCost(baseCostDto, firstAnalogCost, secondAnalogCost, simpleRegisteredLetterCost, vat, policy)
+        );
     }
 }

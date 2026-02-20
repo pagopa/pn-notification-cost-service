@@ -6,6 +6,8 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.AllArgsConstructor;
 
+import java.time.Instant;
+
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
@@ -13,4 +15,5 @@ import lombok.AllArgsConstructor;
 public class NotificationCostRecipientResponseDto {
     private TotalCostDto totalCost;
     private PagoPaIntMode pagoPaIntMode;
+    private Instant lastUpdate;
 }

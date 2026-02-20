@@ -25,10 +25,25 @@ public class CostUtils {
         }
         if (NotificationFeePolicy.DELIVERY_MODE.equals(notificationFeePolicy)) {
             if (Objects.nonNull(baseCostDto.getPaFee()) && Objects.nonNull(baseCostDto.getSendFee())) {
-                int baseCost = baseCostDto.getPaFee() + baseCostDto.getSendFee();
-                totalCost = baseCost + getCostWithVat(firsAnalogCost.getCost(), vat) + getCostWithVat(secondAnalogCost.getCost(), vat) + getCostWithVat(simpleRegisteredLetterCost.getCost(), vat);
+                totalCost = getTotalCost(baseCostDto, firsAnalogCost, secondAnalogCost, simpleRegisteredLetterCost, vat);
+            }
+            else {
+                throw new PnNotFoundException("Not found", "baseCost must have both paFee and sendFee not null", ERROR_CODE_NOTIFICATIONDELIVERYCOST_NOTFOUND_BASECOST);
             }
         }
+        return totalCost;
+    }
+
+    private static int getTotalCost(BaseCostDto baseCostDto, FirstAnalogCostDto firsAnalogCost, SecondAnalogCostDto secondAnalogCost, SimpleRegisteredLetterCostDto simpleRegisteredLetterCost, Integer vat) {
+        int totalCost;
+        int baseCost = baseCostDto.getPaFee() + baseCostDto.getSendFee();
+        Integer firstAnalogCostValue = Objects.nonNull(firsAnalogCost) ? firsAnalogCost.getCost() : null;
+        Integer secondAnalogCostValue = Objects.nonNull(secondAnalogCost) ? secondAnalogCost.getCost() : null;
+        Integer simpleRegisteredCostValue = Objects.nonNull(simpleRegisteredLetterCost) ? simpleRegisteredLetterCost.getCost() : null;
+        totalCost = baseCost
+                + getCostWithVat(firstAnalogCostValue, vat)
+                + getCostWithVat(secondAnalogCostValue, vat)
+                + getCostWithVat(simpleRegisteredCostValue, vat);
         return totalCost;
     }
 
