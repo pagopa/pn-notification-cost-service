@@ -6,12 +6,15 @@ import it.pagopa.pn.notification_cost_service.generated.openapi.server.v1.dto.To
 import it.pagopa.pn.notification_cost_service.generated.openapi.server.v1.dto.BaseCost;
 import it.pagopa.pn.notification_cost_service.generated.openapi.server.v1.dto.BaseCostDetails;
 import it.pagopa.pn.notification_cost_service.generated.openapi.server.v1.dto.AnalogCost;
+import it.pagopa.pn.notificationcostservice.dto.notificationdeliverycost.BaseCostDto;
 import it.pagopa.pn.notificationcostservice.dto.notificationdeliverycost.NotificationCostRecipientResponseDto;
-import it.pagopa.pn.notificationcostservice.dto.cost.basecost.BaseCostDto;
-import it.pagopa.pn.notificationcostservice.dto.cost.analogcost.AnalogCostDto;
+import it.pagopa.pn.notificationcostservice.dto.notificationdeliverycost.analogcost.AnalogCostDto;
+
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
+
+import java.util.Date;
 
 @Slf4j
 @Component
@@ -66,6 +69,9 @@ public class NotificationCostRecipientMapper {
             response.setPagoPaIntMode(NotificationCostRecipientResponse.PagoPaIntModeEnum.fromValue(
                 dto.getPagoPaIntMode().name()));
         }
+        if(dto.getLastUpdate() != null) {
+            response.setLastUpdate(Date.from(dto.getLastUpdate()));
+        }
 
         return response;
     }
@@ -76,14 +82,17 @@ public class NotificationCostRecipientMapper {
         }
 
         BaseCost baseCost = new BaseCost();
-        baseCost.setCost(baseCostDto.getCost());
-
-        if (baseCostDto.getDetails() != null) {
-            BaseCostDetails details = new BaseCostDetails();
-            details.setPaFee(baseCostDto.getDetails().getPaFee());
-            details.setSendFee(baseCostDto.getDetails().getSendFee());
-            baseCost.setDetails(details);
+        Integer paFee = baseCostDto.getPaFee();
+        Integer sendFee = baseCostDto.getSendFee();
+        if (paFee != null && sendFee != null) {
+            int baseCostValue = paFee + sendFee;
+            baseCost.setCost(baseCostValue);
         }
+
+        BaseCostDetails details = new BaseCostDetails();
+        details.setPaFee(paFee);
+        details.setSendFee(sendFee);
+        baseCost.setDetails(details);
 
         return baseCost;
     }
@@ -95,6 +104,7 @@ public class NotificationCostRecipientMapper {
 
         AnalogCost analogCost = new AnalogCost();
         analogCost.setCost(analogCostDto.getCost());
+        analogCost.setProductType(analogCostDto.getProductType());
 
         return analogCost;
     }

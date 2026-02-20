@@ -6,11 +6,11 @@ info:
   x-api-id: api-internal-pn-notification-cost-service
   version: '1.0.0'
   description: >-
-    Da fare
+    Servizio interno per il calcolo e la gestione dei costi di notificazione per i destinatari della piattaforma SEND.
 paths:
   "/notification-cost-private/cost/{iun}/recipient/{recIndex}":
     get:
-      operationId: NotificationCostRecipient                                     # ONLY EXTERNAL
+      operationId: NotificationCostRecipient
       summary: Retrieve notification cost for recipient
       description: >-
         Servizio che restituisce il costo di notificazione per il singolo destinatario
@@ -59,14 +59,12 @@ paths:
               schema:
                 $ref: '#/components/schemas/Problem'
 
-
 components:
-  
   schemas:
     NotificationCostRecipientResponse:
       title: Notification cost Response for recipient
       description: >-
-        Notification cost and effective date
+        Dati relativi al costo totale e alla modalità di aggiornamento per il destinatario.
       type: object
       properties:
         totalCost:
@@ -74,23 +72,27 @@ components:
         pagoPaIntMode:
           type: string
           description: >-
-            Modalitá di integrazione pagoPA per l'attualizazione del costo della notifica. <br/>
+            Modalità di integrazione pagoPA per l'attualizzazione del costo della notifica. <br/>
             - _NONE_: nessuna attualizzazione. <br/>
-            - _SYNC_: modalitá sincrona. <br/>
-            - _ASYNC_: modalitá asincrona. <br/>
+            - _SYNC_: modalità sincrona. <br/>
+            - _ASYNC_: modalità asincrona. <br/>
           enum:
             - NONE
             - SYNC
             - ASYNC
+        lastUpdate:
+          type: string
+          format: date-time
+          description: Data dell'ultimo aggiornamento dei costi di notificazione
     
     TotalCost:
       title: Costo di notificazione applicato al destinatario
       description: >-
-        Costo di notificazione applicato al destinatario
+        Rappresentazione del costo totale (comprensivo di oneri e tributi) in eurocent.
       type: object
       properties:
         cost:
-          description: Costo totale in eurocent
+          description: Costo totale in eurocent (somma algebrica dei dettagli)
           type: integer
           format: int32
         details:
@@ -99,7 +101,7 @@ components:
     TotalCostDetails:
       title: Dettaglio del costo totale per il destinatario
       description: >-
-        Dettaglio dei singoli componenti che compongono il costo di notificazione applicato al destinatario
+        Scomposizione del costo di notifica in base alle diverse componenti di invio.
       type: object
       properties:
         baseCost:
@@ -113,18 +115,14 @@ components:
         vat:
           type: integer
           description: >-
-            IVA espressa in percentuale sui costi degli avvisi in formato cartaceo.<br/>
-            Esempio vat al 22% -> 22 <br/>
+            Aliquota IVA applicata (espressa come intero, es. 22).
           format: int32
           minimum: 0
           maximum: 100
         notificationFeePolicy:
           type: string
           description: >-
-            Politica di addebitamento dei costi di notifica. <br/>
-            - _FLAT_RATE_: costo forfettario fisso. In questa modalità SEND non gestisce
-            il costo della notifica per il destinatario.<br/>
-            - _DELIVERY_MODE_: costo calcolato in base all'effettivo percorso di notifica. <br/>
+            Politica di calcolo dei costi.
           enum:
             - FLAT_RATE
             - DELIVERY_MODE
@@ -132,11 +130,11 @@ components:
     BaseCost:
       title: Costo base di notificazione
       description: >-
-        Costo base di notificazione
+        Quota fissa del costo di notifica indipendente dalle spedizioni cartacee.
       type: object
       properties:
         cost:
-          description: Costo base di notificazione in eurocent
+          description: Somma di paFee e sendFee in eurocent
           type: integer
           format: int32
         details:
@@ -145,41 +143,38 @@ components:
     BaseCostDetails:
       title: Dettaglio del costo base di notificazione
       description: >-
-        Dettaglio dei singoli componenti che compongono il costo base di notificazione
+        Scomposizione tra diritti di notifica PA e costi di piattaforma SEND.
       type: object
       properties:
         paFee:
           type: integer
           description: >-
-            Costo espresso in eurocent sostenuto dal mittente
-            Esempio paFee ad 1€ -> 100 <br/>
+            Diritti di notifica spettanti alla Pubblica Amministrazione (in eurocent).
           format: int32
-          minimum: 0
-          maximum: 100
         sendFee:
-          description: costo base di SeND per notificazione
           type: integer
+          description: >-
+            Costi operativi della piattaforma SEND (in eurocent).
           format: int32
     
     AnalogCost:
       title: Costo di invio cartaceo
       description: >-
-        Costo del singolo invio cartaceo compreso di iva (vat), con il dettaglio sul tipo di prodotto
+        Costo specifico per l'invio fisico, comprensivo di stampa e recapito.
       type: object
       properties:
         cost:
-          description: Costo invio cartaceo in eurocent compreso di iva (vat)
+          description: Costo totale della spedizione analogica in eurocent (IVA inclusa)
           type: integer
           format: int32
         productType:
           type: string
-          maxLength: 10
           description: >
-            Tipo di invio cartaceo effettivamente inviato
-              - __AR__: Raccomandata nazionale Andata e Ritorno
-              - __890__: Recapito a norma della legge 890/1982
-              - __RIR__: Raccomandata internazionale Andata e Ritorno
-              - __RS__: Raccomandata nazionale Semplice
+            Tipologia di prodotto postale utilizzato:
+              - __AR__: Raccomandata nazionale A/R
+              - __890__: Atto giudiziario (Legge 890/1982)
+              - __RIR__: Raccomandata internazionale A/R
+              - __RS__: Raccomandata Semplice
               - __RIS__: Raccomandata internazionale Semplice
     
     Problem:

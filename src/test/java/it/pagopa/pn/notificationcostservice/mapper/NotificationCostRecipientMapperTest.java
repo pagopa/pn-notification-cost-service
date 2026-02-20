@@ -3,14 +3,17 @@ package it.pagopa.pn.notificationcostservice.mapper;
 import it.pagopa.pn.notification_cost_service.generated.openapi.server.v1.dto.*;
 import it.pagopa.pn.notificationcostservice.dto.cost.TotalCostDetailsDto;
 import it.pagopa.pn.notificationcostservice.dto.cost.TotalCostDto;
-import it.pagopa.pn.notificationcostservice.dto.cost.analogcost.AnalogCostDto;
-import it.pagopa.pn.notificationcostservice.dto.cost.basecost.BaseCostDetailsDto;
-import it.pagopa.pn.notificationcostservice.dto.cost.basecost.BaseCostDto;
+import it.pagopa.pn.notificationcostservice.dto.notificationdeliverycost.analogcost.FirstAnalogCostDto;
+import it.pagopa.pn.notificationcostservice.dto.notificationdeliverycost.analogcost.SecondAnalogCostDto;
+import it.pagopa.pn.notificationcostservice.dto.notificationdeliverycost.analogcost.SimpleRegisteredLetterCostDto;
+import it.pagopa.pn.notificationcostservice.dto.notificationdeliverycost.BaseCostDto;
 import it.pagopa.pn.notificationcostservice.dto.notificationdeliverycost.NotificationCostRecipientResponseDto;
 import it.pagopa.pn.notificationcostservice.dto.notificationdeliverycost.NotificationFeePolicy;
 import it.pagopa.pn.notificationcostservice.dto.notificationdeliverycost.PagoPaIntMode;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+
+import java.time.Instant;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -50,14 +53,18 @@ class NotificationCostRecipientMapperTest {
 
         assertNotNull(details.getFirstAnalogCost());
         assertEquals(300, details.getFirstAnalogCost().getCost());
+        assertEquals("AR", details.getFirstAnalogCost().getProductType());
 
         assertNotNull(details.getSecondAnalogCost());
         assertEquals(400, details.getSecondAnalogCost().getCost());
+        assertEquals("RIR", details.getSecondAnalogCost().getProductType());
 
         assertNotNull(details.getSimpleRegisteredLetterCost());
         assertEquals(200, details.getSimpleRegisteredLetterCost().getCost());
+        assertEquals("RS", details.getSimpleRegisteredLetterCost().getProductType());
 
         assertEquals(22, details.getVat());
+        assertNotNull(dto.getLastUpdate());
         assertEquals(TotalCostDetails.NotificationFeePolicyEnum.DELIVERY_MODE, details.getNotificationFeePolicy());
     }
 
@@ -95,7 +102,8 @@ class NotificationCostRecipientMapperTest {
         totalCost.setCost(1000);
         TotalCostDetailsDto detailsDto = new TotalCostDetailsDto();
         BaseCostDto baseCostDto = new BaseCostDto();
-        baseCostDto.setCost(100);
+        baseCostDto.setPaFee(50);
+        baseCostDto.setSendFee(50);
         detailsDto.setBaseCost(baseCostDto);
         totalCost.setDetails(detailsDto);
         dto.setTotalCost(totalCost);
@@ -107,7 +115,9 @@ class NotificationCostRecipientMapperTest {
         assertNotNull(response.getTotalCost().getDetails());
         assertNotNull(response.getTotalCost().getDetails().getBaseCost());
         assertEquals(100, response.getTotalCost().getDetails().getBaseCost().getCost());
-        assertNull(response.getTotalCost().getDetails().getBaseCost().getDetails());
+        assertNotNull(response.getTotalCost().getDetails().getBaseCost().getDetails());
+        assertEquals(50, response.getTotalCost().getDetails().getBaseCost().getDetails().getPaFee());
+        assertEquals(50, response.getTotalCost().getDetails().getBaseCost().getDetails().getSendFee());
     }
 
     @Test
@@ -138,22 +148,25 @@ class NotificationCostRecipientMapperTest {
         TotalCostDetailsDto details = new TotalCostDetailsDto();
 
         BaseCostDto baseCost = new BaseCostDto();
-        baseCost.setCost(100);
-        BaseCostDetailsDto baseCostDetails = new BaseCostDetailsDto();
-        baseCostDetails.setPaFee(50);
-        baseCostDetails.setSendFee(50);
-        baseCost.setDetails(baseCostDetails);
+        baseCost.setPaFee(50);
+        baseCost.setSendFee(50);
         details.setBaseCost(baseCost);
 
-        AnalogCostDto firstAnalog = new AnalogCostDto();
-        firstAnalog.setCost(300);
+        FirstAnalogCostDto firstAnalog = FirstAnalogCostDto.builder()
+            .cost(300)
+            .productType("AR")
+            .build();
         details.setFirstAnalogCost(firstAnalog);
 
-        AnalogCostDto secondAnalog = new AnalogCostDto();
-        secondAnalog.setCost(400);
+        SecondAnalogCostDto secondAnalog = SecondAnalogCostDto.builder()
+            .cost(400)
+            .productType("RIR")
+            .build();
         details.setSecondAnalogCost(secondAnalog);
-        AnalogCostDto simpleRegistered = new AnalogCostDto();
-        simpleRegistered.setCost(200);
+        SimpleRegisteredLetterCostDto simpleRegistered = SimpleRegisteredLetterCostDto.builder()
+            .cost(200)
+            .productType("RS")
+            .build();
         details.setSimpleRegisteredLetterCost(simpleRegistered);
 
         details.setVat(22);
@@ -162,8 +175,8 @@ class NotificationCostRecipientMapperTest {
         totalCost.setDetails(details);
         dto.setTotalCost(totalCost);
         dto.setPagoPaIntMode(PagoPaIntMode.ASYNC);
+        dto.setLastUpdate(Instant.now());
 
         return dto;
     }
 }
-
