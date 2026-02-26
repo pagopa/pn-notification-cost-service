@@ -94,70 +94,25 @@ components:
         Scomposizione del costo di notifica in base alle diverse componenti di invio.
       type: object
       properties:
-        baseCost:
-          $ref: '#/components/schemas/BaseCost'
-        firstAnalogCost:
-          $ref: '#/components/schemas/AnalogCost'
-        secondAnalogCost:
-          $ref: '#/components/schemas/AnalogCost'
+        baseCostComponent:
+          description: Elenco delle componenti di costo base che concorrono a formare il costo totale
+          type: array
+          items:
+            $ref: '#/components/schemas/BaseCostComponent'
+        analogCostComponents:
+          description: Elenco delle componenti di costo anlogiche che concorrono a formare il costo totale
+          type: array
+          items:
+            $ref: '#/components/schemas/AnalogCostComponent'
         vat:
           type: integer
           description: >-
-            Aliquota IVA applicata (espressa come intero, es. 22).
+            Aliquota IVA applicata (espressa come intero, es. 22). Calcolata solo sui costi aventi includedInVatBase = true.
           format: int32
           minimum: 0
           maximum: 100
         notificationFeePolicy:
           $ref: '#/components/schemas/NotificationFeePolicy'
-    
-    BaseCost:
-      title: Costo base di notificazione
-      description: >-
-        Quota fissa del costo di notifica indipendente dalle spedizioni cartacee.
-      type: object
-      properties:
-        cost:
-          description: Somma di paFee e sendFee in eurocent
-          type: integer
-          format: int32
-        details:
-          $ref: '#/components/schemas/BaseCostDetails'
-    
-    BaseCostDetails:
-      title: Dettaglio del costo base di notificazione
-      description: >-
-        Scomposizione tra diritti di notifica PA e costi di piattaforma SEND.
-      type: object
-      properties:
-        paFee:
-          $ref: '#/components/schemas/paFee'
-        sendFee:
-          $ref: '#/components/schemas/sendFee'
-    
-    AnalogCost:
-      title: Costo di invio cartaceo
-      description: >-
-        Costo specifico per l'invio fisico, comprensivo di stampa e recapito.
-      allOf:
-        - $ref: '#/components/schemas/CostComponent'
-        - type: object
-      properties:
-        productType:
-          $ref: '#/components/schemas/ProductType'
-    
-    paFee:
-      description: >-
-        Diritti di notifica spettanti alla Pubblica Amministrazione (in eurocent).
-      allOf:
-        - $ref: '#/components/schemas/CostComponent'
-        - type: object
-    
-    sendFee:
-      description: >-
-        Costi operativi della piattaforma SEND (in eurocent).
-      allOf:
-        - $ref: '#/components/schemas/CostComponent'
-        - type: object
     
     PagoPaIntMode:
       type: string
@@ -188,16 +143,51 @@ components:
           - __RIR__: Raccomandata internazionale A/R
           - __RS__: Raccomandata Semplice
           - __RIS__: Raccomandata internazionale Semplice
-    
-    CostComponent:
+
+    CostName:
+      type: string
+      description: >-
+          Nome della componente di costo.
+          PA_FEE: Diritti di notifica spettanti alla Pubblica Amministrazione (in eurocent).
+          SEND_FEE: Costi operativi della piattaforma SEND (in eurocent).
+      enum:
+          - PA_FEE
+          - SEND_FEE
+
+    GenericCostComponent:
       type: object
+      required: [ cost, includedInVatBase ]
       properties:
         cost:
           description: Costo della componente in eurocent in cui non è inclusa l'IVA
           type: integer
           format: int32
-        isTaxable:
+        includedInVatBase:
+          description: Il costo viene incluso nel calcolo dell'IVA se true
           type: boolean
+
+    AnalogCostComponent:
+       allOf:
+         - $ref: '#/components/schemas/GenericCostComponent'
+         - type: object
+           required: [ sentAttemptMade, productType ]
+           properties:
+             sentAttemptMade:
+               description: Numero di tentativi di invio fisico già effettuati per il destinatario (0 per il primo invio, 1 per il secondo invio)
+               type: integer
+               format: int32
+             productType:
+               $ref: '#/components/schemas/ProductType'
+
+    BaseCostComponent:
+      description: Componente di costo base per la notificazione
+      allOf:
+        - $ref: '#/components/schemas/GenericCostComponent'
+        - type: object
+          required: [ costName ]
+          properties:
+            costName:
+              $ref: '#/components/schemas/CostName'
     
     Problem:
       $ref: './remote-refs.yaml#/components/schemas/Problem'
