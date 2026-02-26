@@ -1,0 +1,205 @@
+openapi: 3.0.3
+info:
+  termsOfService: https://da-definire/
+  title: 'API di notification cost service'
+  x-summary: 'API di  notification cost service'
+  x-api-id: api-internal-pn-notification-cost-service
+  version: '1.0.0'
+  description: >-
+    Servizio interno per il calcolo e la gestione dei costi di notificazione per i destinatari della piattaforma SEND.
+paths:
+  "/notification-cost-private/cost/{iun}/recipient/{recIndex}":
+    get:
+      operationId: NotificationCostRecipient
+      summary: Retrieve notification cost for recipient
+      description: >-
+        Servizio che restituisce il costo di notificazione per il singolo destinatario
+      tags:
+        - NotificationCostRecipient
+      parameters:
+        - name: iun
+          in: path
+          required: true
+          description: Identificativo Univoco Notifica (IUN)
+          schema:
+            type: string
+          example: '00000000-0000-0000-0000-000000000000'
+        - name: recIndex
+          in: path
+          required: true
+          description: Index destinatario notifica digitale
+          schema:
+            type: integer
+            format: int32
+          example: 0
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/NotificationCostRecipientResponse'
+        '400':
+          description: Invalid input
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+        '404':
+          description: Not Found
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+        '500':
+          description: Internal Server Error
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+
+components:
+  schemas:
+    NotificationCostRecipientResponse:
+      title: Notification cost Response for recipient
+      description: >-
+        Dati relativi al costo totale e alla modalità di aggiornamento per il destinatario.
+      type: object
+      properties:
+        totalCost:
+          $ref: '#/components/schemas/TotalCost'
+        pagoPaIntMode:
+          $ref: '#/components/schemas/PagoPaIntMode'
+        lastUpdate:
+          type: string
+          format: date-time
+          description: Data dell'ultimo aggiornamento dei costi di notificazione
+    
+    TotalCost:
+      title: Costo di notificazione applicato al destinatario
+      description: >-
+        Rappresentazione del costo totale (comprensivo di oneri e tributi) in eurocent.
+      type: object
+      properties:
+        costWithVat:
+          description: Costo totale in eurocent (somma algebrica dei dettagli) comprensivo di IVA
+          type: integer
+          format: int32
+        details:
+          $ref: '#/components/schemas/TotalCostDetails'
+    
+    TotalCostDetails:
+      title: Dettaglio del costo totale per il destinatario
+      description: >-
+        Scomposizione del costo di notifica in base alle diverse componenti di invio.
+      type: object
+      properties:
+        baseCost:
+          $ref: '#/components/schemas/BaseCost'
+        firstAnalogCost:
+          $ref: '#/components/schemas/AnalogCost'
+        secondAnalogCost:
+          $ref: '#/components/schemas/AnalogCost'
+        vat:
+          type: integer
+          description: >-
+            Aliquota IVA applicata (espressa come intero, es. 22).
+          format: int32
+          minimum: 0
+          maximum: 100
+        notificationFeePolicy:
+          $ref: '#/components/schemas/NotificationFeePolicy'
+    
+    BaseCost:
+      title: Costo base di notificazione
+      description: >-
+        Quota fissa del costo di notifica indipendente dalle spedizioni cartacee.
+      type: object
+      properties:
+        cost:
+          description: Somma di paFee e sendFee in eurocent
+          type: integer
+          format: int32
+        details:
+          $ref: '#/components/schemas/BaseCostDetails'
+    
+    BaseCostDetails:
+      title: Dettaglio del costo base di notificazione
+      description: >-
+        Scomposizione tra diritti di notifica PA e costi di piattaforma SEND.
+      type: object
+      properties:
+        paFee:
+          $ref: '#/components/schemas/paFee'
+        sendFee:
+          $ref: '#/components/schemas/sendFee'
+    
+    AnalogCost:
+      title: Costo di invio cartaceo
+      description: >-
+        Costo specifico per l'invio fisico, comprensivo di stampa e recapito.
+      allOf:
+        - $ref: '#/components/schemas/CostComponent'
+        - type: object
+      properties:
+        productType:
+          $ref: '#/components/schemas/ProductType'
+    
+    paFee:
+      description: >-
+        Diritti di notifica spettanti alla Pubblica Amministrazione (in eurocent).
+      allOf:
+        - $ref: '#/components/schemas/CostComponent'
+        - type: object
+    
+    sendFee:
+      description: >-
+        Costi operativi della piattaforma SEND (in eurocent).
+      allOf:
+        - $ref: '#/components/schemas/CostComponent'
+        - type: object
+    
+    PagoPaIntMode:
+      type: string
+      description: >-
+        Modalità di integrazione pagoPA per l'attualizzazione del costo della notifica. <br/>
+        - _NONE_: nessuna attualizzazione. <br/>
+        - _SYNC_: modalità sincrona. <br/>
+        - _ASYNC_: modalità asincrona. <br/>
+      enum:
+        - NONE
+        - SYNC
+        - ASYNC
+    
+    NotificationFeePolicy:
+      type: string
+      description: >-
+        Politica di calcolo dei costi.
+      enum:
+        - FLAT_RATE
+        - DELIVERY_MODE
+    
+    ProductType:
+      type: string
+      description: >
+        Tipologia di prodotto postale utilizzato:
+          - __AR__: Raccomandata nazionale A/R
+          - __890__: Atto giudiziario (Legge 890/1982)
+          - __RIR__: Raccomandata internazionale A/R
+          - __RS__: Raccomandata Semplice
+          - __RIS__: Raccomandata internazionale Semplice
+    
+    CostComponent:
+      type: object
+      properties:
+        cost:
+          description: Costo della componente in eurocent in cui non è inclusa l'IVA
+          type: integer
+          format: int32
+        isTaxable:
+          type: boolean
+    
+    Problem:
+      $ref: './remote-refs.yaml#/components/schemas/Problem'
+    ProblemError:
+      $ref: './remote-refs.yaml#/components/schemas/ProblemError'

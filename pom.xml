@@ -158,10 +158,11 @@
 <!--								<reactive>true</reactive>-->
 <!--								<skipDefaultInterface>false</skipDefaultInterface>-->
 <!--								<useTags>true</useTags>-->
-<!--								<basePackage>${project.groupId}.notification-cost-service.generated.openapi.server.v1</basePackage>-->
-<!--								<modelPackage>${project.groupId}.notification-cost-service.generated.openapi.server.v1.dto</modelPackage>-->
-<!--								<apiPackage>${project.groupId}.notification-cost-service.generated.openapi.server.v1.api</apiPackage>-->
-<!--								<configPackage>${project.groupId}.notification-cost-service.generated.openapi.server.v1.config</configPackage>-->
+<!--								<basePackage>${project.groupId}.notification_cost_service.generated.openapi.server.v1</basePackage>-->
+<!--								<modelPackage>${project.groupId}.notification_cost_service.generated.openapi.server.v1.dto</modelPackage>-->
+<!--								<apiPackage>${project.groupId}.notification_cost_service.generated.openapi.server.v1.api</apiPackage>-->
+<!--								<configPackage>${project.groupId}.notification_cost_service.generated.openapi.server.v1.config</configPackage>-->
+<!--								<enumNameSuffix>Enum</enumNameSuffix>-->
 <!--							</configOptions>-->
 <!--						</configuration>-->
 <!--					</execution>-->
