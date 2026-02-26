@@ -196,7 +196,8 @@ components:
           description: Costo della componente in eurocent in cui non è inclusa l'IVA
           type: integer
           format: int32
-        isTaxable:
+        includedInVatBase:
+          description: Il costo viene incluso nel calcolo dell'IVA se true
           type: boolean
     
     Problem:
