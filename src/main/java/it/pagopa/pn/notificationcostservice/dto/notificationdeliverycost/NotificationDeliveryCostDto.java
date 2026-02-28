@@ -23,8 +23,6 @@ public class NotificationDeliveryCostDto {
     private SecondAnalogCostDto secondAnalogCost;
     private SimpleRegisteredLetterCostDto simpleRegisteredLetterCost;
     private Boolean isDeleted;
-    private Integer sendFee;
-    private Integer paFee;
     private NotificationFeePolicy notificationFeePolicy;
     private PagoPaIntMode pagoPaIntMode;
     private Integer vat;

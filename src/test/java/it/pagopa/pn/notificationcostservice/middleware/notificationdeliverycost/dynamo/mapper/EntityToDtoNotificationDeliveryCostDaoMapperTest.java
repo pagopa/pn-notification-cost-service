@@ -60,8 +60,6 @@ class EntityToDtoNotificationDeliveryCostDaoMapperTest {
                 .secondAnalogCost(secondCost)
                 .simpleRegisteredLetterCost(simpleCost)
                 .isDeleted(false)
-                .sendFee(50)
-                .paFee(50)
                 .notificationFeePolicy(NotificationFeePolicy.DELIVERY_MODE)
                 .pagoPaIntMode(PagoPaIntMode.SYNC)
                 .vat(22)
@@ -96,8 +94,6 @@ class EntityToDtoNotificationDeliveryCostDaoMapperTest {
         assertEquals(entity.getSimpleRegisteredLetterCost().getProductType(), dto.getSimpleRegisteredLetterCost().getProductType());
 
         assertEquals(entity.getIsDeleted(), dto.getIsDeleted());
-        assertEquals(entity.getSendFee(), dto.getSendFee());
-        assertEquals(entity.getPaFee(), dto.getPaFee());
         assertEquals(entity.getNotificationFeePolicy(), dto.getNotificationFeePolicy());
         assertEquals(entity.getPagoPaIntMode(), dto.getPagoPaIntMode());
         assertEquals(entity.getVat(), dto.getVat());
@@ -124,8 +120,6 @@ class EntityToDtoNotificationDeliveryCostDaoMapperTest {
                 .secondAnalogCost(null)
                 .simpleRegisteredLetterCost(null)
                 .isDeleted(false)
-                .sendFee(50)
-                .paFee(50)
                 .notificationFeePolicy(NotificationFeePolicy.DELIVERY_MODE)
                 .pagoPaIntMode(PagoPaIntMode.SYNC)
                 .vat(22)
