@@ -1,14 +1,15 @@
 package it.pagopa.pn.notificationcostservice.service.mapper;
 
-import it.pagopa.pn.notificationcostservice.dto.cost.TotalCostDetailsDto;
-import it.pagopa.pn.notificationcostservice.dto.notificationdeliverycost.NotificationCostRecipientResponseDto;
+import it.pagopa.pn.notificationcostservice.dto.cost.CalculatedCosts;
+import it.pagopa.pn.notificationcostservice.dto.notificationdeliverycost.BaseCostDto;
 import it.pagopa.pn.notificationcostservice.dto.notificationdeliverycost.NotificationDeliveryCostDto;
 import it.pagopa.pn.notificationcostservice.dto.notificationdeliverycost.NotificationFeePolicy;
 import it.pagopa.pn.notificationcostservice.dto.notificationdeliverycost.PagoPaIntMode;
+import it.pagopa.pn.notificationcostservice.dto.notificationdeliverycost.analogcost.FirstAnalogCostDto;
+import it.pagopa.pn.notificationcostservice.dto.notificationdeliverycost.analogcost.SecondAnalogCostDto;
+import it.pagopa.pn.notificationcostservice.dto.notificationdeliverycost.analogcost.SimpleRegisteredLetterCostDto;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-
-import java.time.Instant;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -22,313 +23,64 @@ class NotificationDeliveryCostMapperTest {
     }
 
     @Test
-    void testMapDtoToResponseDto_WithCompleteData() {
-        // Given
+    void mapDtoToResponse_ReturnsNullFieldsWhenDtoFieldsAreNull() {
+        NotificationDeliveryCostDto dto = NotificationDeliveryCostDto.builder().build();
+
+        CalculatedCosts calculatedCosts = CalculatedCosts.builder().build();
+
+        var response = mapper.mapDtoToResponse(dto, calculatedCosts);
+
+        assertNull(response.getTotalCost().getDetails().getBaseCost().getDetails().getPaFee().getCost());
+        assertNull(response.getTotalCost().getDetails().getBaseCost().getDetails().getSendFee().getCost());
+        assertNull(response.getTotalCost().getDetails().getFirstAnalogCost());
+        assertNull(response.getTotalCost().getDetails().getSecondAnalogCost());
+        assertNull(response.getTotalCost().getDetails().getVat());
+        assertNull(response.getTotalCost().getDetails().getNotificationFeePolicy());
+    }
+
+    @Test
+    void mapDtoToResponse_UsesSimpleRegisteredLetterCostWhenFirstAnalogCostIsNull() {
         NotificationDeliveryCostDto dto = createCompleteDto();
-        Integer totalCost = 893;
+        dto.setFirstAnalogCost(null);
 
-        // When
-        NotificationCostRecipientResponseDto result = mapper.mapDtoToResponseDto(dto, totalCost);
+        CalculatedCosts calculatedCosts = CalculatedCosts.builder().build();
 
-        // Then
-        assertNotNull(result);
-        assertNotNull(result.getTotalCost());
-        assertEquals(totalCost, result.getTotalCost().getCost());
+        var response = mapper.mapDtoToResponse(dto, calculatedCosts);
 
-        // Verify TotalCostDetails
-        TotalCostDetailsDto details = result.getTotalCost().getDetails();
-        assertNotNull(details);
-        assertEquals(22, details.getVat());
-        assertEquals(NotificationFeePolicy.DELIVERY_MODE, details.getNotificationFeePolicy());
-
-        // Verify BaseCost
-        it.pagopa.pn.notificationcostservice.dto.notificationdeliverycost.BaseCostDto baseCost = details.getBaseCost();
-        assertNotNull(baseCost);
-        assertEquals(50, baseCost.getPaFee());
-        assertEquals(50, baseCost.getSendFee());
-
-        // Verify FirstAnalogCost (200 * 1.22 = 244)
-        it.pagopa.pn.notificationcostservice.dto.notificationdeliverycost.analogcost.FirstAnalogCostDto firstAnalogCost = details.getFirstAnalogCost();
-        assertNotNull(firstAnalogCost);
-        assertEquals(244, firstAnalogCost.getCost());
-
-        // Verify SecondAnalogCost (300 * 1.22 = 366)
-        it.pagopa.pn.notificationcostservice.dto.notificationdeliverycost.analogcost.SecondAnalogCostDto secondAnalogCost = details.getSecondAnalogCost();
-        assertNotNull(secondAnalogCost);
-        assertEquals(366, secondAnalogCost.getCost());
-
-        // Verify SimpleRegisteredLetterCost (150 * 1.22 = 183)
-        it.pagopa.pn.notificationcostservice.dto.notificationdeliverycost.analogcost.SimpleRegisteredLetterCostDto simpleRegisteredLetterCost = details.getSimpleRegisteredLetterCost();
-        assertNotNull(simpleRegisteredLetterCost);
-        assertEquals(183, simpleRegisteredLetterCost.getCost());
+        assertNotNull(response.getTotalCost().getDetails().getFirstAnalogCost());
+        assertEquals(dto.getSimpleRegisteredLetterCost().getCost(),
+                response.getTotalCost().getDetails().getFirstAnalogCost().getCost());
     }
 
     @Test
-    void testMapDtoToResponseDto_WithNullAnalogCosts() {
-        // Given
-        NotificationDeliveryCostDto dto = NotificationDeliveryCostDto.builder()
-                .iun("TEST-IUN-001")
-                .recIndex(0)
-                .baseCost(it.pagopa.pn.notificationcostservice.dto.notificationdeliverycost.BaseCostDto.builder()
-                        .sendFee(50)
-                        .paFee(50)
-                        .build())
-                .firstAnalogCost(null)
-                .secondAnalogCost(null)
-                .simpleRegisteredLetterCost(null)
-                .sendFee(50)
-                .paFee(50)
-                .vat(22)
-                .notificationFeePolicy(NotificationFeePolicy.DELIVERY_MODE)
-                .build();
-        Integer totalCost = 100;
+    void mapDtoToResponse_ReturnsNullForAnalogCostsWhenBothAreNull() {
+        NotificationDeliveryCostDto dto = createCompleteDto();
+        dto.setFirstAnalogCost(null);
+        dto.setSimpleRegisteredLetterCost(null);
+        dto.setSecondAnalogCost(null);
 
-        // When
-        NotificationCostRecipientResponseDto result = mapper.mapDtoToResponseDto(dto, totalCost);
+        CalculatedCosts calculatedCosts = CalculatedCosts.builder().build();
 
-        // Then
-        assertNotNull(result);
-        TotalCostDetailsDto details = result.getTotalCost().getDetails();
+        var response = mapper.mapDtoToResponse(dto, calculatedCosts);
 
-        // Verify all analog costs are 0
-        assertNull(details.getFirstAnalogCost());
-        assertNull(details.getSecondAnalogCost());
-        assertNull(details.getSimpleRegisteredLetterCost());
+        assertNull(response.getTotalCost().getDetails().getFirstAnalogCost());
+        assertNull(response.getTotalCost().getDetails().getSecondAnalogCost());
     }
 
     @Test
-    void testMapDtoToResponseDto_WithZeroVat() {
-        // Given
-        NotificationDeliveryCostDto dto = NotificationDeliveryCostDto.builder()
-                .iun("TEST-IUN-002")
-                .recIndex(0)
-                .baseCost(it.pagopa.pn.notificationcostservice.dto.notificationdeliverycost.BaseCostDto.builder()
-                        .sendFee(50)
-                        .paFee(50)
-                        .build())
-                .firstAnalogCost(it.pagopa.pn.notificationcostservice.dto.notificationdeliverycost.analogcost.FirstAnalogCostDto.builder()
-                        .cost(200)
-                        .build())
-                .secondAnalogCost(it.pagopa.pn.notificationcostservice.dto.notificationdeliverycost.analogcost.SecondAnalogCostDto.builder()
-                        .cost(200)
-                        .build())
-                .simpleRegisteredLetterCost(it.pagopa.pn.notificationcostservice.dto.notificationdeliverycost.analogcost.SimpleRegisteredLetterCostDto.builder()
-                        .cost(150)
-                        .build())
-                .sendFee(50)
-                .paFee(50)
-                .vat(0)
-                .notificationFeePolicy(NotificationFeePolicy.DELIVERY_MODE)
-                .build();
-        Integer totalCost = 750;
+    void mapDtoToResponse_MapsAllFieldsCorrectlyForCompleteDto() {
+        NotificationDeliveryCostDto dto = createCompleteDto();
 
-        // When
-        NotificationCostRecipientResponseDto result = mapper.mapDtoToResponseDto(dto, totalCost);
+        CalculatedCosts calculatedCosts = CalculatedCosts.builder().build();
 
-        // Then
-        assertNotNull(result);
-        TotalCostDetailsDto details = result.getTotalCost().getDetails();
+        var response = mapper.mapDtoToResponse(dto, calculatedCosts);
 
-        assertEquals(0, details.getVat());
-        // With 0% VAT, costs should remain unchanged
-        assertEquals(200, details.getFirstAnalogCost().getCost());
-        assertEquals(200, details.getSecondAnalogCost().getCost());
-        assertEquals(150, details.getSimpleRegisteredLetterCost().getCost());
-    }
-
-    @Test
-    void testMapDtoToResponseDto_WithFlatRatePolicy() {
-        // Given
-        NotificationDeliveryCostDto dto = NotificationDeliveryCostDto.builder()
-                .iun("TEST-IUN-003")
-                .recIndex(0)
-                .baseCost(it.pagopa.pn.notificationcostservice.dto.notificationdeliverycost.BaseCostDto.builder()
-                        .sendFee(50)
-                        .paFee(50)
-                        .build())
-                .firstAnalogCost(it.pagopa.pn.notificationcostservice.dto.notificationdeliverycost.analogcost.FirstAnalogCostDto.builder()
-                        .cost(200)
-                        .build())
-                .secondAnalogCost(it.pagopa.pn.notificationcostservice.dto.notificationdeliverycost.analogcost.SecondAnalogCostDto.builder()
-                        .cost(300)
-                        .build())
-                .simpleRegisteredLetterCost(it.pagopa.pn.notificationcostservice.dto.notificationdeliverycost.analogcost.SimpleRegisteredLetterCostDto.builder()
-                        .cost(150)
-                        .build())
-                .sendFee(50)
-                .paFee(50)
-                .vat(22)
-                .notificationFeePolicy(NotificationFeePolicy.FLAT_RATE)
-                .build();
-        Integer totalCost = 0;
-
-        // When
-        NotificationCostRecipientResponseDto result = mapper.mapDtoToResponseDto(dto, totalCost);
-
-        // Then
-        assertNotNull(result);
-        assertEquals(0, result.getTotalCost().getCost());
-        assertEquals(NotificationFeePolicy.FLAT_RATE, result.getTotalCost().getDetails().getNotificationFeePolicy());
-    }
-
-    @Test
-    void testMapDtoToResponseDto_WithRounding() {
-        // Given - test arrotondamento
-        NotificationDeliveryCostDto dto = NotificationDeliveryCostDto.builder()
-                .iun("TEST-IUN-004")
-                .recIndex(0)
-                .baseCost(it.pagopa.pn.notificationcostservice.dto.notificationdeliverycost.BaseCostDto.builder()
-                        .sendFee(50)
-                        .paFee(50)
-                        .build())
-                .firstAnalogCost(it.pagopa.pn.notificationcostservice.dto.notificationdeliverycost.analogcost.FirstAnalogCostDto.builder()
-                        .cost(436) // 436 * 1.22 = 531.92 -> 532
-                        .build())
-                .secondAnalogCost(it.pagopa.pn.notificationcostservice.dto.notificationdeliverycost.analogcost.SecondAnalogCostDto.builder()
-                        .cost(397) // 397 * 1.22 = 484.34 -> 484
-                        .build())
-                .simpleRegisteredLetterCost(it.pagopa.pn.notificationcostservice.dto.notificationdeliverycost.analogcost.SimpleRegisteredLetterCostDto.builder()
-                        .cost(969) // 969 * 1.22 = 1182.18 -> 1182
-                        .build())
-                .sendFee(50)
-                .paFee(50)
-                .vat(22)
-                .notificationFeePolicy(NotificationFeePolicy.DELIVERY_MODE)
-                .build();
-        Integer totalCost = 2298;
-
-        // When
-        NotificationCostRecipientResponseDto result = mapper.mapDtoToResponseDto(dto, totalCost);
-
-        // Then
-        assertNotNull(result);
-        TotalCostDetailsDto details = result.getTotalCost().getDetails();
-
-        assertEquals(532, details.getFirstAnalogCost().getCost());
-        assertEquals(484, details.getSecondAnalogCost().getCost());
-        assertEquals(1182, details.getSimpleRegisteredLetterCost().getCost());
-    }
-
-    @Test
-    void testMapDtoToResponseDto_WithPartialNullCosts() {
-        // Given
-        NotificationDeliveryCostDto dto = NotificationDeliveryCostDto.builder()
-                .iun("TEST-IUN-005")
-                .recIndex(0)
-                .baseCost(it.pagopa.pn.notificationcostservice.dto.notificationdeliverycost.BaseCostDto.builder()
-                        .sendFee(50)
-                        .paFee(50)
-                        .build())
-                .firstAnalogCost(it.pagopa.pn.notificationcostservice.dto.notificationdeliverycost.analogcost.FirstAnalogCostDto.builder()
-                        .cost(200)
-                        .build())
-                .secondAnalogCost(null)
-                .simpleRegisteredLetterCost(it.pagopa.pn.notificationcostservice.dto.notificationdeliverycost.analogcost.SimpleRegisteredLetterCostDto.builder()
-                        .cost(150)
-                        .build())
-                .sendFee(50)
-                .paFee(50)
-                .vat(22)
-                .notificationFeePolicy(NotificationFeePolicy.DELIVERY_MODE)
-                .build();
-        Integer totalCost = 527;
-
-        // When
-        NotificationCostRecipientResponseDto result = mapper.mapDtoToResponseDto(dto, totalCost);
-
-        // Then
-        assertNotNull(result);
-        TotalCostDetailsDto details = result.getTotalCost().getDetails();
-
-        assertEquals(244, details.getFirstAnalogCost().getCost());
-        assertNull(details.getSecondAnalogCost());
-        assertEquals(183, details.getSimpleRegisteredLetterCost().getCost());
-    }
-
-    @Test
-    void testMapDtoToResponseDto_WithNullBaseCostDetails() {
-        // Given
-        NotificationDeliveryCostDto dto = NotificationDeliveryCostDto.builder()
-                .iun("TEST-IUN-006")
-                .recIndex(0)
-                .baseCost(it.pagopa.pn.notificationcostservice.dto.notificationdeliverycost.BaseCostDto.builder()
-                        .sendFee(null)
-                        .paFee(null)
-                        .build())
-                .firstAnalogCost(it.pagopa.pn.notificationcostservice.dto.notificationdeliverycost.analogcost.FirstAnalogCostDto.builder()
-                        .cost(200)
-                        .build())
-                .secondAnalogCost(it.pagopa.pn.notificationcostservice.dto.notificationdeliverycost.analogcost.SecondAnalogCostDto.builder()
-                        .cost(300)
-                        .build())
-                .simpleRegisteredLetterCost(it.pagopa.pn.notificationcostservice.dto.notificationdeliverycost.analogcost.SimpleRegisteredLetterCostDto.builder()
-                        .cost(150)
-                        .build())
-                .sendFee(null)
-                .paFee(null)
-                .vat(22)
-                .notificationFeePolicy(NotificationFeePolicy.DELIVERY_MODE)
-                .build();
-        Integer totalCost = 0; // totalCost sarà 0 perché baseCost ha sendFee e paFee null
-
-        // When
-        NotificationCostRecipientResponseDto result = mapper.mapDtoToResponseDto(dto, totalCost);
-
-        // Then
-        assertNotNull(result);
-        it.pagopa.pn.notificationcostservice.dto.notificationdeliverycost.BaseCostDto baseCost = result.getTotalCost().getDetails().getBaseCost();
-        assertNotNull(baseCost);
-        assertNull(baseCost.getSendFee());
-        assertNull(baseCost.getPaFee());
-    }
-
-    @Test
-    void testMapDtoToResponseDto_WithAllFieldsPopulated() {
-        // Given - test con tutti i campi popolati
-        NotificationDeliveryCostDto dto = NotificationDeliveryCostDto.builder()
-                .iun("TEST-IUN-007")
-                .recIndex(1)
-                .recipientInternalId("RECIPIENT-001")
-                .baseCost(it.pagopa.pn.notificationcostservice.dto.notificationdeliverycost.BaseCostDto.builder()
-                        .sendFee(75)
-                        .paFee(75)
-                        .build())
-                .firstAnalogCost(it.pagopa.pn.notificationcostservice.dto.notificationdeliverycost.analogcost.FirstAnalogCostDto.builder()
-                        .cost(250)
-                        .build())
-                .secondAnalogCost(it.pagopa.pn.notificationcostservice.dto.notificationdeliverycost.analogcost.SecondAnalogCostDto.builder()
-                        .cost(350)
-                        .build())
-                .simpleRegisteredLetterCost(it.pagopa.pn.notificationcostservice.dto.notificationdeliverycost.analogcost.SimpleRegisteredLetterCostDto.builder()
-                        .cost(175)
-                        .build())
-                .sendFee(75)
-                .paFee(75)
-                .notificationFeePolicy(NotificationFeePolicy.DELIVERY_MODE)
-                .pagoPaIntMode(PagoPaIntMode.SYNC)
-                .vat(22)
-                .lastUpdate(Instant.now())
-                .ttl(3600L)
-                .build();
-        Integer totalCost = 1094;
-
-        // When
-        NotificationCostRecipientResponseDto result = mapper.mapDtoToResponseDto(dto, totalCost);
-
-        // Then
-        assertNotNull(result);
-        assertEquals(1094, result.getTotalCost().getCost());
-
-        TotalCostDetailsDto details = result.getTotalCost().getDetails();
-        it.pagopa.pn.notificationcostservice.dto.notificationdeliverycost.BaseCostDto baseCost = details.getBaseCost();
-        assertNotNull(baseCost);
-        assertEquals(75, baseCost.getSendFee());
-        assertEquals(75, baseCost.getPaFee());
-        assertEquals(305, details.getFirstAnalogCost().getCost()); // 250 * 1.22 = 305
-        assertEquals(427, details.getSecondAnalogCost().getCost()); // 350 * 1.22 = 427
-        assertEquals(214, details.getSimpleRegisteredLetterCost().getCost()); // 175 * 1.22 = 213.5 -> 214
-        assertEquals(22, details.getVat());
-        assertEquals(NotificationFeePolicy.DELIVERY_MODE, details.getNotificationFeePolicy());
+        assertEquals(dto.getVat(), response.getTotalCost().getDetails().getVat());
+        assertEquals(dto.getNotificationFeePolicy().name(), response.getTotalCost().getDetails().getNotificationFeePolicy().name());
+        assertEquals(dto.getFirstAnalogCost().getCost(), response.getTotalCost().getDetails().getFirstAnalogCost().getCost());
+        assertEquals(dto.getSecondAnalogCost().getCost(), response.getTotalCost().getDetails().getSecondAnalogCost().getCost());
+        assertEquals(dto.getBaseCost().getPaFee(), response.getTotalCost().getDetails().getBaseCost().getDetails().getPaFee().getCost());
+        assertEquals(dto.getBaseCost().getSendFee(), response.getTotalCost().getDetails().getBaseCost().getDetails().getSendFee().getCost());
     }
 
     private NotificationDeliveryCostDto createCompleteDto() {
@@ -336,22 +88,23 @@ class NotificationDeliveryCostMapperTest {
                 .iun("TEST-IUN-COMPLETE")
                 .recIndex(0)
                 .recipientInternalId("RECIPIENT-TEST")
-                .baseCost(it.pagopa.pn.notificationcostservice.dto.notificationdeliverycost.BaseCostDto.builder()
+                .baseCost(BaseCostDto.builder()
                         .sendFee(50)
                         .paFee(50)
                         .build())
-                .firstAnalogCost(it.pagopa.pn.notificationcostservice.dto.notificationdeliverycost.analogcost.FirstAnalogCostDto.builder()
+                .firstAnalogCost(FirstAnalogCostDto.builder()
                         .cost(200)
                         .build())
-                .secondAnalogCost(it.pagopa.pn.notificationcostservice.dto.notificationdeliverycost.analogcost.SecondAnalogCostDto.builder()
+                .secondAnalogCost(SecondAnalogCostDto.builder()
                         .cost(300)
                         .build())
-                .simpleRegisteredLetterCost(it.pagopa.pn.notificationcostservice.dto.notificationdeliverycost.analogcost.SimpleRegisteredLetterCostDto.builder()
+                .simpleRegisteredLetterCost(SimpleRegisteredLetterCostDto.builder()
                         .cost(150)
                         .build())
                 .sendFee(50)
                 .paFee(50)
                 .notificationFeePolicy(NotificationFeePolicy.DELIVERY_MODE)
+                .pagoPaIntMode(PagoPaIntMode.SYNC)
                 .vat(22)
                 .build();
     }

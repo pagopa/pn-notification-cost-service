@@ -70,16 +70,7 @@ components:
         totalCost:
           $ref: '#/components/schemas/TotalCost'
         pagoPaIntMode:
-          type: string
-          description: >-
-            Modalità di integrazione pagoPA per l'attualizzazione del costo della notifica. <br/>
-            - _NONE_: nessuna attualizzazione. <br/>
-            - _SYNC_: modalità sincrona. <br/>
-            - _ASYNC_: modalità asincrona. <br/>
-          enum:
-            - NONE
-            - SYNC
-            - ASYNC
+          $ref: '#/components/schemas/PagoPaIntMode'
         lastUpdate:
           type: string
           format: date-time
@@ -91,8 +82,8 @@ components:
         Rappresentazione del costo totale (comprensivo di oneri e tributi) in eurocent.
       type: object
       properties:
-        cost:
-          description: Costo totale in eurocent (somma algebrica dei dettagli)
+        costWithVat:
+          description: Costo totale in eurocent (somma algebrica dei dettagli) comprensivo di IVA
           type: integer
           format: int32
         details:
@@ -110,8 +101,6 @@ components:
           $ref: '#/components/schemas/AnalogCost'
         secondAnalogCost:
           $ref: '#/components/schemas/AnalogCost'
-        simpleRegisteredLetterCost:
-          $ref: '#/components/schemas/AnalogCost'
         vat:
           type: integer
           description: >-
@@ -120,12 +109,7 @@ components:
           minimum: 0
           maximum: 100
         notificationFeePolicy:
-          type: string
-          description: >-
-            Politica di calcolo dei costi.
-          enum:
-            - FLAT_RATE
-            - DELIVERY_MODE
+          $ref: '#/components/schemas/NotificationFeePolicy'
     
     BaseCost:
       title: Costo base di notificazione
@@ -147,36 +131,76 @@ components:
       type: object
       properties:
         paFee:
-          type: integer
-          description: >-
-            Diritti di notifica spettanti alla Pubblica Amministrazione (in eurocent).
-          format: int32
+          $ref: '#/components/schemas/paFee'
         sendFee:
-          type: integer
-          description: >-
-            Costi operativi della piattaforma SEND (in eurocent).
-          format: int32
+          $ref: '#/components/schemas/sendFee'
     
     AnalogCost:
       title: Costo di invio cartaceo
       description: >-
         Costo specifico per l'invio fisico, comprensivo di stampa e recapito.
+      allOf:
+        - $ref: '#/components/schemas/CostComponent'
+        - type: object
+      properties:
+        productType:
+          $ref: '#/components/schemas/ProductType'
+
+    paFee:
+      description: >-
+        Diritti di notifica spettanti alla Pubblica Amministrazione (in eurocent).
+      allOf:
+        - $ref: '#/components/schemas/CostComponent'
+        - type: object
+
+    sendFee:
+      description: >-
+        Costi operativi della piattaforma SEND (in eurocent).
+      allOf:
+        - $ref: '#/components/schemas/CostComponent'
+        - type: object
+
+    PagoPaIntMode:
+      type: string
+      description: >-
+        Modalità di integrazione pagoPA per l'attualizzazione del costo della notifica. <br/>
+        - _NONE_: nessuna attualizzazione. <br/>
+        - _SYNC_: modalità sincrona. <br/>
+        - _ASYNC_: modalità asincrona. <br/>
+      enum:
+        - NONE
+        - SYNC
+        - ASYNC
+
+    NotificationFeePolicy:
+      type: string
+      description: >-
+        Politica di calcolo dei costi.
+      enum:
+        - FLAT_RATE
+        - DELIVERY_MODE
+
+    ProductType:
+      type: string
+      description: >
+        Tipologia di prodotto postale utilizzato:
+          - __AR__: Raccomandata nazionale A/R
+          - __890__: Atto giudiziario (Legge 890/1982)
+          - __RIR__: Raccomandata internazionale A/R
+          - __RS__: Raccomandata Semplice
+          - __RIS__: Raccomandata internazionale Semplice
+    
+    CostComponent:
       type: object
       properties:
         cost:
-          description: Costo totale della spedizione analogica in eurocent (IVA inclusa)
+          description: Costo della componente in eurocent in cui non è inclusa l'IVA
           type: integer
           format: int32
-        productType:
-          type: string
-          description: >
-            Tipologia di prodotto postale utilizzato:
-              - __AR__: Raccomandata nazionale A/R
-              - __890__: Atto giudiziario (Legge 890/1982)
-              - __RIR__: Raccomandata internazionale A/R
-              - __RS__: Raccomandata Semplice
-              - __RIS__: Raccomandata internazionale Semplice
-    
+        includedInVatBase:
+          description: Il costo viene incluso nel calcolo dell'IVA se true
+          type: boolean
+
     Problem:
       $ref: './remote-refs.yaml#/components/schemas/Problem'
     ProblemError:
