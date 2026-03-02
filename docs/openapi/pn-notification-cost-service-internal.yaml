@@ -93,6 +93,7 @@ components:
       description: >-
         Scomposizione del costo di notifica in base alle diverse componenti di invio.
       type: object
+      required: [ baseCostDetail, vat, notificationFeePolicy ]
       properties:
         baseCostDetail:
           description: Dettaglio del costo base di notificazione
@@ -179,7 +180,7 @@ components:
 
     AnalogCostDetail:
       type: object
-      required: [ cost, analogCostComponents ]
+      required: [ costWitVat, analogCostComponents ]
       properties:
         costWitVat:
           description: Costo totale in eurocent (somma algebrica delle componenti) comprensivo di IVA
@@ -195,7 +196,7 @@ components:
     AnalogCostComponent:
       description: Componente di costo anlogica che concorre a formare il costo totale
       type: object
-      required: [ cost, sentAttemptMade, productType ]
+      required: [ cost, attemptIndex, productType ]
       properties:
        cost:
          description: Costo della componente in eurocent in cui non è inclusa l'IVA
