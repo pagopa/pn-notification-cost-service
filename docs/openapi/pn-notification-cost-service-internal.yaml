@@ -94,16 +94,12 @@ components:
         Scomposizione del costo di notifica in base alle diverse componenti di invio.
       type: object
       properties:
-        baseCostComponent:
-          description: Elenco delle componenti di costo base che concorrono a formare il costo totale
-          type: array
-          items:
-            $ref: '#/components/schemas/BaseCostComponent'
-        analogCostComponents:
-          description: Elenco delle componenti di costo anlogiche che concorrono a formare il costo totale
-          type: array
-          items:
-            $ref: '#/components/schemas/AnalogCostComponent'
+        baseCostDetail:
+          description: Dettaglio del costo base di notificazione
+          $ref: '#/components/schemas/BaseCostDetail'
+        analogCostDetail:
+          description: Dettaglio del costo anlogico di notificazione
+          $ref: '#/components/schemas/AnalogCostDetail'
         vat:
           type: integer
           description: >-
@@ -154,41 +150,66 @@ components:
           - PA_FEE
           - SEND_FEE
 
-    GenericCostComponent:
+    BaseCostDetail:
       type: object
-      required: [ cost, includedInVatBase ]
+      required: [ cost, baseCostComponents ]
+      properties:
+        cost:
+          description: Costo totale in eurocent (somma algebrica delle componenti) escluso IVA
+          type: integer
+          format: int32
+        baseCostComponents:
+          description: Elenco delle componenti di costo base che concorrono a formare il costo totale
+          type: array
+          items:
+            $ref: '#/components/schemas/BaseCostComponent'
+            maxItems: 2
+
+    BaseCostComponent:
+      description: Componente di costo base per la notificazione
+      type: object
+      required: [ cost, costName ]
       properties:
         cost:
           description: Costo della componente in eurocent in cui non è inclusa l'IVA
           type: integer
           format: int32
-        includedInVatBase:
-          description: Il costo viene incluso nel calcolo dell'IVA se true
-          type: boolean
+        costName:
+          $ref: '#/components/schemas/CostName'
+
+    AnalogCostDetail:
+      type: object
+      required: [ cost, analogCostComponents ]
+      properties:
+        costWitVat:
+          description: Costo totale in eurocent (somma algebrica delle componenti) comprensivo di IVA
+          type: integer
+          format: int32
+        analogCostComponents:
+          description: Elenco delle componenti di costo analogiche che concorrono a formare il costo totale
+          type: array
+          items:
+            $ref: '#/components/schemas/AnalogCostComponent'
+            maxItems: 2
 
     AnalogCostComponent:
-       allOf:
-         - $ref: '#/components/schemas/GenericCostComponent'
-         - type: object
-           required: [ sentAttemptMade, productType ]
-           properties:
-             sentAttemptMade:
-               description: Numero di tentativi di invio fisico già effettuati per il destinatario (0 per il primo invio, 1 per il secondo invio)
-               type: integer
-               format: int32
-             productType:
-               $ref: '#/components/schemas/ProductType'
+      description: Componente di costo anlogica che concorre a formare il costo totale
+      type: object
+      required: [ cost, sentAttemptMade, productType ]
+      properties:
+       cost:
+         description: Costo della componente in eurocent in cui non è inclusa l'IVA
+         type: integer
+         format: int32
+       attemptIndex:
+         type: integer
+         format: int32
+         description: >
+           Indice del tentativo di spedizione analogica. 
+           Rappresenta la sequenza dell'invio: 0 per il primo tentativo, 1 per il secondo.
+       productType:
+         $ref: '#/components/schemas/ProductType'
 
-    BaseCostComponent:
-      description: Componente di costo base per la notificazione
-      allOf:
-        - $ref: '#/components/schemas/GenericCostComponent'
-        - type: object
-          required: [ costName ]
-          properties:
-            costName:
-              $ref: '#/components/schemas/CostName'
-    
     Problem:
       $ref: './remote-refs.yaml#/components/schemas/Problem'
     ProblemError:
