@@ -180,9 +180,9 @@ components:
 
     AnalogCostDetail:
       type: object
-      required: [ costWitVat, analogCostComponents ]
+      required: [ costWithVat, analogCostComponents ]
       properties:
-        costWitVat:
+        costWithVat:
           description: Costo totale in eurocent (somma algebrica delle componenti) comprensivo di IVA
           type: integer
           format: int32
