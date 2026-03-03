@@ -199,11 +199,11 @@ components:
       type: string
       description: >-
         Nome della componente di costo.
-        FIRST: Costo del primo tentativo di spedizione analogica (in eurocent).
-        SECOND: Costo del secondo tentativo di spedizione analogica (in eurocent).
+        FIRST_ATTEMPT: Costo del primo tentativo di spedizione analogica (in eurocent).
+        SECOND_ATTEMPT: Costo del secondo tentativo di spedizione analogica (in eurocent).
       enum:
-        - FIRST
-        - SECOND
+        - FIRST_ATTEMPT
+        - SECOND_ATTEMPT
 
     AnalogCostComponent:
       description: Componente di costo anlogica che concorre a formare il costo totale
