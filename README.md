@@ -1,7 +1,7 @@
 # pn-notification-cost-service
 
 
-### Script per la migrazione
+### populateNotificationDeliveryCost
 
 #### Responsabilità
 - **Esegue una migrazione di dati per calcolare e salvare i costi di consegna delle notifiche.**
@@ -22,10 +22,31 @@ Analizza le notifiche e le relative timeline per calcolare i costi di consegna.
 #### Configurazione
 | Variabile Ambiente | Descrizione                                | Default | Obbligatorio |
 |--------------------|--------------------------------------------|---------|--------------|
-| AWS_REGION         | La regione AWS per le operazioni DynamoDB. | -       | Si           |
-| NODE_ENV           | Env per l'esecuzione                       | `local` | No           |
+| AWS_REGION         | La regione AWS per le operazioni DynamoDB. | -       | No           |
+| AWS_PROFILE        | profilo AWS per le operazioni DynamoDB     | -       | No           |
+| MFA_TOKEN          | token AWS per le operazioni DynamoDB       | -       | No           |
+| NODE_ENV           | Env per l'esecuzione                       | `local` | Si           |
 
-N.B. Per lanciare lo script in locale, bisogna tirare su localstack tirando su il file `init-for-migration.sh` 
-poi lanciare il seguente comando: `NODE_TLS_REJECT_UNAUTHORIZED=0 node index.js`
-Nel caso in cui si voglia eseguire lo script in un ambiente diverso da `local`, 
-è necessario creare/modificare la configurazione nel file nel seguente path `../config/.env`.
+*Nota: Obbligatori solo per ambienti diversi da local.
+
+# Esecuzione dello script
+Per eseguire correttamente lo script, è necessario configurare l'ambiente come segue:
+
+# Ambienti non locali (es. dev):
+Creare un file `.env` nel percorso `src/config/.env` con la seguente struttura:
+Snippet di codice
+`NODE_ENV=dev`
+
+# Configurazione AWS
+`AWS_PROFILE=dev
+MFA_TOKEN=123456
+AWS_REGION=eu-south-1`
+Assicurarsi di associare l'`AWS_PROFILE` corretto in base all'ambiente di destinazione e di inserire un `MFA_TOKEN` valido 
+al momento del lancio.
+
+# Ambiente locale:
+In locale è sufficiente inizializzare la variabile `NODE_ENV` a `local`. È necessario avviare LocalStack eseguendo 
+il file `init-for-migration.sh`, quindi lanciare il comando:
+
+Bash
+`NODE_TLS_REJECT_UNAUTHORIZED=0 node index.js IUN-STANDARD-MIX IUN-SIMPLE-LETTER`
