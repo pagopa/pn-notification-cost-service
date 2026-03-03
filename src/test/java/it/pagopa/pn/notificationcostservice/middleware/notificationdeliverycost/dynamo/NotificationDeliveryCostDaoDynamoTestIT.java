@@ -96,8 +96,6 @@ public class NotificationDeliveryCostDaoDynamoTestIT {
                 .pagoPaIntMode(PagoPaIntMode.ASYNC)
                 .baseCost(newBaseCost())
                 .vat(0)
-                .sendFee(10)
-                .paFee(2)
                 .notificationFeePolicy(NotificationFeePolicy.DELIVERY_MODE)
                 .isDeleted(false)
                 .lastUpdate(Instant.now())
