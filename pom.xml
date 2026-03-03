@@ -179,10 +179,6 @@
 								<modelPackage>${project.groupId}.notification_cost_service.generated.openapi.server.v1.dto</modelPackage>
 								<apiPackage>${project.groupId}.notification_cost_service.generated.openapi.server.v1.api</apiPackage>
 								<configPackage>${project.groupId}.notification_cost_service.generated.openapi.server.v1.config</configPackage>
-								<additionalModelTypeAnnotations>
-									@lombok.Builder(toBuilder = true);
-									@lombok.AllArgsConstructor;
-								</additionalModelTypeAnnotations>
 							</configOptions>
 						</configuration>
 					</execution>

@@ -50,7 +50,7 @@ class NotificationCostServiceImplTest {
        CalculatedCosts calculatedCosts = CalculatedCosts.builder().build();
        when(costCalculator.calculateCosts(dto)).thenReturn(calculatedCosts);
 
-       NotificationCostRecipientResponse mappedResponse = NotificationCostRecipientResponse.builder().build();
+       NotificationCostRecipientResponse mappedResponse = new NotificationCostRecipientResponse();
        when(notificationDeliveryCostMapper.mapDtoToResponse(eq(dto), any())).thenReturn(mappedResponse);
 
        StepVerifier.create(notificationCostService.getNotificationCostRecipient(IUN, REC_INDEX))

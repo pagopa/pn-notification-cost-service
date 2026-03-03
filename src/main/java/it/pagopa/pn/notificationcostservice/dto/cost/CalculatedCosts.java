@@ -8,6 +8,7 @@ import lombok.Getter;
 public class CalculatedCosts {
     private Integer totalCostWithVat;
     private Integer analogCost;
+    private Integer analogCostWithVat;
     private Integer baseCost;
     private Integer vat;
 }

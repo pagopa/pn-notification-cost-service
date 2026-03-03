@@ -31,7 +31,7 @@ class NotificationCostServiceControllerTest {
 
     @Test
     void testNotificationCostRecipient_Success() {
-        NotificationCostRecipientResponse response = createTestResponse();
+        NotificationCostRecipientResponse response = new NotificationCostRecipientResponse();
 
         when(notificationCostService.getNotificationCostRecipient(TEST_IUN, TEST_REC_INDEX))
                 .thenReturn(Mono.just(response));
@@ -49,10 +49,6 @@ class NotificationCostServiceControllerTest {
                 .verifyComplete();
 
         verify(notificationCostService).getNotificationCostRecipient(TEST_IUN, TEST_REC_INDEX);
-    }
-
-    private NotificationCostRecipientResponse createTestResponse() {
-        return NotificationCostRecipientResponse.builder().build();
     }
 }
 

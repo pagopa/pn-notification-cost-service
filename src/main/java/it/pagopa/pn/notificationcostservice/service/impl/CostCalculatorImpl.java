@@ -1,6 +1,7 @@
 package it.pagopa.pn.notificationcostservice.service.impl;
 
 import it.pagopa.pn.notificationcostservice.dto.cost.CalculatedCosts;
+import it.pagopa.pn.notificationcostservice.dto.notificationdeliverycost.BaseCostDto;
 import it.pagopa.pn.notificationcostservice.dto.notificationdeliverycost.NotificationDeliveryCostDto;
 import it.pagopa.pn.notificationcostservice.dto.notificationdeliverycost.NotificationFeePolicy;
 import it.pagopa.pn.notificationcostservice.dto.notificationdeliverycost.analogcost.AnalogCostDto;
@@ -17,17 +18,18 @@ public class CostCalculatorImpl implements CostCalculator {
     public CalculatedCosts calculateCosts(NotificationDeliveryCostDto notificationDeliveryCostDto) {
         log.debug("calculateCosts - notificationDeliveryCostDto={}", notificationDeliveryCostDto);
         int vat = nullSafe(notificationDeliveryCostDto.getVat());
-        int baseCost = baseCost(notificationDeliveryCostDto);
+        int baseCost = baseCost(notificationDeliveryCostDto.getBaseCost());
         int analogCost = analogCost(notificationDeliveryCostDto);
+        int analogCostWithVat = CostUtils.getCostWithVat(analogCost, vat);
         int totalCostWithVat = 0;
         if(notificationDeliveryCostDto.getNotificationFeePolicy() == NotificationFeePolicy.DELIVERY_MODE) {
-            int analogCostWithVat = CostUtils.getCostWithVat(analogCost, vat);
             totalCostWithVat = baseCost + analogCostWithVat;
         }
         return CalculatedCosts.builder()
                 .totalCostWithVat(totalCostWithVat)
                 .baseCost(baseCost)
                 .analogCost(analogCost)
+                .analogCostWithVat(analogCostWithVat)
                 .vat(notificationDeliveryCostDto.getVat())
                 .build();
     }
@@ -36,8 +38,8 @@ public class CostCalculatorImpl implements CostCalculator {
      * Calculate the base cost of the notification by summing the PA fee and the send fee.
      * @return cost of the base costs
      */
-    public int baseCost(NotificationDeliveryCostDto notificationDelivery) {
-        return nullSafe(notificationDelivery.getPaFee()) + nullSafe(notificationDelivery.getSendFee());
+    public int baseCost(BaseCostDto baseCostDto) {
+        return nullSafe(baseCostDto.getPaFee()) + nullSafe(baseCostDto.getSendFee());
     }
 
     /**

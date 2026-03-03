@@ -1,5 +1,6 @@
 package it.pagopa.pn.notificationcostservice.service.impl;
 
+import it.pagopa.pn.notificationcostservice.dto.notificationdeliverycost.BaseCostDto;
 import it.pagopa.pn.notificationcostservice.dto.notificationdeliverycost.NotificationDeliveryCostDto;
 import it.pagopa.pn.notificationcostservice.dto.notificationdeliverycost.NotificationFeePolicy;
 import it.pagopa.pn.notificationcostservice.dto.notificationdeliverycost.analogcost.FirstAnalogCostDto;
@@ -17,8 +18,10 @@ class CostCalculatorImplTest {
     void calculateCosts_ReturnsZeroTotalCostWithVatWhenFeePolicyIsNotDeliveryMode() {
        NotificationDeliveryCostDto dto = new NotificationDeliveryCostDto();
        dto.setVat(22);
-       dto.setPaFee(100);
-       dto.setSendFee(50);
+       BaseCostDto baseCostDto = new BaseCostDto();
+       baseCostDto.setPaFee(100);
+       baseCostDto.setSendFee(50);
+       dto.setBaseCost(baseCostDto);
        dto.setNotificationFeePolicy(NotificationFeePolicy.FLAT_RATE);
 
        var result = calculator.calculateCosts(dto);
@@ -33,8 +36,10 @@ class CostCalculatorImplTest {
     void calculateCosts_ComputesTotalCostWithVatWhenFeePolicyIsDeliveryMode() {
        NotificationDeliveryCostDto dto = new NotificationDeliveryCostDto();
        dto.setVat(10);
-       dto.setPaFee(100);
-       dto.setSendFee(50);
+       BaseCostDto baseCostDto = new BaseCostDto();
+       baseCostDto.setPaFee(100);
+       baseCostDto.setSendFee(50);
+       dto.setBaseCost(baseCostDto);
        dto.setFirstAnalogCost(FirstAnalogCostDto.builder().cost(200).build());
        dto.setNotificationFeePolicy(NotificationFeePolicy.DELIVERY_MODE);
 
@@ -42,6 +47,7 @@ class CostCalculatorImplTest {
 
        int expectedAnalogWithVat = CostUtils.getCostWithVat(200, 10);
        assertEquals(150 + expectedAnalogWithVat, result.getTotalCostWithVat());
+       assertEquals(expectedAnalogWithVat, result.getAnalogCostWithVat());
        assertEquals(150, result.getBaseCost());
        assertEquals(200, result.getAnalogCost());
        assertEquals(10, result.getVat());
@@ -50,8 +56,9 @@ class CostCalculatorImplTest {
     @Test
     void baseCost_ReturnsZeroWhenPaFeeAndSendFeeAreNull() {
        NotificationDeliveryCostDto dto = new NotificationDeliveryCostDto();
+       dto.setBaseCost(new BaseCostDto());
 
-       assertEquals(0, calculator.baseCost(dto));
+       assertEquals(0, calculator.baseCost(dto.getBaseCost()));
     }
 
     @Test
