@@ -65,6 +65,7 @@ components:
       description: >-
         Dati relativi al costo totale e alla modalità di aggiornamento per il destinatario.
       type: object
+      required: [ totalCost, pagoPaIntMode, lastUpdate ]
       properties:
         totalCost:
           $ref: '#/components/schemas/TotalCost'
@@ -80,6 +81,7 @@ components:
       description: >-
         Rappresentazione del costo totale (comprensivo di oneri e tributi) in eurocent.
       type: object
+      required: [ costWithVat, details ]
       properties:
         costWithVat:
           description: Costo totale in eurocent (somma algebrica dei dettagli) comprensivo di IVA
