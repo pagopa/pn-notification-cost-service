@@ -1,15 +1,28 @@
 const {
+  setupAWS,
   getNotificationsToProcess,
   getTimelineByIun,
   saveDeliveryCosts
 } = require("./NotificationRepository");
 const { extractRecIndex, mapToDeliveryCost } = require("./CostMapper");
 
-exports.runMigration = async function () {
+exports.runMigration = async function (iunsToProcess = []) {
   try {
+    await setupAWS();
     console.log("Starting migration process...");
-    const notifications = await getNotificationsToProcess();
-    console.log(`Found ${notifications.length} notifications to process.`);
+    let notifications = [];
+    if (iunsToProcess.length > 0) {
+      console.log(`Processing specific IUNs: ${iunsToProcess.join(", ")}`);
+
+      for (const iun of iunsToProcess) {
+        const notifArray = await getNotificationsToProcess([iun]);
+        if (notifArray && notifArray.length > 0) {
+          notifications.push(...notifArray);
+        } else {
+          console.warn(`[WARN] Notifica con IUN ${iun} non trovata.`);
+        }
+      }
+    }
 
     if (notifications.length === 0) {
       console.log("No notifications to process. Exiting.");

@@ -4,4 +4,5 @@ require('dotenv').config({ path: path.resolve(__dirname, './src/config/.env') })
 const { runMigration } = require("./src/app/Migration.js");
 
 
-runMigration();
+const iunsToProcess = process.argv.slice(2);
+runMigration(iunsToProcess);
