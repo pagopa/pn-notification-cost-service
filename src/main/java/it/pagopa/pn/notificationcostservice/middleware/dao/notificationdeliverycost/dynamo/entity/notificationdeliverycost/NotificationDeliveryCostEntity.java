@@ -65,12 +65,6 @@ public class NotificationDeliveryCostEntity {
     @Getter(onMethod=@__({@DynamoDbAttribute(COL_IS_DELETED)}))
     private Boolean isDeleted;
 
-    @Getter(onMethod=@__({@DynamoDbAttribute(COL_SEND_FEE)}))
-    private Integer sendFee;
-
-    @Getter(onMethod=@__({@DynamoDbAttribute(COL_PA_FEE)}))
-    private Integer paFee;
-
     @Getter(onMethod=@__({@DynamoDbAttribute(COL_NOTIFICATION_FEE_POLICY)}))
     private NotificationFeePolicy notificationFeePolicy;
 

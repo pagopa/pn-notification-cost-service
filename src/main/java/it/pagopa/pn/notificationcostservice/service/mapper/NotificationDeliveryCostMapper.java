@@ -1,83 +1,83 @@
 package it.pagopa.pn.notificationcostservice.service.mapper;
 
-import it.pagopa.pn.notificationcostservice.dto.cost.TotalCostDetailsDto;
-import it.pagopa.pn.notificationcostservice.dto.cost.TotalCostDto;
-import it.pagopa.pn.notificationcostservice.dto.notificationdeliverycost.BaseCostDto;
-import it.pagopa.pn.notificationcostservice.dto.notificationdeliverycost.NotificationCostRecipientResponseDto;
+import it.pagopa.pn.notification_cost_service.generated.openapi.server.v1.dto.*;
+import it.pagopa.pn.notificationcostservice.dto.cost.CalculatedCosts;
 import it.pagopa.pn.notificationcostservice.dto.notificationdeliverycost.NotificationDeliveryCostDto;
-import it.pagopa.pn.notificationcostservice.dto.notificationdeliverycost.analogcost.FirstAnalogCostDto;
-import it.pagopa.pn.notificationcostservice.dto.notificationdeliverycost.analogcost.SecondAnalogCostDto;
-import it.pagopa.pn.notificationcostservice.dto.notificationdeliverycost.analogcost.SimpleRegisteredLetterCostDto;
+import it.pagopa.pn.notificationcostservice.dto.notificationdeliverycost.analogcost.AnalogCostDto;
 import org.springframework.stereotype.Component;
 
-import java.util.Objects;
-
-import static it.pagopa.pn.notificationcostservice.utils.CostUtils.getCostWithVat;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Optional;
 
 @Component
 public class NotificationDeliveryCostMapper {
 
-    public NotificationCostRecipientResponseDto mapDtoToResponseDto(NotificationDeliveryCostDto dto, Integer totalCost) {
-        return NotificationCostRecipientResponseDto.builder()
-                .totalCost(mapTotalCost(dto, totalCost))
+    private static final Integer FIRST_ATTEMPT_INDEX = 0;
+    private static final Integer SECOND_ATTEMPT_INDEX = 1;
+
+    public NotificationCostRecipientResponse mapDtoToResponse(NotificationDeliveryCostDto dto, CalculatedCosts calculatedCosts) {
+        return new NotificationCostRecipientResponse()
                 .lastUpdate(dto.getLastUpdate())
-                .pagoPaIntMode(dto.getPagoPaIntMode())
-                .build();
+                .pagoPaIntMode(mapPagoPaMode(dto.getPagoPaIntMode()))
+                .totalCost(new TotalCost()
+                        .costWithVat(calculatedCosts.getTotalCostWithVat())
+                        .details(mapTotalCostDetails(dto, calculatedCosts)));
     }
 
-    private TotalCostDto mapTotalCost(NotificationDeliveryCostDto dto, Integer totalCost) {
-        return TotalCostDto.builder()
-                .cost(totalCost)
-                .details(mapTotalCostDetails(dto))
-                .build();
-    }
-
-    private TotalCostDetailsDto mapTotalCostDetails(NotificationDeliveryCostDto dto) {
-        return TotalCostDetailsDto.builder()
-                .baseCost(mapBaseCost(dto))
-                .secondAnalogCost(mapSecondAnalogCost(dto))
-                .firstAnalogCost(mapFirstAnalogCost(dto))
-                .simpleRegisteredLetterCost(mapSimpleRegisteredLetterCost(dto))
+    private TotalCostDetails mapTotalCostDetails(NotificationDeliveryCostDto dto, CalculatedCosts calculatedCosts) {
+        return new TotalCostDetails()
                 .vat(dto.getVat())
-                .notificationFeePolicy(dto.getNotificationFeePolicy())
-                .build();
+                .notificationFeePolicy(mapFeePolicy(dto.getNotificationFeePolicy()))
+                .baseCostDetail(new BaseCostDetail()
+                        .cost(calculatedCosts.getBaseCost())
+                        .baseCostComponents(List.of(
+                                new BaseCostComponent().costName(CostName.SEND_FEE).cost(dto.getBaseCost().getSendFee()),
+                                new BaseCostComponent().costName(CostName.PA_FEE).cost(dto.getBaseCost().getPaFee())
+                        )))
+                .analogCostDetail(mapAnalogCostDetail(dto, calculatedCosts));
     }
 
-    private BaseCostDto mapBaseCost(NotificationDeliveryCostDto dto) {
-        return BaseCostDto.builder()
-                .paFee(dto.getPaFee())
-                .sendFee(dto.getSendFee())
-                .build();
+    private AnalogCostDetail mapAnalogCostDetail(NotificationDeliveryCostDto dto, CalculatedCosts calculatedCosts) {
+        List<AnalogCostComponent> components = mapAnalogComponents(dto);
+
+        if (components.isEmpty()) return null;
+
+        return new AnalogCostDetail()
+                .costWithVat(calculatedCosts.getAnalogCostWithVat())
+                .analogCostComponents(components);
     }
 
+    private List<AnalogCostComponent> mapAnalogComponents(NotificationDeliveryCostDto dto) {
+        List<AnalogCostComponent> components = new ArrayList<>();
 
-    private FirstAnalogCostDto mapFirstAnalogCost(NotificationDeliveryCostDto dto) {
-        if(Objects.isNull(dto.getFirstAnalogCost())){
-            return null;
-        }
-        return FirstAnalogCostDto.builder()
-                .productType(dto.getFirstAnalogCost().getProductType())
-                .cost(getCostWithVat(dto.getFirstAnalogCost().getCost(), dto.getVat()))
-                .build();
+        // Gestione primo tentativo o raccomandata semplice
+        Optional<AnalogCostComponent> firstAnalogCost = Optional.ofNullable(dto.getSimpleRegisteredLetterCost())
+                .map(c -> toAnalogComponent(c, FIRST_ATTEMPT_INDEX))
+                .or(() -> Optional.ofNullable(dto.getFirstAnalogCost())
+                        .map(c -> toAnalogComponent(c, FIRST_ATTEMPT_INDEX)));
+
+        firstAnalogCost.ifPresent(components::add);
+
+        // Gestione secondo tentativo
+        Optional.ofNullable(dto.getSecondAnalogCost())
+                .ifPresent(c -> components.add(toAnalogComponent(c, SECOND_ATTEMPT_INDEX)));
+
+        return components;
     }
 
-    private SecondAnalogCostDto mapSecondAnalogCost(NotificationDeliveryCostDto dto) {
-        if(Objects.isNull(dto.getSecondAnalogCost())){
-            return null;
-        }
-        return SecondAnalogCostDto.builder()
-                .productType(dto.getSecondAnalogCost().getProductType())
-                .cost(getCostWithVat(dto.getSecondAnalogCost().getCost(), dto.getVat()))
-                .build();
+    private AnalogCostComponent toAnalogComponent(AnalogCostDto dto, int index) {
+        return new AnalogCostComponent()
+                .cost(dto.getCost())
+                .attemptIndex(index)
+                .productType(dto.getProductType());
     }
 
-    private SimpleRegisteredLetterCostDto mapSimpleRegisteredLetterCost(NotificationDeliveryCostDto dto) {
-        if(Objects.isNull(dto.getSimpleRegisteredLetterCost())){
-            return null;
-        }
-        return SimpleRegisteredLetterCostDto.builder()
-                .productType(dto.getSimpleRegisteredLetterCost().getProductType())
-                .cost(getCostWithVat(dto.getSimpleRegisteredLetterCost().getCost(), dto.getVat()))
-                .build();
+    private PagoPaIntMode mapPagoPaMode(Enum<?> source) {
+        return source != null ? PagoPaIntMode.fromValue(source.name()) : null;
+    }
+
+    private NotificationFeePolicy mapFeePolicy(Enum<?> source) {
+        return source != null ? NotificationFeePolicy.fromValue(source.name()) : null;
     }
 }

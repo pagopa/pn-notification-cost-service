@@ -20,12 +20,10 @@ public class DtoToEntityNotificationDeliveryCostMapper {
                 .recIndex(notificationDeliveryCostDto.getRecIndex())
                 .recipientInternalId(notificationDeliveryCostDto.getRecipientInternalId())
                 .notificationFeePolicy(notificationDeliveryCostDto.getNotificationFeePolicy())
-                .paFee(notificationDeliveryCostDto.getPaFee())
                 .isDeleted(notificationDeliveryCostDto.getIsDeleted())
                 .lastUpdate(notificationDeliveryCostDto.getLastUpdate())
                 .ttl(notificationDeliveryCostDto.getTtl())
                 .senderInternalId(notificationDeliveryCostDto.getSenderInternalId())
-                .sendFee(notificationDeliveryCostDto.getSendFee())
                 .pagoPaIntMode(notificationDeliveryCostDto.getPagoPaIntMode())
                 .vat(notificationDeliveryCostDto.getVat())
                 .firstAnalogCost(mapFirstAnalogCost(notificationDeliveryCostDto.getFirstAnalogCost()))
@@ -47,8 +45,8 @@ public class DtoToEntityNotificationDeliveryCostMapper {
 
     private BaseCost mapBaseCost(NotificationDeliveryCostDto dto){
         return BaseCost.builder()
-                .paFee(dto.getPaFee())
-                .sendFee(dto.getSendFee())
+                .paFee(dto.getBaseCost().getPaFee())
+                .sendFee(dto.getBaseCost().getSendFee())
                 .build();
     }
 
