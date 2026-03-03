@@ -42,7 +42,7 @@ public class NotificationDeliveryCostDaoDynamoTest {
     private PnNotificationCostServiceConfigs configs;
 
     @Mock
-    private PnNotificationCostServiceConfigs.NotificationDeliveryCostDao notificationDeliveryCostDao;
+    private PnNotificationCostServiceConfigs.NotificationDeliveryCostTable notificationDeliveryCostDao;
 
     @Mock
     private DynamoDbAsyncTable<NotificationDeliveryCostEntity> mockTable;

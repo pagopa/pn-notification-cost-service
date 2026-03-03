@@ -226,7 +226,7 @@ Resources:
         ContainerEnvEntry2: !Sub 'PN_CRON_ANALYZER=${PnCronAnalyzer}'
         ContainerEnvEntry3: !Sub 'WIRE_TAP_LOG=${WireTapLogActivation}'
         ContainerEnvEntry4: !Sub 'CORS_ALLOWED_DOMAINS=${CorsAllowedDomains}'
-        ContainerEnvEntry5: !Sub 'PN_NOTIFICATIONCOSTSERVICE_NOTIFICATIONDELIVERYCOSTDAO_TABLENAME=${NotificationDeliveryCostTableName}'
+        ContainerEnvEntry5: !Sub 'PN_NOTIFICATIONCOSTSERVICE_NOTIFICATIONDELIVERYCOSTTABLE_TABLENAME=${NotificationDeliveryCostTableName}'
         ApplicativeEnvFileChecksum: !Ref ApplicativeEnvFileChecksum
         JavaToolOptions: '-Dreactor.netty.ioWorkerCount=50'
         MappedPaths: '/notification-cost-service/*,/notification-cost-service-private/*'
