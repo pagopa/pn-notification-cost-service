@@ -27,4 +27,5 @@ Analizza le notifiche e le relative timeline per calcolare i costi di consegna.
 
 N.B. Per lanciare lo script in locale, bisogna tirare su localstack tirando su il file `init-for-migration.sh` 
 poi lanciare il seguente comando: `NODE_TLS_REJECT_UNAUTHORIZED=0 node index.js`
-Nel caso in cui si voglia eseguire lo script in un ambiente diverso da `local`, è necessario modificare la configurazione presente nel file `.env`.
+Nel caso in cui si voglia eseguire lo script in un ambiente diverso da `local`, 
+è necessario creare/modificare la configurazione nel file nel seguente path `../config/.env`.
