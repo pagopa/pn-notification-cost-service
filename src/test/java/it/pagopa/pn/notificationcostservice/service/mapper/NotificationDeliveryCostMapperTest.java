@@ -1,9 +1,6 @@
 package it.pagopa.pn.notificationcostservice.service.mapper;
 
-import it.pagopa.pn.notification_cost_service.generated.openapi.server.v1.dto.AnalogCostComponent;
-import it.pagopa.pn.notification_cost_service.generated.openapi.server.v1.dto.AnalogCostDetail;
-import it.pagopa.pn.notification_cost_service.generated.openapi.server.v1.dto.BaseCostDetail;
-import it.pagopa.pn.notification_cost_service.generated.openapi.server.v1.dto.NotificationCostRecipientResponse;
+import it.pagopa.pn.notification_cost_service.generated.openapi.server.v1.dto.*;
 import it.pagopa.pn.notificationcostservice.dto.cost.CalculatedCosts;
 import it.pagopa.pn.notificationcostservice.dto.notificationdeliverycost.BaseCostDto;
 import it.pagopa.pn.notificationcostservice.dto.notificationdeliverycost.NotificationDeliveryCostDto;
@@ -30,7 +27,6 @@ class NotificationDeliveryCostMapperTest {
         Instant now = Instant.now();
         NotificationDeliveryCostDto dto = createBaseDto();
         dto.setLastUpdate(now);
-        dto.setVat(22);
 
         CalculatedCosts calculated = CalculatedCosts.builder()
                 .totalCostWithVat(1000)
@@ -43,7 +39,6 @@ class NotificationDeliveryCostMapperTest {
         // Then
         assertThat(response.getLastUpdate()).isEqualTo(now);
         assertThat(response.getTotalCost().getCostWithVat()).isEqualTo(1000);
-        assertThat(response.getTotalCost().getDetails().getVat()).isEqualTo(22);
 
         BaseCostDetail baseDetail = response.getTotalCost().getDetails().getBaseCostDetail();
         assertThat(baseDetail.getCost()).isEqualTo(500L);
@@ -78,7 +73,7 @@ class NotificationDeliveryCostMapperTest {
         assertThat(components).hasSize(1);
         assertThat(components.getFirst().getCost()).isEqualTo(100L);
         assertThat(components.getFirst().getProductType()).isEqualTo("SIMPLE");
-        assertThat(components.getFirst().getAttemptIndex()).isEqualTo(0);
+        assertThat(components.getFirst().getCostName()).isEqualTo(AnalogCostName.FIRST_ATTEMPT);
     }
 
     @Test
@@ -88,6 +83,7 @@ class NotificationDeliveryCostMapperTest {
         NotificationDeliveryCostDto dto = createBaseDto();
         dto.setFirstAnalogCost(FirstAnalogCostDto.builder().cost(100).productType("AR").build());
         dto.setSecondAnalogCost(SecondAnalogCostDto.builder().cost(150).productType("AR").build());
+        dto.setVat(22);
 
         CalculatedCosts calculated = CalculatedCosts.builder()
                 .analogCostWithVat(300)
@@ -101,9 +97,12 @@ class NotificationDeliveryCostMapperTest {
         assertNotNull(response.getTotalCost().getDetails());
         AnalogCostDetail analogDetail = response.getTotalCost().getDetails().getAnalogCostDetail();
         assertNotNull(analogDetail);
+        assertThat(analogDetail.getVat()).isEqualTo(22);
         assertThat(analogDetail.getAnalogCostComponents()).hasSize(2);
-        assertThat(analogDetail.getAnalogCostComponents().get(1).getAttemptIndex()).isEqualTo(1);
-        assertThat(analogDetail.getAnalogCostComponents().get(1).getCost()).isEqualTo(150L);
+        assertThat(analogDetail.getAnalogCostComponents().get(0).getCostName()).isEqualTo(AnalogCostName.FIRST_ATTEMPT);
+        assertThat(analogDetail.getAnalogCostComponents().get(0).getCost()).isEqualTo(100);
+        assertThat(analogDetail.getAnalogCostComponents().get(1).getCostName()).isEqualTo(AnalogCostName.SECOND_ATTEMPT);
+        assertThat(analogDetail.getAnalogCostComponents().get(1).getCost()).isEqualTo(150);
     }
 
     @Test
