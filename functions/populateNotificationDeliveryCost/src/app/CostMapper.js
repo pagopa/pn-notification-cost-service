@@ -19,13 +19,30 @@ const extractAttempt = (elementId) => {
 /**
  * Mappa i campi dalla tabella NotificationDeliveryCost
  */
-const mapToDeliveryCost = (notif, currentIndex, recipientEvents, ttlValue) => {
+const mapToDeliveryCost = (notif, currentIndex, recipientEvents, isDeletedField, ttlValue) => {
   const recipientId = (notif.recipients && notif.recipients[currentIndex])
     ? notif.recipients[currentIndex].recipientId : null;
 
   let firstAnalogCost = null;
   let secondAnalogCost = null;
   let simpleRegisteredLetterCost = null;
+
+  const deliveryCost = {
+      iun: String(notif.iun),
+      recIndex: Number(currentIndex),
+      baseCost: {
+        sendFee: 100,
+        paFee: notif.paFee
+      },
+      vat: toSafeNumber(notif.vat),
+      ttl: ttlValue,
+      notificationFeePolicy: notif.notificationFeePolicy,
+      senderInternalId: notif.senderPaId,
+      recipientInternalId: recipientId,
+      isDeleted: isDeletedField,
+      lastUpdate: new Date().toISOString(),
+      pagoPaIntMode: notif.pagoPaIntMode
+    };
 
   for (const event of recipientEvents) {
     const attempt = extractAttempt(event.timelineElementId);
@@ -34,37 +51,16 @@ const mapToDeliveryCost = (notif, currentIndex, recipientEvents, ttlValue) => {
 
     if (event.category === 'SEND_ANALOG_DOMICILE') {
       if (attempt === 0) {
-        firstAnalogCost = { productType, cost };
+        deliveryCost.firstAnalogCost = { productType, cost };
       } else if (attempt === 1) {
-        secondAnalogCost = { productType, cost };
+        deliveryCost.secondAnalogCost = { productType, cost };
       }
     } else if (event.category === 'SEND_SIMPLE_REGISTERED_LETTER') {
       simpleRegisteredLetterCost = { productType, cost };
+      deliveryCost.simpleRegisteredLetterCost = { productType, cost };
     }
   }
-
-  const isDeletedStatus = ['REQUEST_REFUSED', 'NOTIFICATION_CANCELLED']
-    .includes(notif.notificationStatus || notif.status);
-
-  return {
-    iun: String(notif.iun),
-    recIndex: Number(currentIndex),
-    baseCost: {
-      sendFee: 100,
-      paFee: notif.paFee
-    },
-    vat: toSafeNumber(notif.vat),
-    ttl: ttlValue,
-    notificationFeePolicy: notif.notificationFeePolicy,
-    isDeleted: isDeletedStatus,
-    senderInternalId: notif.senderPaId,
-    recipientInternalId: recipientId,
-    firstAnalogCost,
-    secondAnalogCost,
-    simpleRegisteredLetterCost,
-    lastUpdate: new Date().toISOString(),
-    pagoPaIntMode: notif.pagoPaIntMode
-  };
+  return deliveryCost;
 };
 
 module.exports = {

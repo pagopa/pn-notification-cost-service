@@ -44,6 +44,10 @@ aws --endpoint-url=$ENDPOINT dynamodb put-item --table-name pn-Timelines --item 
 IUN3="IUN-REFUSED"
 aws --endpoint-url=$ENDPOINT dynamodb put-item --table-name pn-Notifications --item "{\"iun\": {\"S\": \"$IUN3\"}, \"notificationStatus\": {\"S\": \"REQUEST_REFUSED\"}, \"paFee\": {\"N\": \"100\"}, \"vat\": {\"N\": \"22\"}, \"senderPaId\": {\"S\": \"PA-003\"}, \"notificationFeePolicy\": {\"S\": \"FLAT_RATE\"}, \"pagoPaIntMode\": {\"S\": \"NONE\"}, \"recipients\": {\"L\": [{\"M\": {\"recipientId\": {\"S\": \"REC-REFUSED\"}}}]}}"
 
+aws --endpoint-url=$ENDPOINT dynamodb put-item --table-name pn-Timelines --item "{\"iun\": {\"S\": \"$IUN3\"}, \"timelineElementId\": {\"S\": \"SEND_SIMPLE.$IUN2.RECINDEX_0\"}, \"category\": {\"S\": \"REQUEST_REFUSED\"}, \"details\": {\"M\": {\"recIndex\": {\"N\": \"0\"}, \"analogCost\": {\"N\": \"120\"}, \"productType\": {\"S\": \"896\"}}}}"
+
+aws --endpoint-url=$ENDPOINT dynamodb put-item --table-name pn-Timelines --item "{\"iun\": {\"S\": \"$IUN3\"}, \"timelineElementId\": {\"S\": \"SEND_SIMPLE.$IUN2.RECINDEX_0\"}, \"category\": {\"S\": \"NOTIFICATION_CANCELLED\"}, \"details\": {\"M\": {\"recIndex\": {\"N\": \"0\"}, \"analogCost\": {\"N\": \"120\"}, \"productType\": {\"S\": \"896\"}}}}"
+
 
 IUN4="IUN-DOUBLE-ATTEMPT"
 aws --endpoint-url=$ENDPOINT dynamodb put-item --table-name pn-Notifications --item "{\"iun\": {\"S\": \"$IUN4\"}, \"paFee\": {\"N\": \"100\"}, \"vat\": {\"N\": \"22\"}, \"senderPaId\": {\"S\": \"PA-004\"}, \"notificationFeePolicy\": {\"S\": \"FLAT_RATE\"}, \"pagoPaIntMode\": {\"S\": \"NONE\"}, \"recipients\": {\"L\": [{\"M\": {\"recipientId\": {\"S\": \"REC-FULL\"}}}]}}"

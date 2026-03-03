@@ -32,8 +32,12 @@ exports.runMigration = async function (iunsToProcess = []) {
     const ttlValue = Math.floor(Date.now() / 1000) + (365 * 24 * 60 * 60);
 
     for (const notif of notifications) {
+      let isDeletedStatus= false;
       const timelineItems = await getTimelineByIun(notif.iun);
 
+      isDeletedStatus = timelineItems.some(item =>
+        item.category === 'REQUEST_REFUSED' || item.category === 'NOTIFICATION_CANCELLED'
+      );
       const uniqueRecIndices = [...new Set(
         timelineItems.map(item => extractRecIndex(item.timelineElementId)).filter(idx => idx !== null)
       )];
@@ -41,7 +45,8 @@ exports.runMigration = async function (iunsToProcess = []) {
 
       const itemsToWrite = indicesToProcess.map(idx => {
         const recipientEvents = timelineItems.filter(item => extractRecIndex(item.timelineElementId) === idx);
-        return mapToDeliveryCost(notif, idx, recipientEvents, ttlValue);
+        const isDeletedField = isDeletedStatus;
+        return mapToDeliveryCost(notif, idx, recipientEvents, isDeletedField ,ttlValue);
       });
 
 
