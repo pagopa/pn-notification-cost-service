@@ -45,17 +45,15 @@ Resources:
         - AttributeName: "pk"
           AttributeType: "S"
         - AttributeName: "sk"
-          AttributeType: "S"
+          AttributeType: "N"
       KeySchema:
         - AttributeName: "pk"
           KeyType: "HASH"
         - AttributeName: "sk"
           KeyType: "RANGE"
-      Projection:
-        ProjectionType: "ALL"
       BillingMode: "PAY_PER_REQUEST"
       TimeToLiveSpecification:
-        AttributeName: "i_ttl"
+        AttributeName: "ttl"
         Enabled: true
       PointInTimeRecoverySpecification:
         PointInTimeRecoveryEnabled: true
