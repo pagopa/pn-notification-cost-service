@@ -16,7 +16,7 @@ public class NotificationDeliveryCostMapper {
     public NotificationCostRecipientResponse mapDtoToResponse(NotificationDeliveryCostDto dto, CalculatedCosts calculatedCosts) {
         return new NotificationCostRecipientResponse()
                 .lastUpdate(dto.getLastUpdate())
-                .pagoPaIntMode(mapPagoPaMode(dto.getPagoPaIntMode()))
+                .pagoPaIntMode(PagoPaIntMode.fromValue(dto.getPagoPaIntMode().name()))
                 .totalCost(new TotalCost()
                         .costWithVat(calculatedCosts.getTotalCostWithVat())
                         .details(mapTotalCostDetails(dto, calculatedCosts)));
@@ -24,7 +24,7 @@ public class NotificationDeliveryCostMapper {
 
     private TotalCostDetails mapTotalCostDetails(NotificationDeliveryCostDto dto, CalculatedCosts calculatedCosts) {
         return new TotalCostDetails()
-                .notificationFeePolicy(mapFeePolicy(dto.getNotificationFeePolicy()))
+                .notificationFeePolicy(NotificationFeePolicy.fromValue(dto.getNotificationFeePolicy().name()))
                 .baseCostDetail(new BaseCostDetail()
                         .cost(calculatedCosts.getBaseCost())
                         .baseCostComponents(List.of(
@@ -48,7 +48,6 @@ public class NotificationDeliveryCostMapper {
     private List<AnalogCostComponent> mapAnalogComponents(NotificationDeliveryCostDto dto) {
         List<AnalogCostComponent> components = new ArrayList<>();
 
-        // Gestione primo tentativo o raccomandata semplice
         Optional<AnalogCostComponent> firstAnalogCost = Optional.ofNullable(dto.getSimpleRegisteredLetterCost())
                 .map(c -> toAnalogComponent(c, AnalogCostName.FIRST_ATTEMPT))
                 .or(() -> Optional.ofNullable(dto.getFirstAnalogCost())
@@ -68,13 +67,5 @@ public class NotificationDeliveryCostMapper {
                 .cost(dto.getCost())
                 .costName(costName)
                 .productType(dto.getProductType());
-    }
-
-    private PagoPaIntMode mapPagoPaMode(Enum<?> source) {
-        return source != null ? PagoPaIntMode.fromValue(source.name()) : null;
-    }
-
-    private NotificationFeePolicy mapFeePolicy(Enum<?> source) {
-        return source != null ? NotificationFeePolicy.fromValue(source.name()) : null;
     }
 }

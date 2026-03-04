@@ -1,8 +1,7 @@
 openapi: 3.0.3
 info:
-  termsOfService: https://da-definire/
   title: 'API di notification cost service'
-  x-summary: 'API di  notification cost service'
+  x-summary: 'API di notification cost service'
   x-api-id: api-internal-pn-notification-cost-service
   version: '1.0.0'
   description: >-
@@ -95,7 +94,7 @@ components:
       description: >-
         Scomposizione del costo di notifica in base alle diverse componenti di invio.
       type: object
-      required: [ baseCostDetail, vat, notificationFeePolicy ]
+      required: [ baseCostDetail, notificationFeePolicy ]
       properties:
         notificationFeePolicy:
           $ref: '#/components/schemas/NotificationFeePolicy'
@@ -157,9 +156,9 @@ components:
         baseCostComponents:
           description: Elenco delle componenti di costo base che concorrono a formare il costo totale
           type: array
+          maxItems: 2
           items:
             $ref: '#/components/schemas/BaseCostComponent'
-            maxItems: 2
 
     BaseCostComponent:
       description: Componente di costo base per la notificazione
@@ -175,7 +174,7 @@ components:
 
     AnalogCostDetail:
       type: object
-      required: [ costWithVat, analogCostComponents ]
+      required: [ costWithVat, vat, analogCostComponents ]
       properties:
         costWithVat:
           description: Costo totale in eurocent (somma algebrica delle componenti) comprensivo di IVA
@@ -191,9 +190,9 @@ components:
         analogCostComponents:
           description: Elenco delle componenti di costo analogiche che concorrono a formare il costo totale
           type: array
+          maxItems: 2
           items:
             $ref: '#/components/schemas/AnalogCostComponent'
-            maxItems: 2
 
     AnalogCostName:
       type: string
@@ -208,7 +207,7 @@ components:
     AnalogCostComponent:
       description: Componente di costo anlogica che concorre a formare il costo totale
       type: object
-      required: [ cost, attemptIndex, productType ]
+      required: [ cost, costName, productType ]
       properties:
        cost:
          description: Costo della componente in eurocent in cui non è inclusa l'IVA

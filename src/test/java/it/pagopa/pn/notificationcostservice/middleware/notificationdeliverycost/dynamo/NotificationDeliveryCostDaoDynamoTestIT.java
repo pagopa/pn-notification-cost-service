@@ -13,7 +13,6 @@ import it.pagopa.pn.notificationcostservice.middleware.dao.notificationdeliveryc
 import it.pagopa.pn.notificationcostservice.middleware.dao.notificationdeliverycost.dynamo.entity.notificationdeliverycost.analogcost.SecondAnalogCost;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -27,7 +26,6 @@ import static org.junit.jupiter.api.Assertions.fail;
 
 @SpringBootTest
 @Import({LocalStackTestConfig.class, MockAWSObjectsTest.class})
-@Disabled
 public class NotificationDeliveryCostDaoDynamoTestIT {
     @Autowired
     private NotificationDeliveryCostDaoDynamo dao;

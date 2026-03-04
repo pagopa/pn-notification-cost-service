@@ -7,12 +7,8 @@ public class CostUtils {
     /**
      * Calcola e applica l'IVA a un costo
      */
-    public static Integer getCostWithVat(Integer cost, Integer vat) {
-        int costWithVat = 0;
-        if (vat != null && cost != null) {
-            double completeCostWithVat = cost.doubleValue() + (cost.doubleValue() * vat.doubleValue() / 100);
-            costWithVat = Math.toIntExact(Math.round(completeCostWithVat));
-        }
-        return costWithVat;
+    public static Integer getCostWithVat(int cost, int vat) {
+        double completeCostWithVat = (double) cost + ((double) cost * ((double)vat / 100));
+        return Math.toIntExact(Math.round(completeCostWithVat));
     }
 }
