@@ -9,6 +9,8 @@ if (process.env.PR_NUM) {
     options["sonar.pullrequest.key"] = process.env.PR_NUM;
 }
 
+process.env.SONAR_SCANNER_OPTS = "-Dsonar.scanner.skipJreProvisioning=true";
+
 const scanner = require("sonarqube-scanner");
 
 scanner(
