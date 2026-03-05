@@ -257,17 +257,17 @@ Resources:
           - ','
           - - !Sub '/aws/ecs/${ProjectName}-notification-cost-service'
     
-    # Grant operational rights to Pn-NotificationCostService microservice
-    NotificationCostServiceMicroserviceTaskManagedPolicy:
-      Type: AWS::IAM::ManagedPolicy
-      Properties:
-        PolicyDocument:
-          Version: 2012-10-17
-          Statement:
-            - Effect: Allow
-              Action:
-                - 'dynamodb:GetItem'
-                - 'dynamodb:PutItem'
-                - 'dynamodb:UpdateItem'
-              Resource:
-                - !Sub "${NotificationDeliveryCostTableArn}"
+  # Grant operational rights to Pn-NotificationCostService microservice
+  NotificationCostServiceMicroserviceTaskManagedPolicy:
+    Type: AWS::IAM::ManagedPolicy
+    Properties:
+      PolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          - Effect: Allow
+            Action:
+              - 'dynamodb:GetItem'
+              - 'dynamodb:PutItem'
+              - 'dynamodb:UpdateItem'
+            Resource:
+              - !Sub "${NotificationDeliveryCostTableArn}"
