@@ -13,13 +13,10 @@ import java.util.Optional;
 @Component
 public class NotificationDeliveryCostMapper {
 
-    private static final Integer FIRST_ATTEMPT_INDEX = 0;
-    private static final Integer SECOND_ATTEMPT_INDEX = 1;
-
     public NotificationCostRecipientResponse mapDtoToResponse(NotificationDeliveryCostDto dto, CalculatedCosts calculatedCosts) {
         return new NotificationCostRecipientResponse()
                 .lastUpdate(dto.getLastUpdate())
-                .pagoPaIntMode(mapPagoPaMode(dto.getPagoPaIntMode()))
+                .pagoPaIntMode(PagoPaIntMode.fromValue(dto.getPagoPaIntMode().name()))
                 .totalCost(new TotalCost()
                         .costWithVat(calculatedCosts.getTotalCostWithVat())
                         .details(mapTotalCostDetails(dto, calculatedCosts)));
@@ -27,13 +24,12 @@ public class NotificationDeliveryCostMapper {
 
     private TotalCostDetails mapTotalCostDetails(NotificationDeliveryCostDto dto, CalculatedCosts calculatedCosts) {
         return new TotalCostDetails()
-                .vat(dto.getVat())
-                .notificationFeePolicy(mapFeePolicy(dto.getNotificationFeePolicy()))
+                .notificationFeePolicy(NotificationFeePolicy.fromValue(dto.getNotificationFeePolicy().name()))
                 .baseCostDetail(new BaseCostDetail()
                         .cost(calculatedCosts.getBaseCost())
                         .baseCostComponents(List.of(
-                                new BaseCostComponent().costName(CostName.SEND_FEE).cost(dto.getBaseCost().getSendFee()),
-                                new BaseCostComponent().costName(CostName.PA_FEE).cost(dto.getBaseCost().getPaFee())
+                                new BaseCostComponent().costName(BaseCostName.SEND_FEE).cost(dto.getBaseCost().getSendFee()),
+                                new BaseCostComponent().costName(BaseCostName.PA_FEE).cost(dto.getBaseCost().getPaFee())
                         )))
                 .analogCostDetail(mapAnalogCostDetail(dto, calculatedCosts));
     }
@@ -45,39 +41,31 @@ public class NotificationDeliveryCostMapper {
 
         return new AnalogCostDetail()
                 .costWithVat(calculatedCosts.getAnalogCostWithVat())
+                .vat(dto.getVat())
                 .analogCostComponents(components);
     }
 
     private List<AnalogCostComponent> mapAnalogComponents(NotificationDeliveryCostDto dto) {
         List<AnalogCostComponent> components = new ArrayList<>();
 
-        // Gestione primo tentativo o raccomandata semplice
         Optional<AnalogCostComponent> firstAnalogCost = Optional.ofNullable(dto.getSimpleRegisteredLetterCost())
-                .map(c -> toAnalogComponent(c, FIRST_ATTEMPT_INDEX))
+                .map(c -> toAnalogComponent(c, AnalogCostName.FIRST_ATTEMPT))
                 .or(() -> Optional.ofNullable(dto.getFirstAnalogCost())
-                        .map(c -> toAnalogComponent(c, FIRST_ATTEMPT_INDEX)));
+                        .map(c -> toAnalogComponent(c, AnalogCostName.FIRST_ATTEMPT)));
 
         firstAnalogCost.ifPresent(components::add);
 
         // Gestione secondo tentativo
         Optional.ofNullable(dto.getSecondAnalogCost())
-                .ifPresent(c -> components.add(toAnalogComponent(c, SECOND_ATTEMPT_INDEX)));
+                .ifPresent(c -> components.add(toAnalogComponent(c, AnalogCostName.SECOND_ATTEMPT)));
 
         return components;
     }
 
-    private AnalogCostComponent toAnalogComponent(AnalogCostDto dto, int index) {
+    private AnalogCostComponent toAnalogComponent(AnalogCostDto dto, AnalogCostName costName) {
         return new AnalogCostComponent()
                 .cost(dto.getCost())
-                .attemptIndex(index)
+                .costName(costName)
                 .productType(dto.getProductType());
-    }
-
-    private PagoPaIntMode mapPagoPaMode(Enum<?> source) {
-        return source != null ? PagoPaIntMode.fromValue(source.name()) : null;
-    }
-
-    private NotificationFeePolicy mapFeePolicy(Enum<?> source) {
-        return source != null ? NotificationFeePolicy.fromValue(source.name()) : null;
     }
 }

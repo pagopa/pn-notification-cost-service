@@ -28,17 +28,17 @@ public class NotificationCostServiceImpl implements NotificationCostService {
     public Mono<NotificationCostRecipientResponse> getNotificationCostRecipient(String iun, Integer recIndex) {
         log.info("Start to get notification cost recipient for iun: {} and recIndex: {}", iun, recIndex);
         return notificationDeliveryCostDao.getNotificationDeliveryCostItem(iun, recIndex)
-                .flatMap(dto -> {
+                .map(dto -> {
                     if (Boolean.TRUE.equals(dto.getIsDeleted())) {
                         log.info("Notification with iun: {} and recIndex: {} is deleted", iun, recIndex);
-                        return Mono.error(new PnNotFoundException("Not Found",
+                        throw new PnNotFoundException("Not Found",
                                 "Notification with iun: " + dto.getIun() + " and recIndex: " + dto.getRecIndex() + " is deleted",
-                                ERROR_CODE_NOTIFICATIONDELIVERYCOST_DELETED));
+                                ERROR_CODE_NOTIFICATIONDELIVERYCOST_DELETED);
                     }
                     log.info("Item retrieved for iun: {} and recIndex: {}", iun, recIndex);
                     CalculatedCosts calculatedCosts = costCalculator.calculateCosts(dto);
-                    return Mono.just(notificationDeliveryCostMapper.mapDtoToResponse(dto, calculatedCosts));
+                    return notificationDeliveryCostMapper.mapDtoToResponse(dto, calculatedCosts);
                 })
-                .doOnError(e -> log.error("Error processing cost recipient for iun: {} - Error: {}", iun, e.getMessage()));
+                .doOnError(e -> log.error("Error processing cost recipient for iun: {} and recIndex: {}", iun, recIndex, e));
     }
 }

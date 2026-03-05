@@ -1,6 +1,7 @@
 package it.pagopa.pn.notificationcostservice.service.impl;
 
 import it.pagopa.pn.notification_cost_service.generated.openapi.server.v1.dto.NotificationCostRecipientResponse;
+import it.pagopa.pn.notificationcostservice.NotificationDeliveryCostDtoTestBuilder;
 import it.pagopa.pn.notificationcostservice.dto.cost.CalculatedCosts;
 import it.pagopa.pn.notificationcostservice.dto.notificationdeliverycost.NotificationDeliveryCostDto;
 import it.pagopa.pn.notificationcostservice.exception.PnNotFoundException;
@@ -39,10 +40,11 @@ class NotificationCostServiceImplTest {
 
     @Test
     void getNotificationCostRecipient_ReturnsMappedResponseWhenItemExistsAndNotDeleted() {
-       NotificationDeliveryCostDto dto = new NotificationDeliveryCostDto();
-       dto.setIun(IUN);
-       dto.setRecIndex(REC_INDEX);
-       dto.setIsDeleted(false);
+       NotificationDeliveryCostDto dto = NotificationDeliveryCostDtoTestBuilder.builder()
+               .withIun(IUN)
+               .withRecIndex(REC_INDEX)
+               .withIsDeleted(false)
+               .build();
 
 
        when(notificationDeliveryCostDao.getNotificationDeliveryCostItem(IUN, REC_INDEX)).thenReturn(Mono.just(dto));
@@ -64,10 +66,11 @@ class NotificationCostServiceImplTest {
 
     @Test
     void getNotificationCostRecipient_ReturnsNotFoundErrorWhenItemIsDeleted() {
-       NotificationDeliveryCostDto dto = new NotificationDeliveryCostDto();
-       dto.setIun(IUN);
-       dto.setRecIndex(REC_INDEX);
-       dto.setIsDeleted(true);
+        NotificationDeliveryCostDto dto = NotificationDeliveryCostDtoTestBuilder.builder()
+                .withIun(IUN)
+                .withRecIndex(REC_INDEX)
+                .withIsDeleted(true)
+                .build();
 
        when(notificationDeliveryCostDao.getNotificationDeliveryCostItem(IUN, REC_INDEX)).thenReturn(Mono.just(dto));
 

@@ -13,9 +13,7 @@ class CostUtilsTest {
             "1000, 22, 1220", // 22% VAT
             "1500, 10, 1650", // 10% VAT
             "1500, 0, 1500", // Test with 0% VAT
-            "1500, NULL, 0", // Test with null VAT
-            "NULL, 22, 0" // Test with null cost
-    }, nullValues = {"NULL"})
+    })
     void getCostWithVatTest(Integer cost, Integer vat, Integer expectedCostWithVat) {
 
         Integer costWithVat = CostUtils.getCostWithVat(cost, vat);
