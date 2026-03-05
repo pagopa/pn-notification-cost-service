@@ -1,12 +1,11 @@
 package it.pagopa.pn.notificationcostservice.middleware.notificationdeliverycost.dynamo.mapper;
 
 import it.pagopa.pn.notificationcostservice.dto.notificationdeliverycost.BaseCostDto;
-import it.pagopa.pn.notificationcostservice.dto.notificationdeliverycost.analogcost.FirstAnalogCostDto;
-import it.pagopa.pn.notificationcostservice.dto.notificationdeliverycost.analogcost.SecondAnalogCostDto;
-import it.pagopa.pn.notificationcostservice.dto.notificationdeliverycost.analogcost.SimpleRegisteredLetterCostDto;
 import it.pagopa.pn.notificationcostservice.dto.notificationdeliverycost.NotificationDeliveryCostDto;
 import it.pagopa.pn.notificationcostservice.dto.notificationdeliverycost.NotificationFeePolicy;
 import it.pagopa.pn.notificationcostservice.dto.notificationdeliverycost.PagoPaIntMode;
+import it.pagopa.pn.notificationcostservice.dto.notificationdeliverycost.analogcost.FirstAnalogCostDto;
+import it.pagopa.pn.notificationcostservice.dto.notificationdeliverycost.analogcost.SecondAnalogCostDto;
 import it.pagopa.pn.notificationcostservice.middleware.dao.notificationdeliverycost.dynamo.entity.notificationdeliverycost.NotificationDeliveryCostEntity;
 import it.pagopa.pn.notificationcostservice.middleware.dao.notificationdeliverycost.dynamo.mapper.DtoToEntityNotificationDeliveryCostMapper;
 import org.junit.jupiter.api.BeforeEach;
@@ -39,11 +38,6 @@ public class DtoToEntityNotificationDeliveryCostDaoMapperTest {
                 .productType("890")
                 .build();
 
-        SimpleRegisteredLetterCostDto simpleCost = SimpleRegisteredLetterCostDto.builder()
-                .cost(20)
-                .productType("RS")
-                .build();
-
         BaseCostDto baseCost = BaseCostDto.builder()
                 .paFee(50)
                 .sendFee(50)
@@ -56,7 +50,6 @@ public class DtoToEntityNotificationDeliveryCostDaoMapperTest {
                 .baseCost(baseCost)
                 .firstAnalogCost(firstCost)
                 .secondAnalogCost(secondCost)
-                .simpleRegisteredLetterCost(simpleCost)
                 .isDeleted(false)
                 .notificationFeePolicy(NotificationFeePolicy.DELIVERY_MODE)
                 .pagoPaIntMode(PagoPaIntMode.SYNC)
@@ -86,8 +79,7 @@ public class DtoToEntityNotificationDeliveryCostDaoMapperTest {
         assertEquals(dto.getSecondAnalogCost().getProductType(), entity.getSecondAnalogCost().getProductType());
 
         // Verifica SimpleRegisteredLetterCost
-        assertEquals(dto.getSimpleRegisteredLetterCost().getCost(), entity.getSimpleRegisteredLetterCost().getCost());
-        assertEquals(dto.getSimpleRegisteredLetterCost().getProductType(), entity.getSimpleRegisteredLetterCost().getProductType());
+        assertNull(entity.getSimpleRegisteredLetterCost());
 
         assertEquals(dto.getIsDeleted(), entity.getIsDeleted());
         assertEquals(dto.getNotificationFeePolicy(), entity.getNotificationFeePolicy());
