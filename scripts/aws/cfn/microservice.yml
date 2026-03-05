@@ -104,7 +104,7 @@ Parameters:
     Default: ''
     Description: 'Applicative environment variable file checksum'
   
-  MinTasksNumberValidator:
+  MinTasksNumber:
     Default: 1
     Type: Number
     Description: minimum autoscaling number of tasks (task)
