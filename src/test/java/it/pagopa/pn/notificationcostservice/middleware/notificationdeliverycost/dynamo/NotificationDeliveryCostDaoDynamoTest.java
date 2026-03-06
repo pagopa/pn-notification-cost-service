@@ -55,7 +55,7 @@ public class NotificationDeliveryCostDaoDynamoTest {
     @BeforeEach
     void setup() {
         when(notificationDeliveryCostDao.getTableName()).thenReturn("NotificationDeliveryCost");
-        when(configs.getNotificationDeliveryCostDao()).thenReturn(notificationDeliveryCostDao);
+        when(configs.getNotificationDeliveryCostTable()).thenReturn(notificationDeliveryCostDao);
         when(dynamoDbEnhancedAsyncClient.table(
                 any(String.class),
                 any(TableSchema.class)
