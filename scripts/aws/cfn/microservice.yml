@@ -231,7 +231,7 @@ Resources:
         JavaToolOptions: '-Dreactor.netty.ioWorkerCount=50'
         MappedPaths: '/notification-cost-service/*,/notification-cost-service-private/*'
         ECSClusterName: !Ref ECSClusterName
-        CpuArchitecture: ARM
+        CpuArchitecture: ARM64
         Subnets: !Join [ ',', !Ref SubnetsIds ]
         VpcId: !Ref VpcId
         EcsDefaultSecurityGroup: !Ref EcsDefaultSecurityGroup
