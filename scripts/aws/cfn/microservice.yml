@@ -196,6 +196,10 @@ Parameters:
     Type: String
     Description: 'ARN of dynamodb table containing cost of notification delivery '
 
+  ContainerImageInjectorURI:
+    Type: String
+    Description: Container image URI for Open telemetry
+
 Resources:
   # PN-Notification-Cost-Service microservice
   NotificationCostServiceMicroservice:
@@ -241,6 +245,7 @@ Resources:
         AlbSecurityGroup: !Ref AlbSecurityGroup
         EcsLogGroup: !Ref EcsNotificationCostServiceLogGroup
         LogAlarmStrategyV1: !Ref LogAlarmStrategy
+        ContainerImageInjectorURI: !Ref ContainerImageInjectorURI
         
   NotificationCostServiceMicroserviceCloudWatchDashboard:
     Type: AWS::CloudFormation::Stack
