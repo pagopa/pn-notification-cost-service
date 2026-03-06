@@ -15,7 +15,7 @@ import org.springframework.context.annotation.Import;
 @Slf4j
 public class PnNotificationCostServiceConfigs {
 
-    private NotificationDeliveryCostTable notificationDeliveryCostDao;
+    private NotificationDeliveryCostTable notificationDeliveryCostTable;
 
     @Data
     public static class NotificationDeliveryCostTable {

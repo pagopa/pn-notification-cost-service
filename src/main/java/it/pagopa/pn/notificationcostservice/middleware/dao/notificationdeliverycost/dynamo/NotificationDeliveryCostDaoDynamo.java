@@ -28,7 +28,7 @@ public class NotificationDeliveryCostDaoDynamo extends BaseDao implements Notifi
 
     public NotificationDeliveryCostDaoDynamo(DynamoDbEnhancedAsyncClient dynamoDbEnhancedAsyncClient,
                                              PnNotificationCostServiceConfigs awsConfigs, EntityToDtoNotificationDeliveryCostMapper entityToDto) {
-        this.notificationDeliveryCostTable = dynamoDbEnhancedAsyncClient.table(awsConfigs.getNotificationDeliveryCostDao().getTableName(), TableSchema.fromBean(NotificationDeliveryCostEntity.class));
+        this.notificationDeliveryCostTable = dynamoDbEnhancedAsyncClient.table(awsConfigs.getNotificationDeliveryCostTable().getTableName(), TableSchema.fromBean(NotificationDeliveryCostEntity.class));
         this.dynamoDbEnhancedAsyncClient = dynamoDbEnhancedAsyncClient;
         this.entityToDto = entityToDto;
     }
