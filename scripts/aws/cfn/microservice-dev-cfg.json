@@ -8,6 +8,7 @@
     "MinTasksNumber": "1",
     "MaxTasksNumber": "1",
     "AutoscalingThreshold": "650",
-    "ContainerImageInjectorURI": "911845998067.dkr.ecr.eu-south-1.amazonaws.com/aws-otel-agent-injector:v1.33.0"
+    "ContainerImageInjectorURI": "911845998067.dkr.ecr.eu-south-1.amazonaws.com/aws-otel-agent-injector:v1.33.0",
+    "ContainerCloudWatchAgentURI": "911845998067.dkr.ecr.eu-south-1.amazonaws.com/cloudwatch-agent:v1.30-arm64"
   }
 }

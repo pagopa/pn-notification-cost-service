@@ -200,6 +200,10 @@ Parameters:
     Type: String
     Description: Container image URI for Open telemetry
 
+  ContainerCloudWatchAgentURI:
+    Type: String
+    Description: Container image URI for Cloudwatch agent
+
 Resources:
   # PN-Notification-Cost-Service microservice
   NotificationCostServiceMicroservice:
@@ -246,7 +250,8 @@ Resources:
         EcsLogGroup: !Ref EcsNotificationCostServiceLogGroup
         LogAlarmStrategyV1: !Ref LogAlarmStrategy
         ContainerImageInjectorURI: !Ref ContainerImageInjectorURI
-        
+        ContainerCloudWatchAgentURI: !Ref ContainerCloudWatchAgentURI 
+
   NotificationCostServiceMicroserviceCloudWatchDashboard:
     Type: AWS::CloudFormation::Stack
     Properties:
