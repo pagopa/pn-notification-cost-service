@@ -8,8 +8,10 @@ import it.pagopa.pn.notificationcostservice.dto.notificationdeliverycost.analogc
 import it.pagopa.pn.notificationcostservice.service.CostCalculator;
 import it.pagopa.pn.notificationcostservice.utils.CostUtils;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.stereotype.Component;
 
 @Slf4j
+@Component
 public class CostCalculatorImpl implements CostCalculator {
 
     @Override
