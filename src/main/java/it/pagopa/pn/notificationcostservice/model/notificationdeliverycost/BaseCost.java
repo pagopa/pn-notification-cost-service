@@ -1,4 +1,4 @@
-package it.pagopa.pn.notificationcostservice.dto.notificationdeliverycost;
+package it.pagopa.pn.notificationcostservice.model.notificationdeliverycost;
 
 import it.pagopa.pn.notificationcostservice.exception.PnDomainObjectValidationException;
 import lombok.Builder;
@@ -12,12 +12,12 @@ import static it.pagopa.pn.notificationcostservice.utils.DomainValidationUtils.v
 
 @ToString
 @Data
-public class BaseCostDto {
+public class BaseCost {
     private int sendFee;
     private int paFee;
 
     @Builder
-    public BaseCostDto(Integer sendFee, Integer paFee) {
+    public BaseCost(Integer sendFee, Integer paFee) {
         List<String> violations = new ArrayList<>();
         validatePositiveIntField(sendFee, "sendFee", violations);
         validatePositiveIntField(paFee, "paFee", violations);

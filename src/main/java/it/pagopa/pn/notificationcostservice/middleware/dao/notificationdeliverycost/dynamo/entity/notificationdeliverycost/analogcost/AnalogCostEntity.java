@@ -11,7 +11,7 @@ import software.amazon.awssdk.enhanced.dynamodb.mapper.annotations.DynamoDbBean;
 @NoArgsConstructor
 @AllArgsConstructor
 @SuperBuilder(toBuilder = true)
-public class AnalogCost {
+public class AnalogCostEntity {
 
     public static final String COL_COST = "cost";
     public static final String COL_PRODUCT_TYPE = "productType";

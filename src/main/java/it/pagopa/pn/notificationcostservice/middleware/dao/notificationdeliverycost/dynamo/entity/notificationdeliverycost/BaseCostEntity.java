@@ -11,7 +11,7 @@ import software.amazon.awssdk.enhanced.dynamodb.mapper.annotations.DynamoDbBean;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class BaseCost {
+public class BaseCostEntity {
     public static final String COL_SEND_FEE = "sendFee";
     public static final String COL_PA_FEE = "paFee";
 

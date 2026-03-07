@@ -1,11 +1,11 @@
 package it.pagopa.pn.notificationcostservice.middleware.notificationdeliverycost.dynamo.mapper;
 
-import it.pagopa.pn.notificationcostservice.dto.notificationdeliverycost.BaseCostDto;
-import it.pagopa.pn.notificationcostservice.dto.notificationdeliverycost.NotificationDeliveryCostDto;
-import it.pagopa.pn.notificationcostservice.dto.notificationdeliverycost.NotificationFeePolicy;
-import it.pagopa.pn.notificationcostservice.dto.notificationdeliverycost.PagoPaIntMode;
-import it.pagopa.pn.notificationcostservice.dto.notificationdeliverycost.analogcost.FirstAnalogCostDto;
-import it.pagopa.pn.notificationcostservice.dto.notificationdeliverycost.analogcost.SecondAnalogCostDto;
+import it.pagopa.pn.notificationcostservice.model.notificationdeliverycost.BaseCost;
+import it.pagopa.pn.notificationcostservice.model.notificationdeliverycost.NotificationDeliveryCost;
+import it.pagopa.pn.notificationcostservice.model.notificationdeliverycost.NotificationFeePolicy;
+import it.pagopa.pn.notificationcostservice.model.notificationdeliverycost.PagoPaIntMode;
+import it.pagopa.pn.notificationcostservice.model.notificationdeliverycost.analogcost.FirstAnalogCost;
+import it.pagopa.pn.notificationcostservice.model.notificationdeliverycost.analogcost.SecondAnalogCost;
 import it.pagopa.pn.notificationcostservice.middleware.dao.notificationdeliverycost.dynamo.entity.notificationdeliverycost.NotificationDeliveryCostEntity;
 import it.pagopa.pn.notificationcostservice.middleware.dao.notificationdeliverycost.dynamo.mapper.DtoToEntityNotificationDeliveryCostMapper;
 import org.junit.jupiter.api.BeforeEach;
@@ -28,22 +28,22 @@ public class DtoToEntityNotificationDeliveryCostDaoMapperTest {
     void dto2Entity(){
         Instant now = Instant.now();
 
-        FirstAnalogCostDto firstCost = FirstAnalogCostDto.builder()
+        FirstAnalogCost firstCost = FirstAnalogCost.builder()
                 .cost(50)
                 .productType("AR")
                 .build();
 
-        SecondAnalogCostDto secondCost = SecondAnalogCostDto.builder()
+        SecondAnalogCost secondCost = SecondAnalogCost.builder()
                 .cost(30)
                 .productType("890")
                 .build();
 
-        BaseCostDto baseCost = BaseCostDto.builder()
+        BaseCost baseCost = BaseCost.builder()
                 .paFee(50)
                 .sendFee(50)
                 .build();
 
-        NotificationDeliveryCostDto dto = NotificationDeliveryCostDto.builder()
+        NotificationDeliveryCost dto = NotificationDeliveryCost.builder()
                 .iun("IUN123")
                 .recIndex(0)
                 .recipientInternalId("recipientId")
@@ -93,12 +93,12 @@ public class DtoToEntityNotificationDeliveryCostDaoMapperTest {
     void dto2EntityWithNullAnalogCosts(){
         Instant now = Instant.now();
 
-        BaseCostDto baseCost = BaseCostDto.builder()
+        BaseCost baseCost = BaseCost.builder()
                 .paFee(50)
                 .sendFee(50)
                 .build();
 
-        NotificationDeliveryCostDto dto = NotificationDeliveryCostDto.builder()
+        NotificationDeliveryCost dto = NotificationDeliveryCost.builder()
                 .iun("IUN123")
                 .recIndex(0)
                 .recipientInternalId("recipientId")

@@ -164,6 +164,7 @@
 								<importMapping>java.util.Date=java.time.Instant</importMapping>
 								<importMapping>Date=java.time.Instant</importMapping>
 							</importMappings>
+							<modelNameSuffix>Dto</modelNameSuffix>
 							<configOptions>
 								<useSpringBoot3>true</useSpringBoot3>
 								<dateLibrary>java11</dateLibrary>

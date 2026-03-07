@@ -8,9 +8,9 @@ import software.amazon.awssdk.enhanced.dynamodb.mapper.annotations.DynamoDbBean;
 @DynamoDbBean
 @Data
 @SuperBuilder
-public class SimpleRegisteredLetterCost extends AnalogCost{
+public class SimpleRegisteredLetterCostEntity extends AnalogCostEntity {
 
-    public SimpleRegisteredLetterCost() {
+    public SimpleRegisteredLetterCostEntity() {
         super();
     }
 }

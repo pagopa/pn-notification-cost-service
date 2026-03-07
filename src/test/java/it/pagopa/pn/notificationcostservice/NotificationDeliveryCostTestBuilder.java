@@ -1,29 +1,29 @@
 package it.pagopa.pn.notificationcostservice;
 
-import it.pagopa.pn.notificationcostservice.dto.notificationdeliverycost.BaseCostDto;
-import it.pagopa.pn.notificationcostservice.dto.notificationdeliverycost.NotificationDeliveryCostDto;
-import it.pagopa.pn.notificationcostservice.dto.notificationdeliverycost.NotificationFeePolicy;
-import it.pagopa.pn.notificationcostservice.dto.notificationdeliverycost.PagoPaIntMode;
-import it.pagopa.pn.notificationcostservice.dto.notificationdeliverycost.analogcost.FirstAnalogCostDto;
-import it.pagopa.pn.notificationcostservice.dto.notificationdeliverycost.analogcost.SecondAnalogCostDto;
-import it.pagopa.pn.notificationcostservice.dto.notificationdeliverycost.analogcost.SimpleRegisteredLetterCostDto;
+import it.pagopa.pn.notificationcostservice.model.notificationdeliverycost.BaseCost;
+import it.pagopa.pn.notificationcostservice.model.notificationdeliverycost.NotificationDeliveryCost;
+import it.pagopa.pn.notificationcostservice.model.notificationdeliverycost.NotificationFeePolicy;
+import it.pagopa.pn.notificationcostservice.model.notificationdeliverycost.PagoPaIntMode;
+import it.pagopa.pn.notificationcostservice.model.notificationdeliverycost.analogcost.FirstAnalogCost;
+import it.pagopa.pn.notificationcostservice.model.notificationdeliverycost.analogcost.SecondAnalogCost;
+import it.pagopa.pn.notificationcostservice.model.notificationdeliverycost.analogcost.SimpleRegisteredLetterCost;
 
 import java.time.Instant;
 
 /**
- * Test builder for NotificationDeliveryCostDto.
+ * Test builder for NotificationDeliveryCost.
  * Provides a fluent API to create instances of NotificationDeliveryCostDto with default values for testing purposes.
  * Allows overriding specific fields as needed for different test scenarios.
  */
-public class NotificationDeliveryCostDtoTestBuilder {
+public class NotificationDeliveryCostTestBuilder {
     private String iun;
     private int recIndex;
     private String recipientInternalId;
     private String senderInternalId;
-    private BaseCostDto baseCost;
-    private FirstAnalogCostDto firstAnalogCost;
-    private SecondAnalogCostDto secondAnalogCost;
-    private SimpleRegisteredLetterCostDto simpleRegisteredLetterCost;
+    private BaseCost baseCost;
+    private FirstAnalogCost firstAnalogCost;
+    private SecondAnalogCost secondAnalogCost;
+    private SimpleRegisteredLetterCost simpleRegisteredLetterCost;
     private Boolean isDeleted;
     private NotificationFeePolicy notificationFeePolicy;
     private PagoPaIntMode pagoPaIntMode;
@@ -31,67 +31,67 @@ public class NotificationDeliveryCostDtoTestBuilder {
     private Instant lastUpdate;
     private Long ttl;
 
-    public static NotificationDeliveryCostDtoTestBuilder builder() {
-        return new NotificationDeliveryCostDtoTestBuilder();
+    public static NotificationDeliveryCostTestBuilder builder() {
+        return new NotificationDeliveryCostTestBuilder();
     }
 
-    public NotificationDeliveryCostDtoTestBuilder withIun(String iun) {
+    public NotificationDeliveryCostTestBuilder withIun(String iun) {
         this.iun = iun;
         return this;
     }
 
-    public NotificationDeliveryCostDtoTestBuilder withRecIndex(int recIndex) {
+    public NotificationDeliveryCostTestBuilder withRecIndex(int recIndex) {
         this.recIndex = recIndex;
         return this;
     }
 
-    public NotificationDeliveryCostDtoTestBuilder withBaseCost(BaseCostDto baseCost) {
+    public NotificationDeliveryCostTestBuilder withBaseCost(BaseCost baseCost) {
         this.baseCost = baseCost;
         return this;
     }
 
-    public NotificationDeliveryCostDtoTestBuilder withNotificationFeePolicy(NotificationFeePolicy notificationFeePolicy) {
+    public NotificationDeliveryCostTestBuilder withNotificationFeePolicy(NotificationFeePolicy notificationFeePolicy) {
         this.notificationFeePolicy = notificationFeePolicy;
         return this;
     }
 
-    public NotificationDeliveryCostDtoTestBuilder withPagoPaIntMode(PagoPaIntMode pagoPaIntMode) {
+    public NotificationDeliveryCostTestBuilder withPagoPaIntMode(PagoPaIntMode pagoPaIntMode) {
         this.pagoPaIntMode = pagoPaIntMode;
         return this;
     }
 
-    public NotificationDeliveryCostDtoTestBuilder withVat(int vat) {
+    public NotificationDeliveryCostTestBuilder withVat(int vat) {
         this.vat = vat;
         return this;
     }
 
-    public NotificationDeliveryCostDtoTestBuilder withFirstAnalogCost(FirstAnalogCostDto firstAnalogCost) {
+    public NotificationDeliveryCostTestBuilder withFirstAnalogCost(FirstAnalogCost firstAnalogCost) {
         this.firstAnalogCost = firstAnalogCost;
         return this;
     }
 
-    public NotificationDeliveryCostDtoTestBuilder withSecondAnalogCost(SecondAnalogCostDto secondAnalogCost) {
+    public NotificationDeliveryCostTestBuilder withSecondAnalogCost(SecondAnalogCost secondAnalogCost) {
         this.secondAnalogCost = secondAnalogCost;
         return this;
     }
 
-    public NotificationDeliveryCostDtoTestBuilder withSimpleRegisteredLetterCost(SimpleRegisteredLetterCostDto simpleRegisteredLetterCost) {
+    public NotificationDeliveryCostTestBuilder withSimpleRegisteredLetterCost(SimpleRegisteredLetterCost simpleRegisteredLetterCost) {
         this.simpleRegisteredLetterCost = simpleRegisteredLetterCost;
         return this;
     }
 
-    public NotificationDeliveryCostDtoTestBuilder withIsDeleted(Boolean isDeleted) {
+    public NotificationDeliveryCostTestBuilder withIsDeleted(Boolean isDeleted) {
         this.isDeleted = isDeleted;
         return this;
     }
 
-    public NotificationDeliveryCostDto build() {
+    public NotificationDeliveryCost build() {
         if(iun == null) {
             iun = "test-iun";
         }
 
         if(baseCost == null) {
-            baseCost = BaseCostDto.builder().sendFee(100).paFee(50).build();
+            baseCost = BaseCost.builder().sendFee(100).paFee(50).build();
         }
 
         if(notificationFeePolicy == null) {
@@ -102,7 +102,7 @@ public class NotificationDeliveryCostDtoTestBuilder {
             pagoPaIntMode = PagoPaIntMode.SYNC;
         }
 
-        return NotificationDeliveryCostDto.builder()
+        return NotificationDeliveryCost.builder()
                 .iun(iun)
                 .recIndex(recIndex)
                 .recipientInternalId(recipientInternalId)

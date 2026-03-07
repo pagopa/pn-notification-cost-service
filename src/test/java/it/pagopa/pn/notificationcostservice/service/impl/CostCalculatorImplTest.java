@@ -1,11 +1,11 @@
 package it.pagopa.pn.notificationcostservice.service.impl;
 
-import it.pagopa.pn.notificationcostservice.NotificationDeliveryCostDtoTestBuilder;
-import it.pagopa.pn.notificationcostservice.dto.notificationdeliverycost.BaseCostDto;
-import it.pagopa.pn.notificationcostservice.dto.notificationdeliverycost.NotificationDeliveryCostDto;
-import it.pagopa.pn.notificationcostservice.dto.notificationdeliverycost.NotificationFeePolicy;
-import it.pagopa.pn.notificationcostservice.dto.notificationdeliverycost.analogcost.FirstAnalogCostDto;
-import it.pagopa.pn.notificationcostservice.dto.notificationdeliverycost.analogcost.SecondAnalogCostDto;
+import it.pagopa.pn.notificationcostservice.NotificationDeliveryCostTestBuilder;
+import it.pagopa.pn.notificationcostservice.model.notificationdeliverycost.BaseCost;
+import it.pagopa.pn.notificationcostservice.model.notificationdeliverycost.NotificationDeliveryCost;
+import it.pagopa.pn.notificationcostservice.model.notificationdeliverycost.NotificationFeePolicy;
+import it.pagopa.pn.notificationcostservice.model.notificationdeliverycost.analogcost.FirstAnalogCost;
+import it.pagopa.pn.notificationcostservice.model.notificationdeliverycost.analogcost.SecondAnalogCost;
 import it.pagopa.pn.notificationcostservice.utils.CostUtils;
 import org.junit.jupiter.api.Test;
 
@@ -16,13 +16,13 @@ class CostCalculatorImplTest {
 
     @Test
     void calculateCosts_ReturnsZeroTotalCostWithVatWhenFeePolicyIsNotDeliveryMode() {
-       NotificationDeliveryCostDto dto = NotificationDeliveryCostDtoTestBuilder.builder()
-               .withBaseCost(BaseCostDto.builder().paFee(100).sendFee(50).build())
+       NotificationDeliveryCost notificationDeliveryCost = NotificationDeliveryCostTestBuilder.builder()
+               .withBaseCost(BaseCost.builder().paFee(100).sendFee(50).build())
                .withNotificationFeePolicy(NotificationFeePolicy.FLAT_RATE)
                .withVat(22)
                .build();
 
-       var result = calculator.calculateCosts(dto);
+       var result = calculator.calculateCosts(notificationDeliveryCost);
 
        assertEquals(0, result.getTotalCostWithVat());
        assertEquals(150, result.getBaseCost());
@@ -32,14 +32,14 @@ class CostCalculatorImplTest {
 
     @Test
     void calculateCosts_ComputesTotalCostWithVatWhenFeePolicyIsDeliveryMode() {
-        NotificationDeliveryCostDto dto = NotificationDeliveryCostDtoTestBuilder.builder()
-                .withBaseCost(BaseCostDto.builder().paFee(100).sendFee(50).build())
-                .withFirstAnalogCost(FirstAnalogCostDto.builder().cost(200).build())
+        NotificationDeliveryCost notificationDeliveryCost = NotificationDeliveryCostTestBuilder.builder()
+                .withBaseCost(BaseCost.builder().paFee(100).sendFee(50).build())
+                .withFirstAnalogCost(FirstAnalogCost.builder().cost(200).build())
                 .withNotificationFeePolicy(NotificationFeePolicy.DELIVERY_MODE)
                 .withVat(10)
                 .build();
 
-       var result = calculator.calculateCosts(dto);
+       var result = calculator.calculateCosts(notificationDeliveryCost);
 
        int expectedAnalogWithVat = CostUtils.getCostWithVat(200, 10);
        assertEquals(150 + expectedAnalogWithVat, result.getTotalCostWithVat());
@@ -51,23 +51,23 @@ class CostCalculatorImplTest {
 
     @Test
     void analogCost_ReturnsSumOfAllAnalogCosts() {
-        NotificationDeliveryCostDto dto = NotificationDeliveryCostDtoTestBuilder.builder()
-                .withBaseCost(BaseCostDto.builder().paFee(100).sendFee(50).build())
-                .withFirstAnalogCost(FirstAnalogCostDto.builder().cost(40).build())
-                .withSecondAnalogCost(SecondAnalogCostDto.builder().cost(20).build())
+        NotificationDeliveryCost notificationDeliveryCost = NotificationDeliveryCostTestBuilder.builder()
+                .withBaseCost(BaseCost.builder().paFee(100).sendFee(50).build())
+                .withFirstAnalogCost(FirstAnalogCost.builder().cost(40).build())
+                .withSecondAnalogCost(SecondAnalogCost.builder().cost(20).build())
                 .withNotificationFeePolicy(NotificationFeePolicy.DELIVERY_MODE)
                 .withVat(10)
                 .build();
 
-       assertEquals(60, calculator.analogCost(dto));
+       assertEquals(60, calculator.analogCost(notificationDeliveryCost));
     }
 
     @Test
     void analogCost_ReturnsZeroWhenAllAnalogCostsAreNull() {
-       NotificationDeliveryCostDto dto = NotificationDeliveryCostDtoTestBuilder.builder()
-               .withBaseCost(BaseCostDto.builder().paFee(100).sendFee(50).build())
+       NotificationDeliveryCost notificationDeliveryCost = NotificationDeliveryCostTestBuilder.builder()
+               .withBaseCost(BaseCost.builder().paFee(100).sendFee(50).build())
                .build();
 
-       assertEquals(0, calculator.analogCost(dto));
+       assertEquals(0, calculator.analogCost(notificationDeliveryCost));
     }
 }

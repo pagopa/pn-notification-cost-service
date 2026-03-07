@@ -1,20 +1,20 @@
-package it.pagopa.pn.notificationcostservice.dto.notificationdeliverycost;
+package it.pagopa.pn.notificationcostservice.model.notificationdeliverycost;
 
-import it.pagopa.pn.notificationcostservice.dto.notificationdeliverycost.analogcost.FirstAnalogCostDto;
-import it.pagopa.pn.notificationcostservice.dto.notificationdeliverycost.analogcost.SecondAnalogCostDto;
-import it.pagopa.pn.notificationcostservice.dto.notificationdeliverycost.analogcost.SimpleRegisteredLetterCostDto;
+import it.pagopa.pn.notificationcostservice.model.notificationdeliverycost.analogcost.FirstAnalogCost;
+import it.pagopa.pn.notificationcostservice.model.notificationdeliverycost.analogcost.SecondAnalogCost;
+import it.pagopa.pn.notificationcostservice.model.notificationdeliverycost.analogcost.SimpleRegisteredLetterCost;
 import it.pagopa.pn.notificationcostservice.exception.PnDomainObjectValidationException;
 import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-class NotificationDeliveryCostDtoTest {
+class NotificationDeliveryCostTest {
 
     @Test
     void buildsSuccessfullyWithAllRequiredFields() {
-        BaseCostDto baseCost = BaseCostDto.builder().paFee(100).sendFee(50).build();
+        BaseCost baseCost = BaseCost.builder().paFee(100).sendFee(50).build();
 
-        NotificationDeliveryCostDto dto = NotificationDeliveryCostDto.builder()
+        NotificationDeliveryCost dto = NotificationDeliveryCost.builder()
                 .iun("IUN-TEST-123")
                 .recIndex(0)
                 .baseCost(baseCost)
@@ -34,10 +34,10 @@ class NotificationDeliveryCostDtoTest {
 
     @Test
     void throwsExceptionWhenIunIsNull() {
-        BaseCostDto baseCost = BaseCostDto.builder().paFee(100).sendFee(50).build();
+        BaseCost baseCost = BaseCost.builder().paFee(100).sendFee(50).build();
 
         PnDomainObjectValidationException exception = assertThrows(PnDomainObjectValidationException.class, () ->
-                NotificationDeliveryCostDto.builder()
+                NotificationDeliveryCost.builder()
                         .iun(null)
                         .recIndex(0)
                         .baseCost(baseCost)
@@ -53,7 +53,7 @@ class NotificationDeliveryCostDtoTest {
     @Test
     void throwsExceptionWhenBaseCostIsNull() {
         PnDomainObjectValidationException exception = assertThrows(PnDomainObjectValidationException.class, () ->
-                NotificationDeliveryCostDto.builder()
+                NotificationDeliveryCost.builder()
                         .iun("IUN-TEST-123")
                         .recIndex(0)
                         .baseCost(null)
@@ -68,10 +68,10 @@ class NotificationDeliveryCostDtoTest {
 
     @Test
     void throwsExceptionWhenNotificationFeePolicyIsNull() {
-        BaseCostDto baseCost = BaseCostDto.builder().paFee(100).sendFee(50).build();
+        BaseCost baseCost = BaseCost.builder().paFee(100).sendFee(50).build();
 
         PnDomainObjectValidationException exception = assertThrows(PnDomainObjectValidationException.class, () ->
-                NotificationDeliveryCostDto.builder()
+                NotificationDeliveryCost.builder()
                         .iun("IUN-TEST-123")
                         .recIndex(0)
                         .baseCost(baseCost)
@@ -86,10 +86,10 @@ class NotificationDeliveryCostDtoTest {
 
     @Test
     void throwsExceptionWhenPagoPaIntModeIsNull() {
-        BaseCostDto baseCost = BaseCostDto.builder().paFee(100).sendFee(50).build();
+        BaseCost baseCost = BaseCost.builder().paFee(100).sendFee(50).build();
 
         PnDomainObjectValidationException exception = assertThrows(PnDomainObjectValidationException.class, () ->
-                NotificationDeliveryCostDto.builder()
+                NotificationDeliveryCost.builder()
                         .iun("IUN-TEST-123")
                         .recIndex(0)
                         .baseCost(baseCost)
@@ -105,7 +105,7 @@ class NotificationDeliveryCostDtoTest {
     @Test
     void throwsExceptionWhenMultipleFieldsAreNull() {
         PnDomainObjectValidationException exception = assertThrows(PnDomainObjectValidationException.class, () ->
-                NotificationDeliveryCostDto.builder()
+                NotificationDeliveryCost.builder()
                         .iun(null)
                         .recIndex(0)
                         .baseCost(null)
@@ -124,12 +124,12 @@ class NotificationDeliveryCostDtoTest {
 
     @Test
     void throwsExceptionWhenBothFirstAnalogCostAndSimpleRegisteredLetterCostAreSet() {
-        BaseCostDto baseCost = BaseCostDto.builder().paFee(100).sendFee(50).build();
-        FirstAnalogCostDto firstAnalogCost = FirstAnalogCostDto.builder().cost(200).productType("AR").build();
-        SimpleRegisteredLetterCostDto simpleRegisteredLetterCost = SimpleRegisteredLetterCostDto.builder().cost(150).productType("RS").build();
+        BaseCost baseCost = BaseCost.builder().paFee(100).sendFee(50).build();
+        FirstAnalogCost firstAnalogCost = FirstAnalogCost.builder().cost(200).productType("AR").build();
+        SimpleRegisteredLetterCost simpleRegisteredLetterCost = SimpleRegisteredLetterCost.builder().cost(150).productType("RS").build();
 
         PnDomainObjectValidationException exception = assertThrows(PnDomainObjectValidationException.class, () ->
-                NotificationDeliveryCostDto.builder()
+                NotificationDeliveryCost.builder()
                         .iun("IUN-TEST-123")
                         .recIndex(0)
                         .baseCost(baseCost)
@@ -146,10 +146,10 @@ class NotificationDeliveryCostDtoTest {
 
     @Test
     void buildsSuccessfullyWithFirstAnalogCostOnly() {
-        BaseCostDto baseCost = BaseCostDto.builder().paFee(100).sendFee(50).build();
-        FirstAnalogCostDto firstAnalogCost = FirstAnalogCostDto.builder().cost(200).productType("AR").build();
+        BaseCost baseCost = BaseCost.builder().paFee(100).sendFee(50).build();
+        FirstAnalogCost firstAnalogCost = FirstAnalogCost.builder().cost(200).productType("AR").build();
 
-        NotificationDeliveryCostDto dto = NotificationDeliveryCostDto.builder()
+        NotificationDeliveryCost dto = NotificationDeliveryCost.builder()
                 .iun("IUN-TEST-123")
                 .recIndex(0)
                 .baseCost(baseCost)
@@ -166,10 +166,10 @@ class NotificationDeliveryCostDtoTest {
 
     @Test
     void buildsSuccessfullyWithSimpleRegisteredLetterCostOnly() {
-        BaseCostDto baseCost = BaseCostDto.builder().paFee(100).sendFee(50).build();
-        SimpleRegisteredLetterCostDto simpleRegisteredLetterCost = SimpleRegisteredLetterCostDto.builder().cost(150).productType("RS").build();
+        BaseCost baseCost = BaseCost.builder().paFee(100).sendFee(50).build();
+        SimpleRegisteredLetterCost simpleRegisteredLetterCost = SimpleRegisteredLetterCost.builder().cost(150).productType("RS").build();
 
-        NotificationDeliveryCostDto dto = NotificationDeliveryCostDto.builder()
+        NotificationDeliveryCost dto = NotificationDeliveryCost.builder()
                 .iun("IUN-TEST-123")
                 .recIndex(0)
                 .baseCost(baseCost)
@@ -186,9 +186,9 @@ class NotificationDeliveryCostDtoTest {
 
     @Test
     void buildsSuccessfullyWithoutAnalogCosts() {
-        BaseCostDto baseCost = BaseCostDto.builder().paFee(100).sendFee(50).build();
+        BaseCost baseCost = BaseCost.builder().paFee(100).sendFee(50).build();
 
-        NotificationDeliveryCostDto dto = NotificationDeliveryCostDto.builder()
+        NotificationDeliveryCost dto = NotificationDeliveryCost.builder()
                 .iun("IUN-TEST-123")
                 .recIndex(0)
                 .baseCost(baseCost)
@@ -205,11 +205,11 @@ class NotificationDeliveryCostDtoTest {
 
     @Test
     void buildsSuccessfullyWithSecondAnalogCostAndFirstAnalogCost() {
-        BaseCostDto baseCost = BaseCostDto.builder().paFee(100).sendFee(50).build();
-        FirstAnalogCostDto firstAnalogCost = FirstAnalogCostDto.builder().cost(200).productType("AR").build();
-        SecondAnalogCostDto secondAnalogCost = SecondAnalogCostDto.builder().cost(300).productType("890").build();
+        BaseCost baseCost = BaseCost.builder().paFee(100).sendFee(50).build();
+        FirstAnalogCost firstAnalogCost = FirstAnalogCost.builder().cost(200).productType("AR").build();
+        SecondAnalogCost secondAnalogCost = SecondAnalogCost.builder().cost(300).productType("890").build();
 
-        NotificationDeliveryCostDto dto = NotificationDeliveryCostDto.builder()
+        NotificationDeliveryCost dto = NotificationDeliveryCost.builder()
                 .iun("IUN-TEST-123")
                 .recIndex(0)
                 .baseCost(baseCost)

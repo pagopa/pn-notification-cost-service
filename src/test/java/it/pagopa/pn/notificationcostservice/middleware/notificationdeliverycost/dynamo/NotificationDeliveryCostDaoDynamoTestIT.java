@@ -2,15 +2,15 @@ package it.pagopa.pn.notificationcostservice.middleware.notificationdeliverycost
 
 import it.pagopa.pn.notificationcostservice.LocalStackTestConfig;
 import it.pagopa.pn.notificationcostservice.MockAWSObjectsTest;
-import it.pagopa.pn.notificationcostservice.dto.notificationdeliverycost.NotificationDeliveryCostDto;
-import it.pagopa.pn.notificationcostservice.dto.notificationdeliverycost.NotificationFeePolicy;
-import it.pagopa.pn.notificationcostservice.dto.notificationdeliverycost.PagoPaIntMode;
+import it.pagopa.pn.notificationcostservice.model.notificationdeliverycost.NotificationDeliveryCost;
+import it.pagopa.pn.notificationcostservice.model.notificationdeliverycost.NotificationFeePolicy;
+import it.pagopa.pn.notificationcostservice.model.notificationdeliverycost.PagoPaIntMode;
 import it.pagopa.pn.notificationcostservice.exception.PnNotFoundException;
 import it.pagopa.pn.notificationcostservice.middleware.dao.notificationdeliverycost.dynamo.NotificationDeliveryCostDaoDynamo;
-import it.pagopa.pn.notificationcostservice.middleware.dao.notificationdeliverycost.dynamo.entity.notificationdeliverycost.BaseCost;
-import it.pagopa.pn.notificationcostservice.middleware.dao.notificationdeliverycost.dynamo.entity.notificationdeliverycost.analogcost.FirstAnalogCost;
+import it.pagopa.pn.notificationcostservice.middleware.dao.notificationdeliverycost.dynamo.entity.notificationdeliverycost.BaseCostEntity;
+import it.pagopa.pn.notificationcostservice.middleware.dao.notificationdeliverycost.dynamo.entity.notificationdeliverycost.analogcost.FirstAnalogCostEntity;
 import it.pagopa.pn.notificationcostservice.middleware.dao.notificationdeliverycost.dynamo.entity.notificationdeliverycost.NotificationDeliveryCostEntity;
-import it.pagopa.pn.notificationcostservice.middleware.dao.notificationdeliverycost.dynamo.entity.notificationdeliverycost.analogcost.SecondAnalogCost;
+import it.pagopa.pn.notificationcostservice.middleware.dao.notificationdeliverycost.dynamo.entity.notificationdeliverycost.analogcost.SecondAnalogCostEntity;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Disabled;
@@ -52,7 +52,7 @@ public class NotificationDeliveryCostDaoDynamoTestIT {
         NotificationDeliveryCostEntity notificationDeliveryCostEntity = newNotificationDeliveryCostEntity(iun, recIndex);
         try {
             testDao.putItem(notificationDeliveryCostEntity);
-            NotificationDeliveryCostDto elementFromDb = dao.getNotificationDeliveryCostItem(iun, recIndex).block();
+            NotificationDeliveryCost elementFromDb = dao.getNotificationDeliveryCostItem(iun, recIndex).block();
 
             Assertions.assertNotNull(elementFromDb);
             Assertions.assertEquals(notificationDeliveryCostEntity.getIun(), elementFromDb.getIun());
@@ -100,11 +100,11 @@ public class NotificationDeliveryCostDaoDynamoTestIT {
                 .isDeleted(false)
                 .lastUpdate(Instant.now())
                 .ttl(10000L)
-                .firstAnalogCost(FirstAnalogCost.builder()
+                .firstAnalogCost(FirstAnalogCostEntity.builder()
                         .cost(50)
                         .productType("AR")
                         .build())
-                .secondAnalogCost(SecondAnalogCost.builder()
+                .secondAnalogCost(SecondAnalogCostEntity.builder()
                         .cost(30)
                         .productType("890")
                         .build())
@@ -113,8 +113,8 @@ public class NotificationDeliveryCostDaoDynamoTestIT {
                 .build();
     }
 
-    private static BaseCost newBaseCost() {
-        return BaseCost.builder()
+    private static BaseCostEntity newBaseCost() {
+        return BaseCostEntity.builder()
                 .paFee(2)
                 .sendFee(10)
                 .build();

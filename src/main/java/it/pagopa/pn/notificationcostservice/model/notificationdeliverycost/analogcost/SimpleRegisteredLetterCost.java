@@ -1,12 +1,12 @@
-package it.pagopa.pn.notificationcostservice.dto.notificationdeliverycost.analogcost;
+package it.pagopa.pn.notificationcostservice.model.notificationdeliverycost.analogcost;
 
 import lombok.*;
 
 @EqualsAndHashCode(callSuper = true)
 @Getter
 @Setter
-public class SimpleRegisteredLetterCostDto extends AnalogCostDto {
-    public SimpleRegisteredLetterCostDto(Integer cost, String productType) {
+public class SimpleRegisteredLetterCost extends AnalogCost {
+    public SimpleRegisteredLetterCost(Integer cost, String productType) {
         super(cost, productType);
     }
 
@@ -28,8 +28,8 @@ public class SimpleRegisteredLetterCostDto extends AnalogCostDto {
             return this;
         }
 
-        public SimpleRegisteredLetterCostDto build() {
-            return new SimpleRegisteredLetterCostDto(cost, productType);
+        public SimpleRegisteredLetterCost build() {
+            return new SimpleRegisteredLetterCost(cost, productType);
         }
     }
 }

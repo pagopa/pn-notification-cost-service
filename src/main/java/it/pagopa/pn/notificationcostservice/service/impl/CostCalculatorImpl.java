@@ -1,10 +1,10 @@
 package it.pagopa.pn.notificationcostservice.service.impl;
 
-import it.pagopa.pn.notificationcostservice.dto.cost.CalculatedCosts;
-import it.pagopa.pn.notificationcostservice.dto.notificationdeliverycost.BaseCostDto;
-import it.pagopa.pn.notificationcostservice.dto.notificationdeliverycost.NotificationDeliveryCostDto;
-import it.pagopa.pn.notificationcostservice.dto.notificationdeliverycost.NotificationFeePolicy;
-import it.pagopa.pn.notificationcostservice.dto.notificationdeliverycost.analogcost.AnalogCostDto;
+import it.pagopa.pn.notificationcostservice.model.cost.CalculatedCosts;
+import it.pagopa.pn.notificationcostservice.model.notificationdeliverycost.BaseCost;
+import it.pagopa.pn.notificationcostservice.model.notificationdeliverycost.NotificationDeliveryCost;
+import it.pagopa.pn.notificationcostservice.model.notificationdeliverycost.NotificationFeePolicy;
+import it.pagopa.pn.notificationcostservice.model.notificationdeliverycost.analogcost.AnalogCost;
 import it.pagopa.pn.notificationcostservice.service.CostCalculator;
 import it.pagopa.pn.notificationcostservice.utils.CostUtils;
 import lombok.extern.slf4j.Slf4j;
@@ -15,14 +15,14 @@ import org.springframework.stereotype.Component;
 public class CostCalculatorImpl implements CostCalculator {
 
     @Override
-    public CalculatedCosts calculateCosts(NotificationDeliveryCostDto notificationDeliveryCostDto) {
-        log.debug("calculateCosts - notificationDeliveryCostDto={}", notificationDeliveryCostDto);
-        int vat = notificationDeliveryCostDto.getVat();
-        int baseCost = baseCost(notificationDeliveryCostDto.getBaseCost());
-        int analogCost = analogCost(notificationDeliveryCostDto);
+    public CalculatedCosts calculateCosts(NotificationDeliveryCost notificationDeliveryCost) {
+        log.debug("calculateCosts - notificationDeliveryCost={}", notificationDeliveryCost);
+        int vat = notificationDeliveryCost.getVat();
+        int baseCost = baseCost(notificationDeliveryCost.getBaseCost());
+        int analogCost = analogCost(notificationDeliveryCost);
         int analogCostWithVat = CostUtils.getCostWithVat(analogCost, vat);
         int totalCostWithVat = 0;
-        if(notificationDeliveryCostDto.getNotificationFeePolicy() == NotificationFeePolicy.DELIVERY_MODE) {
+        if(notificationDeliveryCost.getNotificationFeePolicy() == NotificationFeePolicy.DELIVERY_MODE) {
             totalCostWithVat = baseCost + analogCostWithVat;
         }
         return CalculatedCosts.builder()
@@ -30,7 +30,7 @@ public class CostCalculatorImpl implements CostCalculator {
                 .baseCost(baseCost)
                 .analogCost(analogCost)
                 .analogCostWithVat(analogCostWithVat)
-                .vat(notificationDeliveryCostDto.getVat())
+                .vat(notificationDeliveryCost.getVat())
                 .build();
     }
 
@@ -38,19 +38,19 @@ public class CostCalculatorImpl implements CostCalculator {
      * Calculate the base cost of the notification by summing the PA fee and the send fee.
      * @return sum of the base costs
      */
-    public int baseCost(BaseCostDto baseCostDto) {
-        return baseCostDto.getPaFee() + baseCostDto.getSendFee();
+    public int baseCost(BaseCost baseCost) {
+        return baseCost.getPaFee() + baseCost.getSendFee();
     }
 
     /**
      * Calculate the total analog cost by summing the first analog cost, second analog cost, simple registered letter cost, when they are present.
      * @return sum of the analog costs
      */
-    public int analogCost(NotificationDeliveryCostDto notificationDelivery) {
+    public int analogCost(NotificationDeliveryCost notificationDelivery) {
         return nullSafe(notificationDelivery.getFirstAnalogCost()) + nullSafe(notificationDelivery.getSecondAnalogCost()) + nullSafe(notificationDelivery.getSimpleRegisteredLetterCost());
     }
 
-    private int nullSafe(AnalogCostDto analog) {
+    private int nullSafe(AnalogCost analog) {
         return analog != null ? analog.getCost() : 0;
     }
 }

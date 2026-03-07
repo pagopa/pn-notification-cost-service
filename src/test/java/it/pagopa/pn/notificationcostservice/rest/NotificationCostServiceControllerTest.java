@@ -1,6 +1,6 @@
 package it.pagopa.pn.notificationcostservice.rest;
 
-import it.pagopa.pn.notification_cost_service.generated.openapi.server.v1.dto.NotificationCostRecipientResponse;
+import it.pagopa.pn.notification_cost_service.generated.openapi.server.v1.dto.NotificationCostRecipientResponseDto;
 import it.pagopa.pn.notificationcostservice.service.NotificationCostService;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -31,12 +31,12 @@ class NotificationCostServiceControllerTest {
 
     @Test
     void testNotificationCostRecipient_Success() {
-        NotificationCostRecipientResponse response = new NotificationCostRecipientResponse();
+        NotificationCostRecipientResponseDto response = new NotificationCostRecipientResponseDto();
 
         when(notificationCostService.getNotificationCostRecipient(TEST_IUN, TEST_REC_INDEX))
                 .thenReturn(Mono.just(response));
 
-        Mono<ResponseEntity<NotificationCostRecipientResponse>> result =
+        Mono<ResponseEntity<NotificationCostRecipientResponseDto>> result =
                 controller.notificationCostRecipient(TEST_IUN, TEST_REC_INDEX, null);
 
         StepVerifier.create(result)

@@ -1,8 +1,8 @@
 package it.pagopa.pn.notificationcostservice.service.impl;
 
 
-import it.pagopa.pn.notification_cost_service.generated.openapi.server.v1.dto.NotificationCostRecipientResponse;
-import it.pagopa.pn.notificationcostservice.dto.cost.CalculatedCosts;
+import it.pagopa.pn.notification_cost_service.generated.openapi.server.v1.dto.NotificationCostRecipientResponseDto;
+import it.pagopa.pn.notificationcostservice.model.cost.CalculatedCosts;
 import it.pagopa.pn.notificationcostservice.exception.PnNotFoundException;
 import it.pagopa.pn.notificationcostservice.middleware.dao.notificationdeliverycost.NotificationDeliveryCostDao;
 import it.pagopa.pn.notificationcostservice.service.CostCalculator;
@@ -25,7 +25,7 @@ public class NotificationCostServiceImpl implements NotificationCostService {
     private final CostCalculator costCalculator;
 
     @Override
-    public Mono<NotificationCostRecipientResponse> getNotificationCostRecipient(String iun, Integer recIndex) {
+    public Mono<NotificationCostRecipientResponseDto> getNotificationCostRecipient(String iun, Integer recIndex) {
         log.info("Start to get notification cost recipient for iun: {} and recIndex: {}", iun, recIndex);
         return notificationDeliveryCostDao.getNotificationDeliveryCostItem(iun, recIndex)
                 .map(dto -> {

@@ -1,7 +1,7 @@
 package it.pagopa.pn.notificationcostservice.middleware.dao.notificationdeliverycost.dynamo;
 
 import it.pagopa.pn.notificationcostservice.config.PnNotificationCostServiceConfigs;
-import it.pagopa.pn.notificationcostservice.dto.notificationdeliverycost.NotificationDeliveryCostDto;
+import it.pagopa.pn.notificationcostservice.model.notificationdeliverycost.NotificationDeliveryCost;
 import it.pagopa.pn.notificationcostservice.exception.PnNotFoundException;
 import it.pagopa.pn.notificationcostservice.middleware.dao.notificationdeliverycost.NotificationDeliveryCostDao;
 import it.pagopa.pn.notificationcostservice.middleware.dao.notificationdeliverycost.dynamo.entity.notificationdeliverycost.NotificationDeliveryCostEntity;
@@ -41,7 +41,7 @@ public class NotificationDeliveryCostDaoDynamo extends BaseDao implements Notifi
      * @return oggetto di notifica con costi
      */
     @Override
-    public Mono<NotificationDeliveryCostDto> getNotificationDeliveryCostItem(String iun, Integer recIndex) {
+    public Mono<NotificationDeliveryCost> getNotificationDeliveryCostItem(String iun, Integer recIndex) {
         return Mono.fromFuture(retrieveItem(iun, recIndex))
                 .switchIfEmpty(Mono.error(() -> new PnNotFoundException(
                         "Not Found",

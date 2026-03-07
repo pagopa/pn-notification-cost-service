@@ -1,9 +1,9 @@
 package it.pagopa.pn.notificationcostservice.service.impl;
 
-import it.pagopa.pn.notification_cost_service.generated.openapi.server.v1.dto.NotificationCostRecipientResponse;
-import it.pagopa.pn.notificationcostservice.NotificationDeliveryCostDtoTestBuilder;
-import it.pagopa.pn.notificationcostservice.dto.cost.CalculatedCosts;
-import it.pagopa.pn.notificationcostservice.dto.notificationdeliverycost.NotificationDeliveryCostDto;
+import it.pagopa.pn.notification_cost_service.generated.openapi.server.v1.dto.NotificationCostRecipientResponseDto;
+import it.pagopa.pn.notificationcostservice.NotificationDeliveryCostTestBuilder;
+import it.pagopa.pn.notificationcostservice.model.cost.CalculatedCosts;
+import it.pagopa.pn.notificationcostservice.model.notificationdeliverycost.NotificationDeliveryCost;
 import it.pagopa.pn.notificationcostservice.exception.PnNotFoundException;
 import it.pagopa.pn.notificationcostservice.middleware.dao.notificationdeliverycost.NotificationDeliveryCostDao;
 import it.pagopa.pn.notificationcostservice.service.CostCalculator;
@@ -40,33 +40,33 @@ class NotificationCostServiceImplTest {
 
     @Test
     void getNotificationCostRecipient_ReturnsMappedResponseWhenItemExistsAndNotDeleted() {
-       NotificationDeliveryCostDto dto = NotificationDeliveryCostDtoTestBuilder.builder()
+       NotificationDeliveryCost notificationDeliveryCost = NotificationDeliveryCostTestBuilder.builder()
                .withIun(IUN)
                .withRecIndex(REC_INDEX)
                .withIsDeleted(false)
                .build();
 
 
-       when(notificationDeliveryCostDao.getNotificationDeliveryCostItem(IUN, REC_INDEX)).thenReturn(Mono.just(dto));
+       when(notificationDeliveryCostDao.getNotificationDeliveryCostItem(IUN, REC_INDEX)).thenReturn(Mono.just(notificationDeliveryCost));
 
        CalculatedCosts calculatedCosts = CalculatedCosts.builder().build();
-       when(costCalculator.calculateCosts(dto)).thenReturn(calculatedCosts);
+       when(costCalculator.calculateCosts(notificationDeliveryCost)).thenReturn(calculatedCosts);
 
-       NotificationCostRecipientResponse mappedResponse = new NotificationCostRecipientResponse();
-       when(notificationDeliveryCostMapper.mapDtoToResponse(eq(dto), any())).thenReturn(mappedResponse);
+       NotificationCostRecipientResponseDto mappedResponse = new NotificationCostRecipientResponseDto();
+       when(notificationDeliveryCostMapper.mapDtoToResponse(eq(notificationDeliveryCost), any())).thenReturn(mappedResponse);
 
        StepVerifier.create(notificationCostService.getNotificationCostRecipient(IUN, REC_INDEX))
                .expectNext(mappedResponse)
                .verifyComplete();
 
        verify(notificationDeliveryCostDao).getNotificationDeliveryCostItem(IUN, REC_INDEX);
-       verify(costCalculator).calculateCosts(dto);
-       verify(notificationDeliveryCostMapper).mapDtoToResponse(eq(dto), any());
+       verify(costCalculator).calculateCosts(notificationDeliveryCost);
+       verify(notificationDeliveryCostMapper).mapDtoToResponse(eq(notificationDeliveryCost), any());
     }
 
     @Test
     void getNotificationCostRecipient_ReturnsNotFoundErrorWhenItemIsDeleted() {
-        NotificationDeliveryCostDto dto = NotificationDeliveryCostDtoTestBuilder.builder()
+        NotificationDeliveryCost dto = NotificationDeliveryCostTestBuilder.builder()
                 .withIun(IUN)
                 .withRecIndex(REC_INDEX)
                 .withIsDeleted(true)

@@ -1,22 +1,22 @@
 package it.pagopa.pn.notificationcostservice.middleware.dao.notificationdeliverycost.dynamo.mapper;
 
-import it.pagopa.pn.notificationcostservice.dto.notificationdeliverycost.BaseCostDto;
-import it.pagopa.pn.notificationcostservice.dto.notificationdeliverycost.NotificationDeliveryCostDto;
-import it.pagopa.pn.notificationcostservice.dto.notificationdeliverycost.analogcost.FirstAnalogCostDto;
-import it.pagopa.pn.notificationcostservice.dto.notificationdeliverycost.analogcost.SecondAnalogCostDto;
-import it.pagopa.pn.notificationcostservice.dto.notificationdeliverycost.analogcost.SimpleRegisteredLetterCostDto;
+import it.pagopa.pn.notificationcostservice.model.notificationdeliverycost.BaseCost;
+import it.pagopa.pn.notificationcostservice.model.notificationdeliverycost.NotificationDeliveryCost;
+import it.pagopa.pn.notificationcostservice.model.notificationdeliverycost.analogcost.FirstAnalogCost;
+import it.pagopa.pn.notificationcostservice.model.notificationdeliverycost.analogcost.SecondAnalogCost;
+import it.pagopa.pn.notificationcostservice.model.notificationdeliverycost.analogcost.SimpleRegisteredLetterCost;
 import it.pagopa.pn.notificationcostservice.middleware.dao.notificationdeliverycost.dynamo.entity.notificationdeliverycost.NotificationDeliveryCostEntity;
-import it.pagopa.pn.notificationcostservice.middleware.dao.notificationdeliverycost.dynamo.entity.notificationdeliverycost.analogcost.FirstAnalogCost;
-import it.pagopa.pn.notificationcostservice.middleware.dao.notificationdeliverycost.dynamo.entity.notificationdeliverycost.analogcost.SecondAnalogCost;
-import it.pagopa.pn.notificationcostservice.middleware.dao.notificationdeliverycost.dynamo.entity.notificationdeliverycost.analogcost.SimpleRegisteredLetterCost;
+import it.pagopa.pn.notificationcostservice.middleware.dao.notificationdeliverycost.dynamo.entity.notificationdeliverycost.analogcost.FirstAnalogCostEntity;
+import it.pagopa.pn.notificationcostservice.middleware.dao.notificationdeliverycost.dynamo.entity.notificationdeliverycost.analogcost.SecondAnalogCostEntity;
+import it.pagopa.pn.notificationcostservice.middleware.dao.notificationdeliverycost.dynamo.entity.notificationdeliverycost.analogcost.SimpleRegisteredLetterCostEntity;
 import org.springframework.stereotype.Component;
 
 import java.util.Objects;
 
 @Component
 public class EntityToDtoNotificationDeliveryCostMapper {
-    public NotificationDeliveryCostDto entity2Dto(NotificationDeliveryCostEntity entity) {
-        return NotificationDeliveryCostDto.builder()
+    public NotificationDeliveryCost entity2Dto(NotificationDeliveryCostEntity entity) {
+        return NotificationDeliveryCost.builder()
                 .iun(entity.getIun())
                 .recIndex(entity.getRecIndex())
                 .firstAnalogCost(mapFirstAnalogCost(entity.getFirstAnalogCost()))
@@ -34,38 +34,38 @@ public class EntityToDtoNotificationDeliveryCostMapper {
                 .build();
     }
 
-    private FirstAnalogCostDto mapFirstAnalogCost(FirstAnalogCost entity) {
+    private FirstAnalogCost mapFirstAnalogCost(FirstAnalogCostEntity entity) {
         if(Objects.isNull(entity)){
             return null;
         }
-        return FirstAnalogCostDto.builder()
+        return FirstAnalogCost.builder()
                 .cost(entity.getCost())
                 .productType(entity.getProductType())
                 .build();
     }
 
-    private BaseCostDto mapBaseCost(NotificationDeliveryCostEntity entity){
-        return BaseCostDto.builder()
+    private BaseCost mapBaseCost(NotificationDeliveryCostEntity entity){
+        return BaseCost.builder()
                 .paFee(entity.getBaseCost().getPaFee())
                 .sendFee(entity.getBaseCost().getSendFee())
                 .build();
     }
 
-    private SecondAnalogCostDto mapSecondAnalogCost(SecondAnalogCost entity) {
+    private SecondAnalogCost mapSecondAnalogCost(SecondAnalogCostEntity entity) {
         if(Objects.isNull(entity)){
             return null;
         }
-        return SecondAnalogCostDto.builder()
+        return SecondAnalogCost.builder()
                 .cost(entity.getCost())
                 .productType(entity.getProductType())
                 .build();
     }
 
-    private SimpleRegisteredLetterCostDto mapSimpleRegisteredLetterCost(SimpleRegisteredLetterCost entity) {
+    private SimpleRegisteredLetterCost mapSimpleRegisteredLetterCost(SimpleRegisteredLetterCostEntity entity) {
         if(Objects.isNull(entity)){
             return null;
         }
-        return SimpleRegisteredLetterCostDto.builder()
+        return SimpleRegisteredLetterCost.builder()
                 .cost(entity.getCost())
                 .productType(entity.getProductType())
                 .build();

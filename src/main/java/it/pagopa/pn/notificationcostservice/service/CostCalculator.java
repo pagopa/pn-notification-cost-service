@@ -1,8 +1,8 @@
 package it.pagopa.pn.notificationcostservice.service;
 
-import it.pagopa.pn.notificationcostservice.dto.cost.CalculatedCosts;
-import it.pagopa.pn.notificationcostservice.dto.notificationdeliverycost.NotificationDeliveryCostDto;
+import it.pagopa.pn.notificationcostservice.model.cost.CalculatedCosts;
+import it.pagopa.pn.notificationcostservice.model.notificationdeliverycost.NotificationDeliveryCost;
 
 public interface CostCalculator {
-    CalculatedCosts calculateCosts(NotificationDeliveryCostDto notificationDeliveryCostDto);
+    CalculatedCosts calculateCosts(NotificationDeliveryCost notificationDeliveryCost);
 }

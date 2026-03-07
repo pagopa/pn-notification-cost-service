@@ -1,8 +1,8 @@
-package it.pagopa.pn.notificationcostservice.dto.notificationdeliverycost;
+package it.pagopa.pn.notificationcostservice.model.notificationdeliverycost;
 
-import it.pagopa.pn.notificationcostservice.dto.notificationdeliverycost.analogcost.FirstAnalogCostDto;
-import it.pagopa.pn.notificationcostservice.dto.notificationdeliverycost.analogcost.SecondAnalogCostDto;
-import it.pagopa.pn.notificationcostservice.dto.notificationdeliverycost.analogcost.SimpleRegisteredLetterCostDto;
+import it.pagopa.pn.notificationcostservice.model.notificationdeliverycost.analogcost.FirstAnalogCost;
+import it.pagopa.pn.notificationcostservice.model.notificationdeliverycost.analogcost.SecondAnalogCost;
+import it.pagopa.pn.notificationcostservice.model.notificationdeliverycost.analogcost.SimpleRegisteredLetterCost;
 import it.pagopa.pn.notificationcostservice.exception.PnDomainObjectValidationException;
 import lombok.Builder;
 import lombok.Data;
@@ -20,15 +20,15 @@ import static it.pagopa.pn.notificationcostservice.utils.DomainValidationUtils.v
 @Data
 @EqualsAndHashCode
 @ToString
-public class NotificationDeliveryCostDto {
+public class NotificationDeliveryCost {
     private String iun;
     private int recIndex;
     private String recipientInternalId;
     private String senderInternalId;
-    private BaseCostDto baseCost;
-    private FirstAnalogCostDto firstAnalogCost;
-    private SecondAnalogCostDto secondAnalogCost;
-    private SimpleRegisteredLetterCostDto simpleRegisteredLetterCost;
+    private BaseCost baseCost;
+    private FirstAnalogCost firstAnalogCost;
+    private SecondAnalogCost secondAnalogCost;
+    private SimpleRegisteredLetterCost simpleRegisteredLetterCost;
     private Boolean isDeleted;
     private NotificationFeePolicy notificationFeePolicy;
     private PagoPaIntMode pagoPaIntMode;
@@ -37,7 +37,7 @@ public class NotificationDeliveryCostDto {
     private Long ttl;
 
     @Builder
-    private NotificationDeliveryCostDto(String iun, int recIndex, String recipientInternalId, String senderInternalId, BaseCostDto baseCost, FirstAnalogCostDto firstAnalogCost, SecondAnalogCostDto secondAnalogCost, SimpleRegisteredLetterCostDto simpleRegisteredLetterCost, Boolean isDeleted, NotificationFeePolicy notificationFeePolicy, PagoPaIntMode pagoPaIntMode, int vat, Instant lastUpdate, Long ttl) {
+    private NotificationDeliveryCost(String iun, int recIndex, String recipientInternalId, String senderInternalId, BaseCost baseCost, FirstAnalogCost firstAnalogCost, SecondAnalogCost secondAnalogCost, SimpleRegisteredLetterCost simpleRegisteredLetterCost, Boolean isDeleted, NotificationFeePolicy notificationFeePolicy, PagoPaIntMode pagoPaIntMode, int vat, Instant lastUpdate, Long ttl) {
         List<String> violations = new ArrayList<>();
         validateNonNullableField(iun, "iun", violations);
         validateNonNullableField(baseCost, "baseCost", violations);
@@ -66,7 +66,7 @@ public class NotificationDeliveryCostDto {
         this.ttl = ttl;
     }
 
-    private void validateAnalogCosts(FirstAnalogCostDto firstAnalogCost, SimpleRegisteredLetterCostDto simpleRegisteredLetterCost, List<String> violations) {
+    private void validateAnalogCosts(FirstAnalogCost firstAnalogCost, SimpleRegisteredLetterCost simpleRegisteredLetterCost, List<String> violations) {
         if(Objects.nonNull(firstAnalogCost) && Objects.nonNull(simpleRegisteredLetterCost)) {
             violations.add("Only one between firstAnalogCost and simpleRegisteredLetterCost can be set");
         }

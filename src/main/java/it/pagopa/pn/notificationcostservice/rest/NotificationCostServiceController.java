@@ -1,7 +1,7 @@
 package it.pagopa.pn.notificationcostservice.rest;
 
 import it.pagopa.pn.notification_cost_service.generated.openapi.server.v1.api.NotificationCostRecipientApi;
-import it.pagopa.pn.notification_cost_service.generated.openapi.server.v1.dto.NotificationCostRecipientResponse;
+import it.pagopa.pn.notification_cost_service.generated.openapi.server.v1.dto.NotificationCostRecipientResponseDto;
 import it.pagopa.pn.notificationcostservice.service.NotificationCostService;
 import lombok.AllArgsConstructor;
 import lombok.CustomLog;
@@ -18,7 +18,7 @@ public class NotificationCostServiceController implements NotificationCostRecipi
     private final NotificationCostService notificationCostService;
 
     @Override
-    public Mono<ResponseEntity<NotificationCostRecipientResponse>> notificationCostRecipient(String iun,
+    public Mono<ResponseEntity<NotificationCostRecipientResponseDto>> notificationCostRecipient(String iun,
                                                                                              Integer recIndex,
                                                                                              final ServerWebExchange exchange) {
         return notificationCostService.getNotificationCostRecipient(iun, recIndex)

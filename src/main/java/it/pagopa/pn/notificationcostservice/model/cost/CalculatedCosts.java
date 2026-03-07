@@ -1,4 +1,4 @@
-package it.pagopa.pn.notificationcostservice.dto.cost;
+package it.pagopa.pn.notificationcostservice.model.cost;
 
 import lombok.Builder;
 import lombok.Getter;

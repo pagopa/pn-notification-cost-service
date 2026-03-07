@@ -1,15 +1,15 @@
-package it.pagopa.pn.notificationcostservice.dto.notificationdeliverycost.analogcost;
+package it.pagopa.pn.notificationcostservice.model.notificationdeliverycost.analogcost;
 
 import it.pagopa.pn.notificationcostservice.exception.PnDomainObjectValidationException;
 import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-class AnalogCostDtoTest {
+class AnalogCostTest {
 
     @Test
     void createsSuccessfullyWithZeroCost() {
-        AnalogCostDto dto = new AnalogCostDto(0, "AR");
+        AnalogCost dto = new AnalogCost(0, "AR");
 
         assertEquals(0, dto.getCost());
         assertEquals("AR", dto.getProductType());
@@ -17,7 +17,7 @@ class AnalogCostDtoTest {
 
     @Test
     void createsSuccessfullyWithPositiveCost() {
-        AnalogCostDto dto = new AnalogCostDto(100, "890");
+        AnalogCost dto = new AnalogCost(100, "890");
 
         assertEquals(100, dto.getCost());
         assertEquals("890", dto.getProductType());
@@ -25,7 +25,7 @@ class AnalogCostDtoTest {
 
     @Test
     void createsSuccessfullyWithNullProductType() {
-        AnalogCostDto dto = new AnalogCostDto(100, null);
+        AnalogCost dto = new AnalogCost(100, null);
 
         assertEquals(100, dto.getCost());
         assertNull(dto.getProductType());
@@ -33,7 +33,7 @@ class AnalogCostDtoTest {
 
     @Test
     void createsSuccessfullyWithEmptyProductType() {
-        AnalogCostDto dto = new AnalogCostDto(100, "");
+        AnalogCost dto = new AnalogCost(100, "");
 
         assertEquals(100, dto.getCost());
         assertEquals("", dto.getProductType());
@@ -42,7 +42,7 @@ class AnalogCostDtoTest {
     @Test
     void throwsExceptionWhenCostIsNull() {
         PnDomainObjectValidationException exception = assertThrows(PnDomainObjectValidationException.class, () ->
-                new AnalogCostDto(null, "AR")
+                new AnalogCost(null, "AR")
         );
 
         assertTrue(exception.getMessage().contains("cost"));
@@ -51,7 +51,7 @@ class AnalogCostDtoTest {
     @Test
     void throwsExceptionWhenCostIsNegative() {
         PnDomainObjectValidationException exception = assertThrows(PnDomainObjectValidationException.class, () ->
-                new AnalogCostDto(-1, "AR")
+                new AnalogCost(-1, "AR")
         );
 
         assertTrue(exception.getMessage().contains("cost"));
