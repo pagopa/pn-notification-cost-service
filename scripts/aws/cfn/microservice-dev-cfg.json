@@ -1,3 +1,12 @@
 {
-  "Parameters" : {}
+  "Parameters" : {
+    "PnCronAnalyzer": "-",
+    "WireTapLogActivation": "false",
+    "MountEfs": "false",
+    "CpuValue": "2048",
+    "MemoryAmount": "4GB",
+    "MinTasksNumber": "1",
+    "MaxTasksNumber": "1",
+    "AutoscalingThreshold": "650"
+  }
 }
