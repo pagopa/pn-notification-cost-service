@@ -42,9 +42,9 @@ Resources:
     Properties:
       TableName: !Sub '${ProjectName}-NotificationDeliveryCost'
       AttributeDefinitions:
-        - AttributeName: "pk"
+        - AttributeName: "iun"
           AttributeType: "S"
-        - AttributeName: "sk"
+        - AttributeName: "recIndex"
           AttributeType: "N"
       KeySchema:
         - AttributeName: "pk"
