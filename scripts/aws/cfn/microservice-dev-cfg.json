@@ -1,6 +1,6 @@
 {
   "Parameters" : {
-    "PnCronAnalyzer": "* */1 * * * *",
+    "PnCronAnalyzer": "-",
     "WireTapLogActivation": "false",
     "MountEfs": "false",
     "CpuValue": "2048",
