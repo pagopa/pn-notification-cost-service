@@ -20,8 +20,8 @@ import java.time.Instant;
 @Data
 public class NotificationDeliveryCostEntity {
 
-    public static final String COL_IUN = "iun";
-    public static final String COL_REC_INDEX = "recIndex";
+    public static final String COL_PK = "pk";
+    public static final String COL_SK = "sk";
     public static final String COL_RECIPIENT_INTERNAL_ID = "recipientInternalId";
     public static final String COL_SENDER_INTERNAL_ID = "senderInternalId";
     public static final String COL_BASE_COST = "baseCost";
@@ -38,10 +38,10 @@ public class NotificationDeliveryCostEntity {
     public static final String COL_TTL = "ttl";
 
 
-    @Getter(onMethod=@__({@DynamoDbPartitionKey, @DynamoDbAttribute(COL_IUN)}))
+    @Getter(onMethod=@__({@DynamoDbPartitionKey, @DynamoDbAttribute(COL_PK)}))
     private String iun;
 
-    @Getter(onMethod=@__({@DynamoDbSortKey, @DynamoDbAttribute(COL_REC_INDEX)}))
+    @Getter(onMethod=@__({@DynamoDbSortKey, @DynamoDbAttribute(COL_SK)}))
     private Integer recIndex;
 
     @Getter(onMethod=@__({@DynamoDbAttribute(COL_RECIPIENT_INTERNAL_ID)}))
