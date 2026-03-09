@@ -109,7 +109,7 @@ const getTimelineByIun = async (iun) => {
  */
 const saveDeliveryCosts = async (items) => {
   if (!items || items.length === 0) return;
-  const tableName = "NotificationDeliveryCost";
+  const tableName = "pn-NotificationDeliveryCost";
 
   for (let i = 0; i < items.length; i += 25) {
     const itemChunk = items.slice(i, i + 25);

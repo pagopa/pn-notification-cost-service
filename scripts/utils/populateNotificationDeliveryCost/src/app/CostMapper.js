@@ -28,8 +28,8 @@ const mapToDeliveryCost = (notif, currentIndex, recipientEvents, isDeletedField,
   let simpleRegisteredLetterCost = null;
 
   const deliveryCost = {
-      iun: String(notif.iun),
-      recIndex: Number(currentIndex),
+      pk: String(notif.iun),
+      sk: Number(currentIndex),
       baseCost: {
         sendFee: 100,
         paFee: notif.paFee

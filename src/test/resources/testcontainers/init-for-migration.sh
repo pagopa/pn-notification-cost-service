@@ -7,9 +7,9 @@ PROFILE="default"
 echo " - Creating Tables..."
 
 aws --profile $PROFILE --region $REGION --endpoint-url=$ENDPOINT \
-    dynamodb create-table --table-name NotificationDeliveryCost \
-    --attribute-definitions AttributeName=iun,AttributeType=S AttributeName=recIndex,AttributeType=N \
-    --key-schema AttributeName=iun,KeyType=HASH AttributeName=recIndex,KeyType=RANGE \
+    dynamodb create-table --table-name pn-NotificationDeliveryCost \
+    --attribute-definitions AttributeName=pk,AttributeType=S AttributeName=sk,AttributeType=N \
+    --key-schema AttributeName=pk,KeyType=HASH AttributeName=sk,KeyType=RANGE \
     --provisioned-throughput ReadCapacityUnits=5,WriteCapacityUnits=5
 
 aws --profile $PROFILE --region $REGION --endpoint-url=$ENDPOINT \
