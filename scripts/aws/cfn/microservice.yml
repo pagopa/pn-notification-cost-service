@@ -195,6 +195,27 @@ Parameters:
   NotificationDeliveryCostTableArn:
     Type: String
     Description: 'ARN of dynamodb table containing cost of notification delivery '
+  
+  PaymentInfoDynamoTableName:
+    Type: String
+    Description: 'Name of dynamodb table containing info cost of notification delivery'
+    
+  PaymentInfoDynamoTableArn:
+    Type: String
+    Description: 'ARN of dynamodb table containing info cost of notification delivery '
+    
+  # --- Sqs ---
+  PnCostToUpdateQueueName:
+    Type: String
+    Description: 'The name of the SQS queue used to communicate with pn-notification-cost-service module.'
+    
+  PnCostToUpdateQueueARN:
+    Type: String
+    Description: 'Identify the resource that the policy applies to.'
+    
+  PnCostToUpdateQueueAlarmARN:
+    Type: String
+    Description: 'Identify the resource that the policy applies to.'
 
 Resources:
   # PN-Notification-Cost-Service microservice
@@ -228,6 +249,8 @@ Resources:
         ContainerEnvEntry3: !Sub 'WIRE_TAP_LOG=${WireTapLogActivation}'
         ContainerEnvEntry4: !Sub 'CORS_ALLOWED_DOMAINS=${CorsAllowedDomains}'
         ContainerEnvEntry5: !Sub 'PN_NOTIFICATIONCOSTSERVICE_NOTIFICATIONDELIVERYCOSTTABLE_TABLENAME=${NotificationDeliveryCostTableName}'
+        ContainerEnvEntry6: !Sub 'PN_NOTIFICATIONCOSTSERVICE_PAYMENTINFOTABLE_TABLENAME=${PaymentInfoDynamoTableName}'
+        ContainerEnvEntry7: !Sub 'PN_NOTIFICATIONCOSTSERVICE_TOPICS_PNCOSTTOUPDATE=${PnCostToUpdateQueueName}'
         ApplicativeEnvFileChecksum: !Ref ApplicativeEnvFileChecksum
         JavaToolOptions: '-Dreactor.netty.ioWorkerCount=50'
         MappedPaths: '/notification-cost-private/*'
@@ -248,8 +271,17 @@ Resources:
       TemplateURL: !Sub "${TemplateBucketBaseUrl}/fragments/microservice-cloudwatch-dashboard.yaml"
       Parameters:
         DashboardName: !Sub "${ProjectName}-notification-cost-service"
-        DynamoDBTableNames: !Ref NotificationDeliveryCostTableName
-        AlarmArns: !GetAtt NotificationCostServiceMicroservice.Outputs.FatalLogsMetricAlarmArn
+        DynamoDBTableNames: !Join
+        - ','
+        - - !Ref NotificationDeliveryCostTableName
+        - - !Ref PaymentInfoDynamoTableName
+        AlarmArns: !Join
+          - ','
+          - - !GetAtt NotificationCostServiceMicroservice.Outputs.FatalLogsMetricAlarmArn
+            - !Ref PnCostToUpdateQueueAlarmARN
+        QueueArns: !Join
+          - ','
+          - - !Ref PnCostToUpdateQueueARN
         LogGroupsNames: !Sub '/aws/ecs/${ProjectName}-notification-cost-service'
 
   # Grant operational rights to Pn-NotificationCostService microservice
@@ -266,3 +298,17 @@ Resources:
               - 'dynamodb:UpdateItem'
             Resource:
               - !Sub "${NotificationDeliveryCostTableArn}"
+              - !Sub "${PaymentInfoDynamoTableArn}"
+          - Effect: Allow
+            Action:
+              - sqs:ChangeMessageVisibility
+              - sqs:ChangeMessageVisibilityBatch
+              - sqs:DeleteMessage
+              - sqs:DeleteMessageBatch
+              - sqs:GetQueueAttributes
+              - sqs:GetQueueUrl
+              - sqs:ReceiveMessage
+              - sqs:SendMessage
+              - sqs:SendMessageBatch
+            Resource:
+              - !Ref PnCostToUpdateQueueARN

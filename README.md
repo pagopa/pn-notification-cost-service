@@ -1,6 +1,40 @@
 # pn-notification-cost-service
 
 
+---
+
+### pn-NotificationDeliveryCost
+
+### Configurazione
+- **Variabile d'ambiente**: `PN_NOTIFICATIONCOSTSERVICE_NOTIFICATIONDELIVERYCOSTTABLE_TABLENAME`
+- **Nome risorsa CloudFormation**: `NotificationDeliveryCostTableName`
+- **Tipo**: Tabella DynamoDB
+- **Funzionalità**: La tabella pn-NotificationDeliveryCost viene utilizzata per persistere i costi di consegna delle notifiche.
+
+---
+
+### pn-PaymentInfo
+
+### Configurazione
+- **Variabile d'ambiente**: `PN_NOTIFICATIONCOSTSERVICE_PAYMENTINFOTABLE_TABLENAME`
+- **Nome risorsa CloudFormation**: `PaymentInfoDynamoTableName`
+- **Tipo**: Tabella DynamoDB
+- **Funzionalità**: La tabella pn-PaymentInfo viene utilizzata per persistere le informazioni di pagamento associate a una notifica.
+
+---
+
+### pnCostToUpdate
+
+### Configurazione
+- **Variabile d'ambiente**: `PN_NOTIFICATIONCOSTSERVICE_TOPICS_PNCOSTTOUPDATE`
+- **Nome risorsa CloudFormation**: `PnCostToUpdateQueueName`
+- **Tipo**: Input (Coda SQS)
+
+### Funzionamento
+- **Scopo**: Disaccoppia la richiesta di validazione dei dati di pagamento dalla logica di business. Il servizio invia un messaggio alla coda.
+- **Trigger**: Riceve un evento di tipo `NotificationCostInizializationEvent`.
+---
+
 ### populateNotificationDeliveryCost
 
 #### Responsabilità
@@ -50,3 +84,4 @@ il file `init-for-migration.sh`, quindi lanciare il comando:
 
 Bash
 `NODE_TLS_REJECT_UNAUTHORIZED=0 node index.js IUN-STANDARD-MIX IUN-SIMPLE-LETTER`
+

@@ -24,6 +24,31 @@ aws --profile $PROFILE --region $REGION --endpoint-url=$ENDPOINT \
     --key-schema AttributeName=iun,KeyType=HASH \
     --provisioned-throughput ReadCapacityUnits=5,WriteCapacityUnits=5
 
+aws --profile default --region us-east-1 --endpoint-url=http://localstack:4566 \
+    dynamodb create-table \
+    --table-name pn-PaymentInfo \
+    --attribute-definitions \
+        AttributeName=pk,AttributeType=S \
+    --key-schema \
+        AttributeName=pk,KeyType=HASH \
+    --provisioned-throughput \
+        ReadCapacityUnits=10,WriteCapacityUnits=5
+
+echo "### CREATE QUEUES FIFO ###"
+
+queues_fifo="pn-cost-to-update.fifo"
+
+for qn in  $( echo $queues_fifo | tr " " "\n" ) ; do
+
+    echo creating queue fifo $qn ...
+
+    aws --profile default --region us-east-1 --endpoint-url http://localstack:4566 \
+        sqs create-queue \
+        --attributes '{"DelaySeconds":"2","FifoQueue": "true","ContentBasedDeduplication": "true"}' \
+        --queue-name $qn
+done
+
+
 echo "Tables created. Inserting test cases..."
 
 IUN1="IUN-STANDARD-MIX"

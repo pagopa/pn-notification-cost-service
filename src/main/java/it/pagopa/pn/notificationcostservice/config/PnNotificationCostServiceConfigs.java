@@ -16,11 +16,23 @@ import org.springframework.context.annotation.Import;
 public class PnNotificationCostServiceConfigs {
 
     private NotificationDeliveryCostTable notificationDeliveryCostTable;
+    private PaymentInfoTable paymentInfoTable;
+    private Topics topics;
 
     @Data
     public static class NotificationDeliveryCostTable {
         private String tableName;
     }
+    @Data
+    public static class PaymentInfoTable {
+        private String tableName;
+    }
+
+    @Data
+    public static class Topics {
+        private String pnCostToUpdate;
+    }
+
     @PostConstruct
     public void init() {
         log.info("PnNotificationCostServiceConfigs={}", this);
