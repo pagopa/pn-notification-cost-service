@@ -17,7 +17,7 @@
 
 ### Configurazione
 - **Variabile d'ambiente**: `PN_NOTIFICATIONCOSTSERVICE_PAYMENTINFOTABLE_TABLENAME`
-- **Nome risorsa CloudFormation**: `PaymentInfoDynamoTableName`
+- **Nome risorsa CloudFormation**: `PaymentInfoTableName`
 - **Tipo**: Tabella DynamoDB
 - **Funzionalità**: La tabella pn-PaymentInfo viene utilizzata per persistere le informazioni di pagamento associate a una notifica.
 

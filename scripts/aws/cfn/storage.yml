@@ -20,6 +20,10 @@ Parameters:
     Type: String
     Description: 'keep track of used projects commitIds'
   
+  AlarmSNSTopicName:
+    Type: String
+    Description: 'Topic alarm'
+  
   #Log
   LogRetention:
     Type: Number

@@ -296,7 +296,7 @@ Resources:
               - 'dynamodb:UpdateItem'
             Resource:
               - !Sub "${NotificationDeliveryCostTableArn}"
-              - !Sub "${PaymentInfoDynamoTableArn}"
+              - !Sub "${PaymentInfoTableArn}"
           - Effect: Allow
             Action:
               - sqs:ChangeMessageVisibility
