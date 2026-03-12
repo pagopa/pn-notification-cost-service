@@ -274,14 +274,12 @@ Resources:
         DynamoDBTableNames: !Join
         - ','
         - - !Ref NotificationDeliveryCostTableName
-        - - !Ref PaymentInfoDynamoTableName
+          - !Ref PaymentInfoDynamoTableName
         AlarmArns: !Join
           - ','
           - - !GetAtt NotificationCostServiceMicroservice.Outputs.FatalLogsMetricAlarmArn
             - !Ref PnCostToUpdateQueueAlarmARN
-        QueueArns: !Join
-          - ','
-          - - !Ref PnCostToUpdateQueueARN
+        QueueArns: !Ref PnCostToUpdateQueueARN
         LogGroupsNames: !Sub '/aws/ecs/${ProjectName}-notification-cost-service'
 
   # Grant operational rights to Pn-NotificationCostService microservice

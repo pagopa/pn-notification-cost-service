@@ -11,7 +11,7 @@ import software.amazon.awssdk.enhanced.dynamodb.mapper.annotations.DynamoDbParti
 @AllArgsConstructor
 @Data
 public class PaymentInfoEntity {
-    public static final String COL_PK = "iuv";
+    public static final String COL_PK = "pk";
     public static final String COL_REC_INDEX = "recIndex";
     public static final String COL_APPLY_COST = "applyCost";
     public static final String COL_IUN = "iun";
