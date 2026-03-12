@@ -274,7 +274,7 @@ Resources:
         DynamoDBTableNames: !Join
         - ','
         - - !Ref NotificationDeliveryCostTableName
-          - !Ref PaymentInfoDynamoTableName
+          - !Ref PaymentInfoTableName
         AlarmArns: !Join
           - ','
           - - !GetAtt NotificationCostServiceMicroservice.Outputs.FatalLogsMetricAlarmArn
