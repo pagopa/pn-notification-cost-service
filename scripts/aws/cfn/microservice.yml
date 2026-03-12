@@ -196,13 +196,13 @@ Parameters:
     Type: String
     Description: 'ARN of dynamodb table containing cost of notification delivery '
   
-  PaymentInfoDynamoTableName:
+  PaymentInfoTableName:
     Type: String
-    Description: 'Name of dynamodb table containing info cost of notification delivery'
+    Description: 'Name of dynamodb table containing info about payments'
     
-  PaymentInfoDynamoTableArn:
+  PaymentInfoTableArn:
     Type: String
-    Description: 'ARN of dynamodb table containing info cost of notification delivery '
+    Description: 'ARN of dynamodb table containing info about payments'
     
   # --- Sqs ---
   PnCostToUpdateQueueName:
@@ -249,7 +249,7 @@ Resources:
         ContainerEnvEntry3: !Sub 'WIRE_TAP_LOG=${WireTapLogActivation}'
         ContainerEnvEntry4: !Sub 'CORS_ALLOWED_DOMAINS=${CorsAllowedDomains}'
         ContainerEnvEntry5: !Sub 'PN_NOTIFICATIONCOSTSERVICE_NOTIFICATIONDELIVERYCOSTTABLE_TABLENAME=${NotificationDeliveryCostTableName}'
-        ContainerEnvEntry6: !Sub 'PN_NOTIFICATIONCOSTSERVICE_PAYMENTINFOTABLE_TABLENAME=${PaymentInfoDynamoTableName}'
+        ContainerEnvEntry6: !Sub 'PN_NOTIFICATIONCOSTSERVICE_PAYMENTINFOTABLE_TABLENAME=${PaymentInfoTableName}'
         ContainerEnvEntry7: !Sub 'PN_NOTIFICATIONCOSTSERVICE_TOPICS_PNCOSTTOUPDATE=${PnCostToUpdateQueueName}'
         ApplicativeEnvFileChecksum: !Ref ApplicativeEnvFileChecksum
         JavaToolOptions: '-Dreactor.netty.ioWorkerCount=50'

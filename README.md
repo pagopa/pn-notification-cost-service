@@ -32,7 +32,7 @@
 
 ### Funzionamento
 - **Scopo**: Disaccoppia la richiesta di validazione dei dati di pagamento dalla logica di business. Il servizio invia un messaggio alla coda.
-- **Trigger**: Riceve un evento di tipo `NotificationCostInizializationEvent`.
+- **Trigger**: Riceve un evento di tipo `NotificationCostInitializationEvent`.
 ---
 
 ### populateNotificationDeliveryCost
