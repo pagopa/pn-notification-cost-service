@@ -110,12 +110,12 @@ Outputs:
     Value: !Sub '${NotificationDeliveryCostTable.Arn}'
   
   PaymentInfoTableName:
-    Description: Name of dynamodb table containing cost of notification delivery
+    Description: Name of dynamodb table containing info about payments
     Value: !Ref PaymentInfoTable
     
-  PaymentInfoTableTableArn:
-    Description: ARN of dynamodb table containing cost of notification delivery
-    Value: !Sub '${PaymentInfoTableTable.Arn}'
+  PaymentInfoTableArn:
+    Description: ARN of dynamodb table containing info about payments
+    Value: !Sub '${PaymentInfoTable.Arn}'
   # Log group exports
   EcsNotificationCostServiceLogGroup:
     Value: !GetAtt PnNotificationCostServiceLogGroup.Outputs.LogGroupName
