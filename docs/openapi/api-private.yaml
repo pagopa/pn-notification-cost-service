@@ -56,9 +56,107 @@ paths:
             application/problem+json:
               schema:
                 $ref: '#/components/schemas/Problem'
-
+  "/notification-cost-private/cost/{iun}":
+    post:
+      operationId: initializeNotificationCost
+      summary: ""
+      description: ""
+      tags:
+        - NotificationCost
+      parameters:
+        - name: iun
+          in: path
+          required: true
+          description: Identificativo Univoco Notifica (IUN)
+          schema:
+            type: string
+          example: '00000000-0000-0000-0000-000000000000'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/NotificationCostRequest'
+      responses:
+        '200':
+          description: ACK - Richiesta elaborata correttamente
+          content:
+            application/json:
+              schema:
+                type: string
+                example: OK
+        '400':
+          description: Invalid input
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+        '500':
+          description: Internal Server Error
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
 components:
   schemas:
+    NotificationCostRequest:
+      type: object
+      properties:
+        recipients:
+          type: array
+          items:
+            $ref: '#/components/schemas/RecipientCostData'
+    
+    RecipientCostData:
+      type: object
+      properties:
+        recIndex:
+          type: integer
+          format: int32
+          description: Indice identificativo del destinatario
+        recipientInternalId:
+          type: string
+          description: ID anonimizzato del destinatario
+        senderInternalId:
+          type: string
+          description: ID anonimizzato del mittente
+        payments:
+          type: array
+          items:
+            $ref: '#/components/schemas/PaymentData'
+        applyCost:
+          type: boolean
+          description: Indica se applicare o meno i costi di notificazione
+        baseCost:
+          type: integer
+          format: int32
+          description: Costo base dato da sendFee + paFee (in eurocent)
+        sendFee:
+          type: integer
+          format: int32
+          description: Costo base di SeND per notificazione (in eurocent)
+        paFee:
+          type: integer
+          format: int32
+          description: Costo base dell'ente per notificazione (in eurocent)
+        notificationFeePolicy:
+          $ref: '#/components/schemas/NotificationFeePolicy'
+        pagoPaIntMode:
+          $ref: '#/components/schemas/PagoPaIntMode'
+        vat:
+          type: integer
+          format: int32
+          minimum: 0
+          maximum: 100
+          description: IVA applicata ai costi cartacei (es. 22)
+    
+    PaymentData:
+      type: object
+      properties:
+        iuv:
+          type: string
+          description: IUV del bollettino di pagamento
+          
     NotificationCostRecipientResponse:
       title: Notification cost Response for recipient
       description: >-
