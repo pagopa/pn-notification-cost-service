@@ -72,5 +72,5 @@ public class NotificationDeliveryCost {
     }
 
     private static final IntegerInterval VAT_RANGE =
-            new IntegerInterval(0,100);
+            new IntegerInterval(0, 100);
 }
