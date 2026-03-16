@@ -1,13 +1,11 @@
 package it.pagopa.pn.notificationcostservice.model.utils;
 
-import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.CsvSource;
-
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
-public class IntegerIntervalTest {
+class IntegerIntervalTest {
     @ParameterizedTest
     @CsvSource({
             "0, 100",
@@ -20,10 +18,15 @@ public class IntegerIntervalTest {
         assertEquals(max, interval.max());
     }
 
-    @Test
-    void throwsExceptionWhenMinIsGreaterThanMax() {
+    @ParameterizedTest
+    @CsvSource({
+            "10, 5",
+            "1, 0",
+            "0, -1"
+    })
+    void throwsExceptionWhenMinIsGreaterThanMax(int min, int max) {
         IllegalArgumentException exception = assertThrows(IllegalArgumentException.class,
-                () -> new IntegerInterval(10, 5));
-        assertEquals("min value must be less than or equal to max value", exception.getMessage());
+                () -> new IntegerInterval(min, max));
+        assertEquals("Invalid interval: min (" + min + ") cannot be greater than max (" + max + ")", exception.getMessage());
     }
 }

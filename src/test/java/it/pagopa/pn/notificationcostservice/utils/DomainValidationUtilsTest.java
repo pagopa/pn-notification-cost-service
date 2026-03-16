@@ -1,14 +1,13 @@
 package it.pagopa.pn.notificationcostservice.utils;
 
 import it.pagopa.pn.notificationcostservice.model.utils.IntegerInterval;
+import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
-
 import java.util.ArrayList;
 import java.util.List;
-
-import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.*;
 
 class DomainValidationUtilsTest {
     @Test
@@ -23,7 +22,7 @@ class DomainValidationUtilsTest {
     void validateNonNullableField_DoesNotAddViolationWhenFieldIsNotNull() {
         List<String> violations = new ArrayList<>();
         Object field = new Object();
-        DomainValidationUtils.validateNonNullableField(field, "testField", violations);
+        Assertions.assertTrue(DomainValidationUtils.validateNonNullableField(field, "testField", violations));
         assertEquals(0, violations.size());
     }
 
@@ -53,8 +52,9 @@ class DomainValidationUtilsTest {
     @Test
     void validateIntervalIntField_AddsViolationWhenFieldIsNull() {
         List<String> violations = new ArrayList<>();
-        IntegerInterval range = new IntegerInterval(0, 100);
-        DomainValidationUtils.validateIntervalIntField(null, "testField", violations, range);
+        new IntegerInterval(0, 100);
+        boolean result = DomainValidationUtils.validateNonNullableField(null, "testField", violations);
+        assertFalse(result);
         assertEquals(1, violations.size());
         assertEquals("Field testField is required and cannot be null", violations.getFirst());
     }

@@ -247,32 +247,36 @@ class NotificationDeliveryCostTest {
     @Test
     void throwsExceptionWhenVatIsLessThanMinimum() {
         BaseCost baseCost = BaseCost.builder().paFee(100).sendFee(50).build();
-        PnDomainObjectValidationException exception = assertThrows(PnDomainObjectValidationException.class, () ->
-                NotificationDeliveryCost.builder()
-                        .iun("IUN-TEST-123")
-                        .recIndex(0)
-                        .baseCost(baseCost)
-                        .notificationFeePolicy(NotificationFeePolicy.DELIVERY_MODE)
-                        .pagoPaIntMode(PagoPaIntMode.ASYNC)
-                        .vat(-1)
-                        .build()
+        NotificationDeliveryCost.NotificationDeliveryCostBuilder builder = NotificationDeliveryCost.builder()
+                .iun("IUN-TEST-123")
+                .recIndex(0)
+                .baseCost(baseCost)
+                .notificationFeePolicy(NotificationFeePolicy.DELIVERY_MODE)
+                .pagoPaIntMode(PagoPaIntMode.ASYNC)
+                .vat(-1);
+        PnDomainObjectValidationException exception = assertThrows(
+                PnDomainObjectValidationException.class,
+                builder::build
         );
+
         assertTrue(exception.getMessage().contains("Field vat cannot be less than 0"));
     }
 
     @Test
     void throwsExceptionWhenVatIsGreaterThanMaximum() {
         BaseCost baseCost = BaseCost.builder().paFee(100).sendFee(50).build();
-        PnDomainObjectValidationException exception = assertThrows(PnDomainObjectValidationException.class, () ->
-                NotificationDeliveryCost.builder()
-                        .iun("IUN-TEST-123")
-                        .recIndex(0)
-                        .baseCost(baseCost)
-                        .notificationFeePolicy(NotificationFeePolicy.DELIVERY_MODE)
-                        .pagoPaIntMode(PagoPaIntMode.ASYNC)
-                        .vat(101)
-                        .build()
+        NotificationDeliveryCost.NotificationDeliveryCostBuilder builder = NotificationDeliveryCost.builder()
+                .iun("IUN-TEST-123")
+                .recIndex(0)
+                .baseCost(baseCost)
+                .notificationFeePolicy(NotificationFeePolicy.DELIVERY_MODE)
+                .pagoPaIntMode(PagoPaIntMode.ASYNC)
+                .vat(101);
+        PnDomainObjectValidationException exception = assertThrows(
+                PnDomainObjectValidationException.class,
+                builder::build
         );
+
         assertTrue(exception.getMessage().contains("Field vat cannot be greater than 100"));
     }
 }
