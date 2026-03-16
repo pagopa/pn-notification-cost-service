@@ -5,6 +5,8 @@ import it.pagopa.pn.notificationcostservice.model.notificationdeliverycost.analo
 import it.pagopa.pn.notificationcostservice.model.notificationdeliverycost.analogcost.SimpleRegisteredLetterCost;
 import it.pagopa.pn.notificationcostservice.exception.PnDomainObjectValidationException;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -224,5 +226,57 @@ class NotificationDeliveryCostTest {
         assertEquals(firstAnalogCost, dto.getFirstAnalogCost());
         assertEquals(secondAnalogCost, dto.getSecondAnalogCost());
         assertNull(dto.getSimpleRegisteredLetterCost());
+    }
+
+    @ParameterizedTest
+    @ValueSource(ints = {0, 22, 100})
+    void buildsSuccessfullyWhenVatIsWithinRange(int vat) {
+        BaseCost baseCost = BaseCost.builder().paFee(100).sendFee(50).build();
+        NotificationDeliveryCost dto = NotificationDeliveryCost.builder()
+                .iun("IUN-TEST-123")
+                .recIndex(0)
+                .baseCost(baseCost)
+                .notificationFeePolicy(NotificationFeePolicy.DELIVERY_MODE)
+                .pagoPaIntMode(PagoPaIntMode.ASYNC)
+                .vat(vat)
+                .build();
+        assertNotNull(dto);
+        assertEquals(vat, dto.getVat());
+    }
+
+    @Test
+    void throwsExceptionWhenVatIsLessThanMinimum() {
+        BaseCost baseCost = BaseCost.builder().paFee(100).sendFee(50).build();
+        NotificationDeliveryCost.NotificationDeliveryCostBuilder builder = NotificationDeliveryCost.builder()
+                .iun("IUN-TEST-123")
+                .recIndex(0)
+                .baseCost(baseCost)
+                .notificationFeePolicy(NotificationFeePolicy.DELIVERY_MODE)
+                .pagoPaIntMode(PagoPaIntMode.ASYNC)
+                .vat(-1);
+        PnDomainObjectValidationException exception = assertThrows(
+                PnDomainObjectValidationException.class,
+                builder::build
+        );
+
+        assertTrue(exception.getMessage().contains("Field vat cannot be less than 0"));
+    }
+
+    @Test
+    void throwsExceptionWhenVatIsGreaterThanMaximum() {
+        BaseCost baseCost = BaseCost.builder().paFee(100).sendFee(50).build();
+        NotificationDeliveryCost.NotificationDeliveryCostBuilder builder = NotificationDeliveryCost.builder()
+                .iun("IUN-TEST-123")
+                .recIndex(0)
+                .baseCost(baseCost)
+                .notificationFeePolicy(NotificationFeePolicy.DELIVERY_MODE)
+                .pagoPaIntMode(PagoPaIntMode.ASYNC)
+                .vat(101);
+        PnDomainObjectValidationException exception = assertThrows(
+                PnDomainObjectValidationException.class,
+                builder::build
+        );
+
+        assertTrue(exception.getMessage().contains("Field vat cannot be greater than 100"));
     }
 }
