@@ -2,11 +2,13 @@ package it.pagopa.pn.notificationcostservice.utils;
 
 import it.pagopa.pn.notificationcostservice.model.utils.IntegerInterval;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 
 import java.util.ArrayList;
 import java.util.List;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 class DomainValidationUtilsTest {
     @Test
@@ -75,27 +77,14 @@ class DomainValidationUtilsTest {
         assertEquals("Field testField cannot be greater than 100", violations.getFirst());
     }
 
-    @Test
-    void validateIntervalIntField_DoesNotAddViolationWhenFieldEqualsMin() {
+    @ParameterizedTest
+    @ValueSource(ints = {0, 100, 50})
+    void validateIntervalIntField_DoesNotAddViolationWhenFieldIsWithinOrAtBoundaries(int value) {
         List<String> violations = new ArrayList<>();
         IntegerInterval range = new IntegerInterval(0, 100);
-        DomainValidationUtils.validateIntervalIntField(0, "testField", violations, range);
-        assertEquals(0, violations.size());
-    }
 
-    @Test
-    void validateIntervalIntField_DoesNotAddViolationWhenFieldEqualsMax() {
-        List<String> violations = new ArrayList<>();
-        IntegerInterval range = new IntegerInterval(0, 100);
-        DomainValidationUtils.validateIntervalIntField(100, "testField", violations, range);
-        assertEquals(0, violations.size());
-    }
+        DomainValidationUtils.validateIntervalIntField(value, "testField", violations, range);
 
-    @Test
-    void validateIntervalIntField_DoesNotAddViolationWhenFieldIsWithinRange() {
-        List<String> violations = new ArrayList<>();
-        IntegerInterval range = new IntegerInterval(0, 100);
-        DomainValidationUtils.validateIntervalIntField(50, "testField", violations, range);
-        assertEquals(0, violations.size());
+        assertEquals(0, violations.size(), "Non dovrebbero esserci violazioni per il valore: " + value);
     }
 }
