@@ -1,9 +1,11 @@
 package it.pagopa.pn.notificationcostservice.model.notificationdeliverycost;
 
+import it.pagopa.pn.notificationcostservice.model.utils.IntegerInterval;
 import it.pagopa.pn.notificationcostservice.model.notificationdeliverycost.analogcost.FirstAnalogCost;
 import it.pagopa.pn.notificationcostservice.model.notificationdeliverycost.analogcost.SecondAnalogCost;
 import it.pagopa.pn.notificationcostservice.model.notificationdeliverycost.analogcost.SimpleRegisteredLetterCost;
 import it.pagopa.pn.notificationcostservice.exception.PnDomainObjectValidationException;
+import it.pagopa.pn.notificationcostservice.model.utils.ValueRange;
 import lombok.Builder;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
@@ -14,8 +16,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 
-import static it.pagopa.pn.notificationcostservice.utils.DomainValidationUtils.validateNonNullableField;
-import static it.pagopa.pn.notificationcostservice.utils.DomainValidationUtils.validatePositiveIntField;
+import static it.pagopa.pn.notificationcostservice.utils.DomainValidationUtils.*;
 
 @Data
 @EqualsAndHashCode
@@ -44,7 +45,8 @@ public class NotificationDeliveryCost {
         validateNonNullableField(notificationFeePolicy, "notificationFeePolicy", violations);
         validateNonNullableField(pagoPaIntMode, "pagoPaIntMode", violations);
         validateAnalogCosts(firstAnalogCost, simpleRegisteredLetterCost, violations);
-        validatePositiveIntField(vat, "vat", violations);
+        validateIntervalIntField(vat, "vat", violations, new IntegerInterval(ValueRange.MIN.getValue(),
+                ValueRange.MAX.getValue()));
 
         if (!violations.isEmpty()) {
             throw new PnDomainObjectValidationException(violations, this.getClass().getName());
