@@ -1,6 +1,7 @@
 package it.pagopa.pn.notificationcostservice.rest;
 
 import it.pagopa.pn.notification_cost_service.generated.openapi.server.v1.dto.NotificationCostRequestDto;
+import it.pagopa.pn.notificationcostservice.model.ValidationStatus;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.http.ResponseEntity;
@@ -28,7 +29,7 @@ class PaymentInfoControllerTest {
         Mono<ResponseEntity<String>> result = controller.initializeNotificationCost(iun, Mono.just(requestDto), exchange);
 
         StepVerifier.create(result)
-                .expectNext(ResponseEntity.ok("ok"))
+                .expectNext(ResponseEntity.ok(ValidationStatus.OK.toString()))
                 .verifyComplete();
     }
 }
