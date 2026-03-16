@@ -116,12 +116,6 @@ components:
           type: string
           description: >-
             Always "OK"
-        description:
-          type: string
-          nullable: true
-          description: >-
-            Human readable status description used for debugging, not for application users.
-            For example "Success!"
     
     RecipientCostData:
       type: object
