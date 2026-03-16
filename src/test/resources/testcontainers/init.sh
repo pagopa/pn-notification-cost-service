@@ -24,17 +24,17 @@ aws --profile default --region us-east-1 --endpoint-url=http://localstack:4566 \
     --provisioned-throughput \
         ReadCapacityUnits=10,WriteCapacityUnits=5
 
-echo "### CREATE QUEUES FIFO ###"
+echo "### CREATE QUEUES ###"
 
-queues_fifo="pn-cost-to-update.fifo"
+queues="pn-cost-to-update"
 
-for qn in  $( echo $queues_fifo | tr " " "\n" ) ; do
+for qn in  $( echo $queues | tr " " "\n" ) ; do
 
-    echo creating queue fifo $qn ...
+    echo creating queue $qn ...
 
     aws --profile default --region us-east-1 --endpoint-url http://localstack:4566 \
         sqs create-queue \
-        --attributes '{"DelaySeconds":"2","FifoQueue": "true","ContentBasedDeduplication": "true"}' \
+        --attributes '{"DelaySeconds":"2","ContentBasedDeduplication": "true"}' \
         --queue-name $qn
 done
 
