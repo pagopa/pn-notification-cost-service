@@ -3,6 +3,7 @@ package it.pagopa.pn.notificationcostservice.rest;
 import it.pagopa.pn.notification_cost_service.generated.openapi.server.v1.api.NotificationCostApi;
 import it.pagopa.pn.notification_cost_service.generated.openapi.server.v1.dto.NotificationCostRequestDto;
 
+import it.pagopa.pn.notification_cost_service.generated.openapi.server.v1.dto.RequestAcceptedDto;
 import it.pagopa.pn.notificationcostservice.model.ValidationStatus;
 import lombok.AllArgsConstructor;
 import lombok.CustomLog;
@@ -17,9 +18,9 @@ import reactor.core.publisher.Mono;
 public class PaymentInfoController implements NotificationCostApi {
 
     @Override
-    public Mono<ResponseEntity<String>> initializeNotificationCost(String iun,
-                                                                   Mono<NotificationCostRequestDto> notificationCostRequestDto,
-                                                                   ServerWebExchange exchange) {
-        return Mono.just(ResponseEntity.ok(ValidationStatus.OK.toString()));
+    public Mono<ResponseEntity<RequestAcceptedDto>> initializeNotificationCost(String iun,
+                                                                               Mono<NotificationCostRequestDto> notificationCostRequestDto,
+                                                                               ServerWebExchange exchange) {
+        return Mono.just(ResponseEntity.ok(new RequestAcceptedDto().status(ValidationStatus.OK.toString())));
     }
 }

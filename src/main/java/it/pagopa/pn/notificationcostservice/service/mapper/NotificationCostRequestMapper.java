@@ -42,7 +42,6 @@ public class NotificationCostRequestMapper {
                         .filter(Objects::nonNull)
                         .map(this::toPaymentData)
                         .collect(Collectors.toList()))
-                .applyCost(dto.getApplyCost())
                 .baseCost(dto.getBaseCost())
                 .sendFee(dto.getSendFee())
                 .paFee(dto.getPaFee())
@@ -59,6 +58,7 @@ public class NotificationCostRequestMapper {
 
         return PaymentData.builder()
                 .iuv(Objects.requireNonNull(dto.getIuv()))
+                .applyCost(dto.getApplyCost())
                 .build();
     }
 }

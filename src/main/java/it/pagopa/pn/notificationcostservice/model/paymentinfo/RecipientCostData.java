@@ -16,12 +16,10 @@ public class RecipientCostData {
     private String recipientInternalId;
     private String senderInternalId;
     private List<PaymentData> payments;
-    private Boolean applyCost;
     private Integer baseCost;
     private Integer sendFee;
     private Integer paFee;
     private NotificationFeePolicy notificationFeePolicy;
     private PagoPaIntMode pagoPaIntMode;
     private Integer vat;
-
 }

@@ -1,34 +1,26 @@
 package it.pagopa.pn.notificationcostservice.service.mapper;
-
 import it.pagopa.pn.notification_cost_service.generated.openapi.server.v1.dto.*;
+import it.pagopa.pn.notificationcostservice.exception.PnNotificationDeliveryCostBadRequestException;
 import it.pagopa.pn.notificationcostservice.model.notificationdeliverycost.NotificationFeePolicy;
 import it.pagopa.pn.notificationcostservice.model.notificationdeliverycost.PagoPaIntMode;
 import it.pagopa.pn.notificationcostservice.model.paymentinfo.NotificationCostRequest;
 import org.jetbrains.annotations.NotNull;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-
 import java.util.Collections;
-
 import static org.junit.jupiter.api.Assertions.*;
-
 class NotificationCostRequestMapperTest {
-
     private NotificationCostRequestMapper mapper;
-
     @BeforeEach
     void setUp() {
         mapper = new NotificationCostRequestMapper();
     }
-
     @Test
     void fromDtoTest() {
         NotificationCostRequestDto dto = new NotificationCostRequestDto();
         RecipientCostDataDto recipientCostDataDto = getRecipientCostDataDto();
         dto.setRecipients(Collections.singletonList(recipientCostDataDto));
-
         NotificationCostRequest result = mapper.fromDto(dto);
-
         assertNotNull(result);
         assertEquals(1, result.getRecipients().size());
         assertEquals(1, result.getRecipients().getFirst().getRecIndex());
@@ -36,7 +28,6 @@ class NotificationCostRequestMapperTest {
         assertEquals("senderInternalId", result.getRecipients().getFirst().getSenderInternalId());
         assertEquals(1, result.getRecipients().getFirst().getPayments().size());
         assertEquals("iuv", result.getRecipients().getFirst().getPayments().getFirst().getIuv());
-        assertTrue(result.getRecipients().getFirst().getApplyCost());
         assertEquals(100, result.getRecipients().getFirst().getBaseCost());
         assertEquals(10, result.getRecipients().getFirst().getSendFee());
         assertEquals(1, result.getRecipients().getFirst().getPaFee());
@@ -44,7 +35,6 @@ class NotificationCostRequestMapperTest {
         assertEquals(PagoPaIntMode.ASYNC, result.getRecipients().getFirst().getPagoPaIntMode());
         assertEquals(22, result.getRecipients().getFirst().getVat());
     }
-
     private static @NotNull RecipientCostDataDto getRecipientCostDataDto() {
         RecipientCostDataDto recipientCostDataDto = new RecipientCostDataDto();
         recipientCostDataDto.setRecIndex(1);
@@ -52,8 +42,8 @@ class NotificationCostRequestMapperTest {
         recipientCostDataDto.setSenderInternalId("senderInternalId");
         PaymentDataDto paymentDataDto = new PaymentDataDto();
         paymentDataDto.setIuv("iuv");
+        paymentDataDto.setApplyCost(true);
         recipientCostDataDto.setPayments(Collections.singletonList(paymentDataDto));
-        recipientCostDataDto.setApplyCost(true);
         recipientCostDataDto.setBaseCost(100);
         recipientCostDataDto.setSendFee(10);
         recipientCostDataDto.setPaFee(1);
@@ -62,13 +52,11 @@ class NotificationCostRequestMapperTest {
         recipientCostDataDto.setVat(22);
         return recipientCostDataDto;
     }
-
     @Test
     void fromDtoNullTest() {
         NotificationCostRequest result = mapper.fromDto(null);
         assertNull(result);
     }
-
     @Test
     void fromDtoWithNullRecipientTest() {
         NotificationCostRequestDto dto = new NotificationCostRequestDto();
@@ -77,7 +65,6 @@ class NotificationCostRequestMapperTest {
         assertNotNull(result);
         assertEquals(0, result.getRecipients().size());
     }
-
     @Test
     void fromDtoWithNullPaymentTest() {
         NotificationCostRequestDto dto = new NotificationCostRequestDto();
@@ -91,5 +78,53 @@ class NotificationCostRequestMapperTest {
         assertEquals(1, result.getRecipients().size());
         assertNotNull(result.getRecipients().getFirst());
         assertEquals(0, result.getRecipients().getFirst().getPayments().size());
+    }
+    @Test
+    void fromDtoWithNullRecipientsFieldThrowsControlledException() {
+        NotificationCostRequestDto dto = new NotificationCostRequestDto();
+        dto.setRecipients(null);
+        PnNotificationDeliveryCostBadRequestException exception = assertThrows(PnNotificationDeliveryCostBadRequestException.class,
+                () -> mapper.fromDto(dto));
+        assertEquals("Missing required field: recipients", exception.getMessage());
+    }
+    @Test
+    void fromDtoWithNullPaymentsFieldThrowsControlledException() {
+        NotificationCostRequestDto dto = new NotificationCostRequestDto();
+        RecipientCostDataDto recipientCostDataDto = getRecipientCostDataDto();
+        recipientCostDataDto.setPayments(null);
+        dto.setRecipients(Collections.singletonList(recipientCostDataDto));
+        PnNotificationDeliveryCostBadRequestException exception = assertThrows(PnNotificationDeliveryCostBadRequestException.class,
+                () -> mapper.fromDto(dto));
+        assertEquals("Missing required field: recipients[0].payments", exception.getMessage());
+    }
+    @Test
+    void fromDtoWithNullNotificationFeePolicyThrowsControlledException() {
+        NotificationCostRequestDto dto = new NotificationCostRequestDto();
+        RecipientCostDataDto recipientCostDataDto = getRecipientCostDataDto();
+        recipientCostDataDto.setNotificationFeePolicy(null);
+        dto.setRecipients(Collections.singletonList(recipientCostDataDto));
+        PnNotificationDeliveryCostBadRequestException exception = assertThrows(PnNotificationDeliveryCostBadRequestException.class,
+                () -> mapper.fromDto(dto));
+        assertEquals("Missing required field: recipients[0].notificationFeePolicy", exception.getMessage());
+    }
+    @Test
+    void fromDtoWithNullPagoPaIntModeThrowsControlledException() {
+        NotificationCostRequestDto dto = new NotificationCostRequestDto();
+        RecipientCostDataDto recipientCostDataDto = getRecipientCostDataDto();
+        recipientCostDataDto.setPagoPaIntMode(null);
+        dto.setRecipients(Collections.singletonList(recipientCostDataDto));
+        PnNotificationDeliveryCostBadRequestException exception = assertThrows(PnNotificationDeliveryCostBadRequestException.class,
+                () -> mapper.fromDto(dto));
+        assertEquals("Missing required field: recipients[0].pagoPaIntMode", exception.getMessage());
+    }
+    @Test
+    void fromDtoWithNullIuvThrowsControlledException() {
+        NotificationCostRequestDto dto = new NotificationCostRequestDto();
+        RecipientCostDataDto recipientCostDataDto = getRecipientCostDataDto();
+        recipientCostDataDto.getPayments().getFirst().setIuv(null);
+        dto.setRecipients(Collections.singletonList(recipientCostDataDto));
+        PnNotificationDeliveryCostBadRequestException exception = assertThrows(PnNotificationDeliveryCostBadRequestException.class,
+                () -> mapper.fromDto(dto));
+        assertEquals("Missing required field: recipients[0].payments[0].iuv", exception.getMessage());
     }
 }

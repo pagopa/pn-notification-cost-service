@@ -8,5 +8,6 @@ import lombok.*;
 public class PaymentData {
     @NonNull
     private String iuv;
+    private Boolean applyCost;
 }
 

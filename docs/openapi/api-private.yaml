@@ -59,8 +59,8 @@ paths:
   "/notification-cost-private/cost/{iun}":
     post:
       operationId: initializeNotificationCost
-      summary: ""
-      description: ""
+      summary: "Initialize notification cost for all recipients"
+      description: " Servizio che inizializza il costo di notificazione per lo IUN indicato per tutti i destinatari della notifica."
       tags:
         - NotificationCost
       parameters:
@@ -83,8 +83,7 @@ paths:
           content:
             application/json:
               schema:
-                type: string
-                example: OK
+                $ref: '#/components/schemas/RequestAccepted'
         '400':
           description: Invalid input
           content:
@@ -107,6 +106,23 @@ components:
           items:
             $ref: '#/components/schemas/RecipientCostData'
     
+    RequestAccepted:
+      type: object
+      additionalProperties: false
+      required:
+        - status
+      properties:
+        status:
+          type: string
+          description: >-
+            Always "OK"
+        description:
+          type: string
+          nullable: true
+          description: >-
+            Human readable status description used for debugging, not for application users.
+            For example "Success!"
+    
     RecipientCostData:
       type: object
       properties:
@@ -124,9 +140,6 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/PaymentData'
-        applyCost:
-          type: boolean
-          description: Indica se applicare o meno i costi di notificazione
         baseCost:
           type: integer
           format: int32
@@ -156,7 +169,9 @@ components:
         iuv:
           type: string
           description: IUV del bollettino di pagamento
-          
+        applyCost:
+          type: boolean
+          description: Indica se applicare o meno i costi di notificazione
     NotificationCostRecipientResponse:
       title: Notification cost Response for recipient
       description: >-
