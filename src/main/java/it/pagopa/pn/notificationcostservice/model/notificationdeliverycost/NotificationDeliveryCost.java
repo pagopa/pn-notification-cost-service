@@ -1,21 +1,20 @@
 package it.pagopa.pn.notificationcostservice.model.notificationdeliverycost;
 
+import it.pagopa.pn.notificationcostservice.exception.PnDomainObjectValidationException;
 import it.pagopa.pn.notificationcostservice.model.notificationdeliverycost.analogcost.FirstAnalogCost;
 import it.pagopa.pn.notificationcostservice.model.notificationdeliverycost.analogcost.SecondAnalogCost;
 import it.pagopa.pn.notificationcostservice.model.notificationdeliverycost.analogcost.SimpleRegisteredLetterCost;
-import it.pagopa.pn.notificationcostservice.exception.PnDomainObjectValidationException;
+import it.pagopa.pn.notificationcostservice.model.utils.IntegerInterval;
 import lombok.Builder;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.ToString;
-
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
-
 import static it.pagopa.pn.notificationcostservice.utils.DomainValidationUtils.validateNonNullableField;
-import static it.pagopa.pn.notificationcostservice.utils.DomainValidationUtils.validatePositiveIntField;
+import static it.pagopa.pn.notificationcostservice.utils.DomainValidationUtils.validateIntervalIntField;
 
 @Data
 @EqualsAndHashCode
@@ -44,7 +43,7 @@ public class NotificationDeliveryCost {
         validateNonNullableField(notificationFeePolicy, "notificationFeePolicy", violations);
         validateNonNullableField(pagoPaIntMode, "pagoPaIntMode", violations);
         validateAnalogCosts(firstAnalogCost, simpleRegisteredLetterCost, violations);
-        validatePositiveIntField(vat, "vat", violations);
+        validateIntervalIntField(vat, "vat", violations, VAT_RANGE);
 
         if (!violations.isEmpty()) {
             throw new PnDomainObjectValidationException(violations, this.getClass().getName());
@@ -71,4 +70,7 @@ public class NotificationDeliveryCost {
             violations.add("Only one between firstAnalogCost and simpleRegisteredLetterCost can be set");
         }
     }
+
+    private static final IntegerInterval VAT_RANGE =
+            new IntegerInterval(0,100);
 }
