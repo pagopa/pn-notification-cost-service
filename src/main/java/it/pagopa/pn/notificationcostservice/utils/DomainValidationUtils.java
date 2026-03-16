@@ -29,6 +29,9 @@ public class DomainValidationUtils {
         if (!validateNonNullableField(field, fieldName, violations)) {
             return;
         }
+        if (!validateNonNullableField(range, fieldName + " range", violations)) {
+            return;
+        }
         if (field < range.getMin()) {
             violations.add(String.format("Field %s cannot be less than %d", fieldName, range.getMin()));
         }

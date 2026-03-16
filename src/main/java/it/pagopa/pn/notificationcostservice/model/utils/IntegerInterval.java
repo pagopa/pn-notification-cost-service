@@ -1,11 +1,11 @@
 package it.pagopa.pn.notificationcostservice.model.utils;
 
-import lombok.Data;
-
-@Data
+import lombok.Getter;
+@Getter
 public class IntegerInterval {
-    private int min;
-    private int max;
+
+    private final int min;
+    private final int max;
 
     public IntegerInterval(int min, int max) {
         this.min = min;
