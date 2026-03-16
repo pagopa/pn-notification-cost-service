@@ -32,11 +32,11 @@ public class DomainValidationUtils {
         if (!validateNonNullableField(range, fieldName + " range", violations)) {
             return;
         }
-        if (field < range.getMin()) {
-            violations.add(String.format("Field %s cannot be less than %d", fieldName, range.getMin()));
+        if (field < range.min()) {
+            violations.add(String.format("Field %s cannot be less than %d", fieldName, range.min()));
         }
-        if (field > range.getMax()) {
-            violations.add(String.format("Field %s cannot be greater than %d", fieldName, range.getMax()));
+        if (field > range.max()) {
+            violations.add(String.format("Field %s cannot be greater than %d", fieldName, range.max()));
         }
     }
 }
