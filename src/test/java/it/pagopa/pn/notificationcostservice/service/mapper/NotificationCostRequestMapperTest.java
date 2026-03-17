@@ -49,7 +49,7 @@ class NotificationCostRequestMapperTest {
     void fromDtoWithNullRecipientsFieldThrowsNPE() {
         NotificationCostRequestDto dto = new NotificationCostRequestDto();
         dto.setRecipients(null);
-        assertThrows(NullPointerException.class, () -> mapper.fromDto(dto));
+        assertThrows(PnNotificationDeliveryCostBadRequestException.class, () -> mapper.fromDto(dto));
     }
 
     @Test
@@ -59,16 +59,6 @@ class NotificationCostRequestMapperTest {
 
 
         assertThrows(PnNotificationDeliveryCostBadRequestException.class, () -> mapper.fromDto(dto));
-    }
-
-    @Test
-    void fromDtoWithNullPaymentsFieldThrowsNPE() {
-        NotificationCostRequestDto dto = new NotificationCostRequestDto();
-        RecipientCostDataDto recipientDto = getRecipientCostDataDto();
-        recipientDto.setPayments(null);
-        dto.setRecipients(Collections.singletonList(recipientDto));
-
-        assertThrows(NullPointerException.class, () -> mapper.fromDto(dto));
     }
 
     @Test

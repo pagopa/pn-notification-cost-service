@@ -14,6 +14,7 @@ import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import reactor.core.publisher.Mono;
+import reactor.core.scheduler.Schedulers;
 import reactor.util.retry.Retry;
 
 import java.time.Duration;
@@ -51,6 +52,7 @@ public class NotificationCostServiceImpl implements NotificationCostService {
                     var event = EventNotificationCostBuilder.buildNotificationCostEvent(request, iun);
                     notificationCostInitialization.push(event);
                 })
+                .subscribeOn(Schedulers.boundedElastic())
                 .doOnSuccess(v -> log.info("NotificationCostInit event sent successfully for iun: {}", iun))
                 .retryWhen(Retry.backoff(3, Duration.ofMillis(1000))
                         .doBeforeRetry(retrySignal ->

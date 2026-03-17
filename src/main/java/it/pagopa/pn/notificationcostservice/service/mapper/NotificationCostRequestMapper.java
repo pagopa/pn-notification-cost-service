@@ -22,6 +22,11 @@ public class NotificationCostRequestMapper {
                     "request object cannot be null", ERROR_CODE_NOTIFICATIONDELIVERYCOST_BAD_REQUEST);
         }
 
+        if (dto.getRecipients() == null || dto.getRecipients().isEmpty()) {
+            throw new PnNotificationDeliveryCostBadRequestException("recipients list cannot be null or empty",
+                    "recipients list cannot be null or empty", ERROR_CODE_NOTIFICATIONDELIVERYCOST_BAD_REQUEST);
+        }
+
         return NotificationCostRequest.builder()
                 .recipients(dto.getRecipients().stream()
                         .map(this::toRecipientCostData)
@@ -38,7 +43,9 @@ public class NotificationCostRequestMapper {
                 .recIndex(dto.getRecIndex())
                 .recipientInternalId(dto.getRecipientInternalId())
                 .senderInternalId(dto.getSenderInternalId())
-                .payments(dto.getPayments().stream()
+                .payments(dto.getPayments() == null
+                        ? java.util.Collections.emptyList()
+                        : dto.getPayments().stream()
                         .map(this::toPaymentData)
                         .toList())
                 .baseCost(dto.getBaseCost())
