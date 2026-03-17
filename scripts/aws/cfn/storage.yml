@@ -22,7 +22,7 @@ Parameters:
   
   AlarmSNSTopicName:
     Type: String
-    Description: 'Topic alarm'
+    Description: ''
   
   #Log
   LogRetention:
@@ -85,7 +85,7 @@ Resources:
     Properties:
       TemplateURL: !Sub "${TemplateBucketBaseUrl}/fragments/sqs-queue.yaml"
       Parameters:
-        QueueName: !Sub '${ProjectName}-cost-to-update.fifo'
+        QueueName: !Sub '${ProjectName}-cost-to-update'
         HasDLQ: "true"
         AlarmSNSTopicName: !Ref AlarmSNSTopicName
         VisibilityTimeout: 60
