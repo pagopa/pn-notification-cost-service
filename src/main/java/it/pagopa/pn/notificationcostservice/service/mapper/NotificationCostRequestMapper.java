@@ -10,7 +10,6 @@ import it.pagopa.pn.notificationcostservice.model.paymentinfo.NotificationCostRe
 import it.pagopa.pn.notificationcostservice.model.paymentinfo.PaymentData;
 import it.pagopa.pn.notificationcostservice.model.paymentinfo.RecipientCostData;
 import org.springframework.stereotype.Component;
-import java.util.stream.Collectors;
 
 import static it.pagopa.pn.notificationcostservice.exception.PnNotificationCostServiceExceptionCodes.ERROR_CODE_NOTIFICATIONDELIVERYCOST_BAD_REQUEST;
 
@@ -26,7 +25,7 @@ public class NotificationCostRequestMapper {
         return NotificationCostRequest.builder()
                 .recipients(dto.getRecipients().stream()
                         .map(this::toRecipientCostData)
-                        .collect(Collectors.toList()))
+                        .toList())
                 .build();
     }
 
@@ -41,7 +40,7 @@ public class NotificationCostRequestMapper {
                 .senderInternalId(dto.getSenderInternalId())
                 .payments(dto.getPayments().stream()
                         .map(this::toPaymentData)
-                        .collect(Collectors.toList()))
+                        .toList())
                 .baseCost(dto.getBaseCost())
                 .sendFee(dto.getSendFee())
                 .paFee(dto.getPaFee())
