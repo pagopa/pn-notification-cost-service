@@ -6,6 +6,7 @@ import it.pagopa.pn.notification_cost_service.generated.openapi.server.v1.dto.No
 import it.pagopa.pn.notification_cost_service.generated.openapi.server.v1.dto.RequestAcceptedDto;
 import it.pagopa.pn.notificationcostservice.model.ValidationStatus;
 import it.pagopa.pn.notificationcostservice.service.NotificationCostService;
+import it.pagopa.pn.notificationcostservice.service.mapper.NotificationCostRequestMapper;
 import lombok.AllArgsConstructor;
 import lombok.CustomLog;
 import org.springframework.http.ResponseEntity;
@@ -19,11 +20,12 @@ import reactor.core.publisher.Mono;
 public class NotificationCostServiceController implements NotificationCostRecipientApi {
 
     private final NotificationCostService notificationCostService;
+    private final NotificationCostRequestMapper notificationCostRequestMapper;
 
     @Override
     public Mono<ResponseEntity<NotificationCostRecipientResponseDto>> notificationCostRecipient(String iun,
-                                                                                             Integer recIndex,
-                                                                                             final ServerWebExchange exchange) {
+                                                                                                Integer recIndex,
+                                                                                                final ServerWebExchange exchange) {
         return notificationCostService.getNotificationCostRecipient(iun, recIndex)
                 .map(ResponseEntity::ok);
     }
@@ -32,7 +34,12 @@ public class NotificationCostServiceController implements NotificationCostRecipi
     public Mono<ResponseEntity<RequestAcceptedDto>> initializeNotificationCost(String iun,
                                                                                Mono<NotificationCostRequestDto> notificationCostRequestDto,
                                                                                ServerWebExchange exchange) {
-        return Mono.just(ResponseEntity.ok(new RequestAcceptedDto().status(ValidationStatus.OK.toString())));
+        return notificationCostRequestDto
+                .map(notificationCostRequestMapper::fromDto)
+                .flatMap(request -> notificationCostService.saveNotificationCost(iun, request))
+                .thenReturn(ResponseEntity.accepted().body(
+                        new RequestAcceptedDto().status(ValidationStatus.OK.name())
+                ));
     }
 
 }

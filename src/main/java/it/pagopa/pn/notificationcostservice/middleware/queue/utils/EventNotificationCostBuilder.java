@@ -1,0 +1,45 @@
+package it.pagopa.pn.notificationcostservice.middleware.queue.utils;
+
+import it.pagopa.pn.api.dto.events.EventPublisher;
+import it.pagopa.pn.api.dto.events.GenericEventHeader;
+import it.pagopa.pn.notificationcostservice.middleware.queue.consumer.event.notificationcost.NotificationCostInitializationEvent;
+import it.pagopa.pn.notificationcostservice.model.paymentinfo.NotificationCostRequest;
+
+import java.time.Instant;
+import java.util.Objects;
+import java.util.UUID;
+
+import static it.pagopa.pn.notificationcostservice.model.paymentinfo.NotificationCostInitializationEventType.NOTIFICATION_COST_INITIALIZATION;
+
+public class EventNotificationCostBuilder {
+    private static final String NOTIFICATION_COST_INIT_EVENT_ID_DESCRIPTOR = "notification_cost_init_";
+    private static final int MAX_EVENT_ID_LENGTH = 79;
+
+    private EventNotificationCostBuilder() {}
+
+    public static NotificationCostInitializationEvent buildNotificationCostEvent(NotificationCostRequest request, String iun) {
+        return NotificationCostInitializationEvent.builder()
+                .header(buildInternalEventHeader(Objects.requireNonNull(iun)))
+                .payload(NotificationCostInitializationEvent.Payload.builder()
+                        .iun(Objects.requireNonNull(iun))
+                        .recipients(Objects.requireNonNull(request.getRecipients()))
+                        .build())
+
+                .build();
+    }
+
+    private static GenericEventHeader buildInternalEventHeader(String pk) {
+        return GenericEventHeader.builder()
+                .eventId(generateEventId(pk))
+                .eventType(NOTIFICATION_COST_INITIALIZATION.getValue())
+                .publisher(EventPublisher.NOTIFICATION_COST_SERVICE.name())
+                .createdAt(Instant.now())
+                .build();
+    }
+
+    private static String generateEventId(String requestId) {
+        String eventId = (NOTIFICATION_COST_INIT_EVENT_ID_DESCRIPTOR + UUID.randomUUID() + "_" + requestId)
+                .replaceAll("[^a-zA-Z0-9]", "_");
+        return eventId.substring(0, Math.min(MAX_EVENT_ID_LENGTH, eventId.length()));
+    }
+}
