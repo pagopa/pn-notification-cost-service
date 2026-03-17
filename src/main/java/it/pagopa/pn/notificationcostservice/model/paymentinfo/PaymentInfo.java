@@ -1,14 +1,13 @@
 package it.pagopa.pn.notificationcostservice.model.paymentinfo;
 
-import lombok.Builder;
-import lombok.Data;
-import lombok.EqualsAndHashCode;
-import lombok.ToString;
+import lombok.*;
 
 @Data
 @EqualsAndHashCode
 @ToString
 @Builder
+@NoArgsConstructor
+@AllArgsConstructor
 public class PaymentInfo {
     private String iuv;
     private String iun;

@@ -5,9 +5,9 @@ import lombok.*;
 @Data
 @Builder
 @ToString
+@NoArgsConstructor
+@AllArgsConstructor
 public class PaymentData {
-    @NonNull
     private String iuv;
     private Boolean applyCost;
 }
-
