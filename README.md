@@ -26,8 +26,8 @@
 ### pnCostToUpdate
 
 ### Configurazione
-- **Variabile d'ambiente**: `PN_NOTIFICATIONCOSTSERVICE_TOPICS_PNCOSTTOUPDATE`
-- **Nome risorsa CloudFormation**: `PnCostToUpdateQueueName`
+- **Variabile d'ambiente**: `PN_NOTIFICATIONCOSTSERVICE_TOPICS_PNNOTIFICATIONCOSTTOUPDATE`
+- **Nome risorsa CloudFormation**: `PnNotificationCostToUpdateQueueName`
 - **Tipo**: Input (Coda SQS)
 
 ### Funzionamento
