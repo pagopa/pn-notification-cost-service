@@ -205,15 +205,15 @@ Parameters:
     Description: 'ARN of dynamodb table containing info about payments'
     
   # --- Sqs ---
-  PnCostToUpdateQueueName:
+  PnNotificationCostToUpdateQueueName:
     Type: String
     Description: 'The name of the SQS queue used to communicate with pn-notification-cost-service module.'
     
-  PnCostToUpdateQueueARN:
+  PnNotificationCostToUpdateQueueARN:
     Type: String
     Description: 'Identify the resource that the policy applies to.'
     
-  PnCostToUpdateQueueAlarmARN:
+  PnNotificationCostToUpdateQueueAlarmARN:
     Type: String
     Description: 'Identify the resource that the policy applies to.'
 
@@ -250,7 +250,7 @@ Resources:
         ContainerEnvEntry4: !Sub 'CORS_ALLOWED_DOMAINS=${CorsAllowedDomains}'
         ContainerEnvEntry5: !Sub 'PN_NOTIFICATIONCOSTSERVICE_NOTIFICATIONDELIVERYCOSTTABLE_TABLENAME=${NotificationDeliveryCostTableName}'
         ContainerEnvEntry6: !Sub 'PN_NOTIFICATIONCOSTSERVICE_PAYMENTINFOTABLE_TABLENAME=${PaymentInfoTableName}'
-        ContainerEnvEntry7: !Sub 'PN_NOTIFICATIONCOSTSERVICE_TOPICS_PNCOSTTOUPDATE=${PnCostToUpdateQueueName}'
+        ContainerEnvEntry7: !Sub 'PN_NOTIFICATIONCOSTSERVICE_TOPICS_PNNOTIFICATIONCOSTTOUPDATE=${PnNotificationCostToUpdateQueueName}'
         ApplicativeEnvFileChecksum: !Ref ApplicativeEnvFileChecksum
         JavaToolOptions: '-Dreactor.netty.ioWorkerCount=50'
         MappedPaths: '/notification-cost-private/*'
@@ -278,8 +278,8 @@ Resources:
         AlarmArns: !Join
           - ','
           - - !GetAtt NotificationCostServiceMicroservice.Outputs.FatalLogsMetricAlarmArn
-            - !Ref PnCostToUpdateQueueAlarmARN
-        QueueArns: !Ref PnCostToUpdateQueueARN
+            - !Ref PnNotificationCostToUpdateQueueAlarmARN
+        QueueArns: !Ref PnNotificationCostToUpdateQueueARN
         LogGroupsNames: !Sub '/aws/ecs/${ProjectName}-notification-cost-service'
 
   # Grant operational rights to Pn-NotificationCostService microservice
@@ -299,14 +299,7 @@ Resources:
               - !Sub "${PaymentInfoTableArn}"
           - Effect: Allow
             Action:
-              - sqs:ChangeMessageVisibility
-              - sqs:ChangeMessageVisibilityBatch
               - sqs:DeleteMessage
-              - sqs:DeleteMessageBatch
-              - sqs:GetQueueAttributes
-              - sqs:GetQueueUrl
               - sqs:ReceiveMessage
-              - sqs:SendMessage
-              - sqs:SendMessageBatch
             Resource:
-              - !Ref PnCostToUpdateQueueARN
+              - !Ref PnNotificationCostToUpdateQueueARN

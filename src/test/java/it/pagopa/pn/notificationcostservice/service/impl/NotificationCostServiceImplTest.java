@@ -8,8 +8,7 @@ import it.pagopa.pn.notificationcostservice.middleware.dao.NotificationDeliveryC
 import it.pagopa.pn.notificationcostservice.middleware.queue.consumer.event.notificationcost.NotificationCostInitializationEvent;
 import it.pagopa.pn.notificationcostservice.model.cost.CalculatedCosts;
 import it.pagopa.pn.notificationcostservice.model.notificationdeliverycost.NotificationDeliveryCost;
-import it.pagopa.pn.notificationcostservice.model.paymentinfo.NotificationCostRequest;
-import it.pagopa.pn.notificationcostservice.model.paymentinfo.RecipientCostData;
+import it.pagopa.pn.notificationcostservice.model.paymentinfo.PaymentInfo;
 import it.pagopa.pn.notificationcostservice.service.CostCalculator;
 import it.pagopa.pn.notificationcostservice.service.mapper.NotificationDeliveryCostMapper;
 import org.junit.jupiter.api.Test;
@@ -40,8 +39,10 @@ class NotificationCostServiceImplTest {
 
     @Mock
     private CostCalculator costCalculator;
+
     @Mock
     private MomProducer<NotificationCostInitializationEvent> notificationCostInitialization;
+
     @InjectMocks
     private NotificationCostServiceImpl notificationCostService;
 
@@ -108,9 +109,12 @@ class NotificationCostServiceImplTest {
     }
     @Test
     void saveNotificationCost_CompletesAndPushesBuiltEvent() {
-        NotificationCostRequest request = buildNotificationCostRequest();
-        ArgumentCaptor<NotificationCostInitializationEvent> eventCaptor = ArgumentCaptor.forClass(NotificationCostInitializationEvent.class);
-        StepVerifier.create(notificationCostService.saveNotificationCost(IUN, request))
+        List<NotificationDeliveryCost> notificationCosts = buildNotificationCosts();
+        List<PaymentInfo> payments = buildPayments();
+        ArgumentCaptor<NotificationCostInitializationEvent> eventCaptor =
+                ArgumentCaptor.forClass(NotificationCostInitializationEvent.class);
+
+        StepVerifier.create(notificationCostService.saveNotificationCost(IUN, notificationCosts, payments))
                 .verifyComplete();
 
         verify(notificationCostInitialization).push(eventCaptor.capture());
@@ -118,13 +122,16 @@ class NotificationCostServiceImplTest {
 
         NotificationCostInitializationEvent event = eventCaptor.getValue();
         assertNotNull(event);
+        assertNotNull(event.getPayload());
         assertEquals(IUN, event.getPayload().getIun());
-        assertEquals(request.getRecipients(), event.getPayload().getRecipients());
+        assertEquals(notificationCosts, event.getPayload().getNotificationCosts());
+        assertEquals(payments, event.getPayload().getPayments());
     }
 
     @Test
     void saveNotificationCost_RetriesAndEventuallyCompletesWhenPushFailsTransiently() {
-        NotificationCostRequest request = buildNotificationCostRequest();
+        List<NotificationDeliveryCost> notificationCosts = buildNotificationCosts();
+        List<PaymentInfo> payments = buildPayments();
 
         doThrow(new RuntimeException("temporary error 1"))
                 .doThrow(new RuntimeException("temporary error 2"))
@@ -132,7 +139,8 @@ class NotificationCostServiceImplTest {
                 .when(notificationCostInitialization)
                 .push(any(NotificationCostInitializationEvent.class));
 
-        StepVerifier.withVirtualTime(() -> notificationCostService.saveNotificationCost(IUN, request))
+        StepVerifier.withVirtualTime(() ->
+                        notificationCostService.saveNotificationCost(IUN, notificationCosts, payments))
                 .thenAwait(Duration.ofSeconds(10))
                 .verifyComplete();
 
@@ -141,35 +149,46 @@ class NotificationCostServiceImplTest {
 
     @Test
     void saveNotificationCost_ShouldLogAndThrowWhenRetriesAreExhausted() {
-        NotificationCostRequest request = buildNotificationCostRequest();
+        List<NotificationDeliveryCost> notificationCosts = buildNotificationCosts();
+        List<PaymentInfo> payments = buildPayments();
+
         String errorMessage = "permanent database error";
         RuntimeException permanentException = new RuntimeException(errorMessage);
+
         doThrow(permanentException)
                 .when(notificationCostInitialization)
                 .push(any(NotificationCostInitializationEvent.class));
-        StepVerifier.withVirtualTime(() -> notificationCostService.saveNotificationCost(IUN, request))
-                .thenAwait(Duration.ofSeconds(10)) // Superiamo il tempo di backoff
-                .expectErrorMatches(throwable -> throwable instanceof RuntimeException &&
-                        throwable.getMessage().equals(errorMessage))
+
+        StepVerifier.withVirtualTime(() ->
+                        notificationCostService.saveNotificationCost(IUN, notificationCosts, payments))
+                .thenAwait(Duration.ofSeconds(10))
+                .expectErrorMatches(throwable ->
+                        throwable instanceof RuntimeException &&
+                                errorMessage.equals(throwable.getMessage()))
                 .verify();
 
-        // 1 tentativo iniziale + 3 retry = 4 push totali
         verify(notificationCostInitialization, times(4)).push(any(NotificationCostInitializationEvent.class));
         verifyNoInteractions(notificationDeliveryCostDao, notificationDeliveryCostMapper, costCalculator);
     }
 
-    private NotificationCostRequest buildNotificationCostRequest() {
-        RecipientCostData recipient = RecipientCostData.builder()
+    private List<NotificationDeliveryCost> buildNotificationCosts() {
+        NotificationDeliveryCost notificationDeliveryCost = NotificationDeliveryCostTestBuilder.builder()
+                .withIun(IUN)
+                .withRecIndex(REC_INDEX)
+                .withIsDeleted(false)
+                .build();
+
+        return List.of(notificationDeliveryCost);
+    }
+
+    private List<PaymentInfo> buildPayments() {
+        PaymentInfo paymentInfo = PaymentInfo.builder()
+                .iun(IUN)
                 .recIndex(REC_INDEX)
-                .recipientInternalId("recipient-internal-id")
-                .senderInternalId("sender-internal-id")
-                .baseCost(100)
-                .sendFee(20)
-                .paFee(10)
-                .vat(22)
+                .iuv("IUV-123456789")
+                .applyCost(true)
                 .build();
-        return NotificationCostRequest.builder()
-                .recipients(List.of(recipient))
-                .build();
+
+        return List.of(paymentInfo);
     }
 }

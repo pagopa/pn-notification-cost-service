@@ -14,7 +14,7 @@ import java.util.List;
 @Slf4j
 public class InitializeCostProducer extends AbstractSqsMomProducer<NotificationCostInitializationEvent> {
     public InitializeCostProducer(SqsClient sqsClient, PnNotificationCostServiceConfigs configs, ObjectMapper objectMapper) {
-        super(sqsClient, configs.getTopics().getPnCostToUpdate(), objectMapper, NotificationCostInitializationEvent.class);
+        super(sqsClient, configs.getTopics().getPnNotificationCostToUpdate(), objectMapper, NotificationCostInitializationEvent.class);
     }
 
     @Override

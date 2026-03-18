@@ -30,7 +30,7 @@ public class PnNotificationCostServiceConfigs {
 
     @Data
     public static class Topics {
-        private String pnCostToUpdate;
+        private String pnNotificationCostToUpdate;
     }
 
     @PostConstruct

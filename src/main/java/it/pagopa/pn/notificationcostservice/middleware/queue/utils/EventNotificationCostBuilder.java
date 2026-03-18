@@ -3,10 +3,10 @@ package it.pagopa.pn.notificationcostservice.middleware.queue.utils;
 import it.pagopa.pn.api.dto.events.EventPublisher;
 import it.pagopa.pn.api.dto.events.GenericEventHeader;
 import it.pagopa.pn.notificationcostservice.middleware.queue.consumer.event.notificationcost.NotificationCostInitializationEvent;
-import it.pagopa.pn.notificationcostservice.model.paymentinfo.NotificationCostRequest;
-
+import it.pagopa.pn.notificationcostservice.model.notificationdeliverycost.NotificationDeliveryCost;
+import it.pagopa.pn.notificationcostservice.model.paymentinfo.PaymentInfo;
 import java.time.Instant;
-import java.util.Objects;
+import java.util.List;
 import java.util.UUID;
 
 import static it.pagopa.pn.notificationcostservice.model.paymentinfo.NotificationCostInitializationEventType.NOTIFICATION_COST_INITIALIZATION;
@@ -17,12 +17,13 @@ public class EventNotificationCostBuilder {
 
     private EventNotificationCostBuilder() {}
 
-    public static NotificationCostInitializationEvent buildNotificationCostEvent(NotificationCostRequest request, String iun) {
+    public static NotificationCostInitializationEvent buildNotificationCostEvent(String iun,List<NotificationDeliveryCost> notificationCosts, List<PaymentInfo> payments) {
         return NotificationCostInitializationEvent.builder()
-                .header(buildInternalEventHeader(Objects.requireNonNull(iun)))
+                .header(buildInternalEventHeader(iun))
                 .payload(NotificationCostInitializationEvent.Payload.builder()
-                        .iun(Objects.requireNonNull(iun))
-                        .recipients(Objects.requireNonNull(request.getRecipients()))
+                        .iun(iun)
+                        .notificationCosts(notificationCosts)
+                        .payments(payments)
                         .build())
 
                 .build();

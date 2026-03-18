@@ -36,7 +36,7 @@ aws --profile default --region us-east-1 --endpoint-url=http://localstack:4566 \
 
 echo "### CREATE QUEUES ###"
 
-queues="pn-cost-to-update"
+queues="pn-notification-cost-to-update"
 
 for qn in  $( echo $queues | tr " " "\n" ) ; do
 
