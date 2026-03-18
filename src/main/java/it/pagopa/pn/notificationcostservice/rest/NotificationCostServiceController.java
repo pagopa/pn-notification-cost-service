@@ -1,8 +1,8 @@
 package it.pagopa.pn.notificationcostservice.rest;
 
 import it.pagopa.pn.notification_cost_service.generated.openapi.server.v1.api.NotificationCostRecipientApi;
+import it.pagopa.pn.notification_cost_service.generated.openapi.server.v1.dto.NewNotificationCostRequestDto;
 import it.pagopa.pn.notification_cost_service.generated.openapi.server.v1.dto.NotificationCostRecipientResponseDto;
-import it.pagopa.pn.notification_cost_service.generated.openapi.server.v1.dto.NotificationCostRequestDto;
 import it.pagopa.pn.notification_cost_service.generated.openapi.server.v1.dto.RequestAcceptedDto;
 import it.pagopa.pn.notificationcostservice.model.ValidationStatus;
 import it.pagopa.pn.notificationcostservice.service.NotificationCostService;
@@ -30,9 +30,9 @@ public class NotificationCostServiceController implements NotificationCostRecipi
 
     @Override
     public Mono<ResponseEntity<RequestAcceptedDto>> initializeNotificationCost(String iun,
-                                                                               Mono<NotificationCostRequestDto> notificationCostRequestDto,
+                                                                               Mono<NewNotificationCostRequestDto> notificationCostRequestDto,
                                                                                ServerWebExchange exchange) {
-        return Mono.just(ResponseEntity.ok(new RequestAcceptedDto().status(ValidationStatus.OK.toString())));
+        return Mono.just(ResponseEntity.accepted().body(new RequestAcceptedDto().status(ValidationStatus.OK.toString())));
     }
 
 }

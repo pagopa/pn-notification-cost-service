@@ -23,7 +23,7 @@ public class PaymentInfoEntity {
     private Integer recIndex;
 
     @Getter(onMethod=@__({@DynamoDbAttribute(COL_APPLY_COST)}))
-    private Boolean applyCost;
+    private boolean applyCost;
 
     @Getter(onMethod=@__({@DynamoDbAttribute(COL_IUN)}))
     private String iun;

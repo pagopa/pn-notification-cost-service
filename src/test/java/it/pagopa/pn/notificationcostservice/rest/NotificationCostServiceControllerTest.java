@@ -1,7 +1,7 @@
 package it.pagopa.pn.notificationcostservice.rest;
 
+import it.pagopa.pn.notification_cost_service.generated.openapi.server.v1.dto.NewNotificationCostRequestDto;
 import it.pagopa.pn.notification_cost_service.generated.openapi.server.v1.dto.NotificationCostRecipientResponseDto;
-import it.pagopa.pn.notification_cost_service.generated.openapi.server.v1.dto.NotificationCostRequestDto;
 import it.pagopa.pn.notification_cost_service.generated.openapi.server.v1.dto.RequestAcceptedDto;
 import it.pagopa.pn.notificationcostservice.model.ValidationStatus;
 import it.pagopa.pn.notificationcostservice.service.NotificationCostService;
@@ -57,11 +57,11 @@ class NotificationCostServiceControllerTest {
     @Test
     void initializeNotificationCostTest() {
         String iun = "iun";
-        NotificationCostRequestDto requestDto = new NotificationCostRequestDto();
+        NewNotificationCostRequestDto requestDto = new NewNotificationCostRequestDto();
         ServerWebExchange exchange = mock(ServerWebExchange.class);
         Mono<ResponseEntity<RequestAcceptedDto>> result = controller.initializeNotificationCost(iun, Mono.just(requestDto), exchange);
         StepVerifier.create(result)
-                .expectNext(ResponseEntity.ok(new RequestAcceptedDto().status(ValidationStatus.OK.toString())))
+                .expectNext(ResponseEntity.accepted().body(new RequestAcceptedDto().status(ValidationStatus.OK.toString())))
                 .verifyComplete();
     }
 }
