@@ -76,7 +76,7 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/NotificationCostRequest'
+              $ref: '#/components/schemas/NewNotificationCostRequest'
       responses:
         '202':
           description: ACK - Richiesta elaborata correttamente
@@ -98,7 +98,7 @@ paths:
                 $ref: '#/components/schemas/Problem'
 components:
   schemas:
-    NotificationCostRequest:
+    NewNotificationCostRequest:
       type: object
       required:
         - recipients

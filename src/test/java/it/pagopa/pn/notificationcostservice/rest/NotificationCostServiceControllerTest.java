@@ -1,11 +1,11 @@
 package it.pagopa.pn.notificationcostservice.rest;
+
+import it.pagopa.pn.notification_cost_service.generated.openapi.server.v1.dto.NewNotificationCostRequestDto;
 import it.pagopa.pn.notification_cost_service.generated.openapi.server.v1.dto.NotificationCostRecipientResponseDto;
 import it.pagopa.pn.notification_cost_service.generated.openapi.server.v1.dto.NotificationCostRequestDto;
 import it.pagopa.pn.notification_cost_service.generated.openapi.server.v1.dto.RequestAcceptedDto;
 import it.pagopa.pn.notificationcostservice.model.ValidationStatus;
-import it.pagopa.pn.notificationcostservice.model.paymentinfo.NotificationCostRequest;
 import it.pagopa.pn.notificationcostservice.service.NotificationCostService;
-import it.pagopa.pn.notificationcostservice.service.mapper.NotificationCostRequestMapper;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -16,6 +16,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.server.ServerWebExchange;
 import reactor.core.publisher.Mono;
 import reactor.test.StepVerifier;
+
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.mockito.ArgumentMatchers.any;
@@ -29,8 +30,7 @@ class NotificationCostServiceControllerTest {
 
     @Mock
     private NotificationCostService notificationCostService;
-    @Mock
-    private NotificationCostRequestMapper notificationCostRequestMapper;
+
     @InjectMocks
     private NotificationCostServiceController controller;
 
@@ -95,3 +95,4 @@ class NotificationCostServiceControllerTest {
         verify(notificationCostService).saveNotificationCost(TEST_IUN, request);
     }
 }
+

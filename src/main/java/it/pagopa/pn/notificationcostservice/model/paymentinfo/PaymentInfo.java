@@ -12,5 +12,5 @@ public class PaymentInfo {
     private String iuv;
     private String iun;
     private Integer recIndex;
-    private Boolean applyCost;
+    private boolean applyCost;
 }

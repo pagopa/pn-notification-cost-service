@@ -17,7 +17,7 @@ public class EntityToDtoPaymentInfoMapper {
                 .iun(entity.getIun())
                 .recIndex(entity.getRecIndex())
                 .iuv(entity.getIuv())
-                .applyCost(entity.getApplyCost())
+                .applyCost(entity.isApplyCost())
                 .build();
     }
 }
