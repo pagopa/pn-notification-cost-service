@@ -28,7 +28,7 @@ class NotificationDeliveryCostMapperTest {
     @DisplayName("mapDtoToNotificationDeliveryCost mappa tutti i recipient in NotificationDeliveryCost")
     void shouldMapDtoToNotificationDeliveryCost() {
         NewNotificationCostRequestDto request = new NewNotificationCostRequestDto()
-                .recipients(List.of(
+                .costRecipients(List.of(
                         new RecipientCostDataDto(
                                 0,
                                 "recipient-1",
@@ -111,7 +111,7 @@ class NotificationDeliveryCostMapperTest {
         ));
 
         NewNotificationCostRequestDto request = new NewNotificationCostRequestDto()
-                .recipients(List.of(firstRecipient, secondRecipient));
+                .costRecipients(List.of(firstRecipient, secondRecipient));
 
         List<PaymentInfo> result = mapper.mapDtoToPaymentInfo("IUN-123", request);
 
@@ -149,7 +149,7 @@ class NotificationDeliveryCostMapperTest {
         ).payments(List.of());
 
         NewNotificationCostRequestDto request = new NewNotificationCostRequestDto()
-                .recipients(List.of(recipient));
+                .costRecipients(List.of(recipient));
 
         List<PaymentInfo> result = mapper.mapDtoToPaymentInfo("IUN-123", request);
 
@@ -187,7 +187,7 @@ class NotificationDeliveryCostMapperTest {
         recipient.setPayments(null);
 
         NewNotificationCostRequestDto request = new NewNotificationCostRequestDto()
-                .recipients(List.of(recipient));
+                .costRecipients(List.of(recipient));
 
         assertThatThrownBy(() -> mapper.mapDtoToPaymentInfo("IUN-123", request))
                 .isInstanceOf(NullPointerException.class);

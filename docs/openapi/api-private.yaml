@@ -101,10 +101,12 @@ components:
     NewNotificationCostRequest:
       type: object
       required:
-        - recipients
+        - costRecipients
       properties:
-        recipients:
+        costRecipients:
           type: array
+          minItems: 1
+          maxItems: 100
           items:
             $ref: '#/components/schemas/RecipientCostData'
     
