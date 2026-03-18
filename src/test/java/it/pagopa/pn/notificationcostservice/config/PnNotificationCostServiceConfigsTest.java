@@ -29,7 +29,7 @@ class PnNotificationCostServiceConfigsTest {
 
         PnNotificationCostServiceConfigs.Topics topics = pnNotificationCostServiceConfigs.getTopics();
         assertNotNull(topics);
-        assertEquals("pn-cost-to-update", topics.getPnCostToUpdate());
+        assertEquals("pn-notification-cost-to-update", topics.getPnNotificationCostToUpdate());
     }
 }
 

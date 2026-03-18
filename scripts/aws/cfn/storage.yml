@@ -78,14 +78,14 @@ Resources:
       PointInTimeRecoverySpecification:
         PointInTimeRecoveryEnabled: true
   #Sqs queues
-  PnCostToUpdateQueue:
+  PnNotificationCostToUpdateQueue:
     Type: AWS::CloudFormation::Stack
     UpdateReplacePolicy: Retain
     DeletionPolicy: Retain
     Properties:
       TemplateURL: !Sub "${TemplateBucketBaseUrl}/fragments/sqs-queue.yaml"
       Parameters:
-        QueueName: !Sub '${ProjectName}-cost-to-update'
+        QueueName: !Sub '${ProjectName}-notification-cost-to-update'
         HasDLQ: "true"
         AlarmSNSTopicName: !Ref AlarmSNSTopicName
         VisibilityTimeout: 60
@@ -122,18 +122,18 @@ Outputs:
   EcsNotificationCostServiceLogGroup:
     Value: !GetAtt PnNotificationCostServiceLogGroup.Outputs.LogGroupName
   # Sqs
-  PnCostToUpdateQueueName:
-    Value: !GetAtt PnCostToUpdateQueue.Outputs.QueueName
-    Description: pn-Cost-To-Update queue name
-  PnCostToUpdateQueueURL:
-    Value: !GetAtt PnCostToUpdateQueue.Outputs.QueueURL
-    Description: pn-Cost-To-Update queue URL
-  PnCostToUpdateQueueARN:
-    Value: !GetAtt PnCostToUpdateQueue.Outputs.QueueARN
-    Description: pn-Cost-To-Update queue ARN
-  PnCostToUpdateQueueAlarmARN:
-    Value: !GetAtt PnCostToUpdateQueue.Outputs.SqsDLQAlarmArn
-    Description: pn-Cost-To-Update alarm ARN
-  PnCostToUpdateQueueAgeAlarmARN:
-    Value: !GetAtt PnCostToUpdateQueue.Outputs.SqsAgeAlarmArn
-    Description: pn-Cost-To-Update age alarm ARN
+  PnNotificationCostToUpdateQueueName:
+    Value: !GetAtt PnNotificationCostToUpdateQueue.Outputs.QueueName
+    Description: pn-Notification-Cost-To-Update queue name
+  PnNotificationCostToUpdateQueueURL:
+    Value: !GetAtt PnNotificationCostToUpdateQueue.Outputs.QueueURL
+    Description: pn-Notification-Cost-To-Update queue URL
+  PnNotificationCostToUpdateQueueARN:
+    Value: !GetAtt PnNotificationCostToUpdateQueue.Outputs.QueueARN
+    Description: pn-Notification-Cost-To-Update queue ARN
+  PnNotificationCostToUpdateQueueAlarmARN:
+    Value: !GetAtt PnNotificationCostToUpdateQueue.Outputs.SqsDLQAlarmArn
+    Description: pn-Notification-Cost-To-Update alarm ARN
+  PnNotificationCostToUpdateQueueAgeAlarmARN:
+    Value: !GetAtt PnNotificationCostToUpdateQueue.Outputs.SqsAgeAlarmArn
+    Description: pn-Notification-Cost-To-Update age alarm ARN
