@@ -2,7 +2,8 @@ package it.pagopa.pn.notificationcostservice.middleware.queue.consumer.event.not
 
 import it.pagopa.pn.api.dto.events.GenericEvent;
 import it.pagopa.pn.api.dto.events.GenericEventHeader;
-import it.pagopa.pn.notificationcostservice.model.paymentinfo.RecipientCostData;
+import it.pagopa.pn.notificationcostservice.model.notificationdeliverycost.NotificationDeliveryCost;
+import it.pagopa.pn.notificationcostservice.model.paymentinfo.PaymentInfo;
 import lombok.*;
 
 import java.util.List;
@@ -23,6 +24,7 @@ public class NotificationCostInitializationEvent implements GenericEvent<Generic
     @AllArgsConstructor
     public static class Payload {
         private String iun;
-        private List<RecipientCostData> recipients;
+        private List<NotificationDeliveryCost> notificationCosts;
+        private List<PaymentInfo> payments;
     }
 }

@@ -1,4 +1,5 @@
 package it.pagopa.pn.notificationcostservice.service.impl;
+
 import it.pagopa.pn.api.dto.events.MomProducer;
 import it.pagopa.pn.notification_cost_service.generated.openapi.server.v1.dto.NotificationCostRecipientResponseDto;
 import it.pagopa.pn.notificationcostservice.exception.PnNotFoundException;
@@ -6,7 +7,8 @@ import it.pagopa.pn.notificationcostservice.middleware.dao.notificationdeliveryc
 import it.pagopa.pn.notificationcostservice.middleware.queue.consumer.event.notificationcost.NotificationCostInitializationEvent;
 import it.pagopa.pn.notificationcostservice.middleware.queue.utils.EventNotificationCostBuilder;
 import it.pagopa.pn.notificationcostservice.model.cost.CalculatedCosts;
-import it.pagopa.pn.notificationcostservice.model.paymentinfo.NotificationCostRequest;
+import it.pagopa.pn.notificationcostservice.model.notificationdeliverycost.NotificationDeliveryCost;
+import it.pagopa.pn.notificationcostservice.model.paymentinfo.PaymentInfo;
 import it.pagopa.pn.notificationcostservice.service.CostCalculator;
 import it.pagopa.pn.notificationcostservice.service.NotificationCostService;
 import it.pagopa.pn.notificationcostservice.service.mapper.NotificationDeliveryCostMapper;
@@ -16,10 +18,10 @@ import org.springframework.stereotype.Service;
 import reactor.core.publisher.Mono;
 import reactor.core.scheduler.Schedulers;
 import reactor.util.retry.Retry;
-
 import java.time.Duration;
-
+import java.util.List;
 import static it.pagopa.pn.notificationcostservice.exception.PnNotificationCostServiceExceptionCodes.ERROR_CODE_NOTIFICATIONDELIVERYCOST_DELETED;
+
 @Slf4j
 @AllArgsConstructor
 @Service
@@ -46,10 +48,10 @@ public class NotificationCostServiceImpl implements NotificationCostService {
                 .doOnError(e -> log.error("Error processing cost recipient for iun: {} and recIndex: {}", iun, recIndex, e));
     }
     @Override
-    public Mono<Void> saveNotificationCost(String iun, NotificationCostRequest request) {
+    public Mono<Void> saveNotificationCost(String iun,List<NotificationDeliveryCost> notificationCosts, List<PaymentInfo> payments) {
         log.info("Start to save notification cost for iun: {}", iun);
         return Mono.fromRunnable(() -> {
-                    var event = EventNotificationCostBuilder.buildNotificationCostEvent(request, iun);
+                    var event = EventNotificationCostBuilder.buildNotificationCostEvent(iun,notificationCosts,payments);
                     notificationCostInitialization.push(event);
                 })
                 .subscribeOn(Schedulers.boundedElastic())

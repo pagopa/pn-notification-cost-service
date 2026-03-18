@@ -1,53 +1,81 @@
 package it.pagopa.pn.notificationcostservice.middleware.queue.utils;
+
 import it.pagopa.pn.api.dto.events.EventPublisher;
-import it.pagopa.pn.notificationcostservice.model.notificationdeliverycost.NotificationFeePolicy;
-import it.pagopa.pn.notificationcostservice.model.notificationdeliverycost.PagoPaIntMode;
+import it.pagopa.pn.notificationcostservice.NotificationDeliveryCostTestBuilder;
+import it.pagopa.pn.notificationcostservice.model.notificationdeliverycost.NotificationDeliveryCost;
 import it.pagopa.pn.notificationcostservice.model.paymentinfo.NotificationCostInitializationEventType;
-import it.pagopa.pn.notificationcostservice.model.paymentinfo.NotificationCostRequest;
-import it.pagopa.pn.notificationcostservice.model.paymentinfo.PaymentData;
-import it.pagopa.pn.notificationcostservice.model.paymentinfo.RecipientCostData;
+import it.pagopa.pn.notificationcostservice.model.paymentinfo.PaymentInfo;
 import org.junit.jupiter.api.Test;
 import java.util.List;
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.*;
+
 class EventNotificationCostBuilderTest {
     @Test
     void buildNotificationCostEventCreatesExpectedHeaderAndPayload() {
         String iun = "TEST-IUN-987";
-        NotificationCostRequest request = NotificationCostRequest.builder()
-                .recipients(List.of(RecipientCostData.builder()
+
+        List<NotificationDeliveryCost> notificationCosts = List.of(
+                NotificationDeliveryCostTestBuilder.builder()
+                        .withIun(iun)
+                        .withRecIndex(1)
+                        .build()
+        );
+
+        List<PaymentInfo> payments = List.of(
+                PaymentInfo.builder()
+                        .iun(iun)
                         .recIndex(1)
-                        .recipientInternalId("recipient")
-                        .senderInternalId("sender")
-                        .payments(List.of(PaymentData.builder().iuv("IUV-1").applyCost(true).build()))
-                        .baseCost(100)
-                        .sendFee(10)
-                        .paFee(90)
-                        .notificationFeePolicy(NotificationFeePolicy.FLAT_RATE)
-                        .pagoPaIntMode(PagoPaIntMode.SYNC)
-                        .vat(22)
-                        .build()))
-                .build();
-        var event = EventNotificationCostBuilder.buildNotificationCostEvent(request, iun);
+                        .iuv("IUV-1")
+                        .applyCost(true)
+                        .build()
+        );
+
+        var event = EventNotificationCostBuilder.buildNotificationCostEvent(iun, notificationCosts, payments);
+
+        assertNotNull(event);
         assertNotNull(event.getHeader());
         assertNotNull(event.getHeader().getCreatedAt());
-        assertEquals(NotificationCostInitializationEventType.NOTIFICATION_COST_INITIALIZATION.getValue(), event.getHeader().getEventType());
+        assertEquals(NotificationCostInitializationEventType.NOTIFICATION_COST_INITIALIZATION.getValue(),
+                event.getHeader().getEventType());
         assertEquals(EventPublisher.NOTIFICATION_COST_SERVICE.name(), event.getHeader().getPublisher());
         assertTrue(event.getHeader().getEventId().startsWith("notification_cost_init_"));
         assertTrue(event.getHeader().getEventId().length() <= 79);
+
+        assertNotNull(event.getPayload());
         assertEquals(iun, event.getPayload().getIun());
-        assertEquals(request.getRecipients(), event.getPayload().getRecipients());
+        assertEquals(notificationCosts, event.getPayload().getNotificationCosts());
+        assertEquals(payments, event.getPayload().getPayments());
     }
+
     @Test
-    void buildNotificationCostEventThrowsWhenIunIsNull() {
-        NotificationCostRequest request = NotificationCostRequest.builder().recipients(List.of()).build();
-        assertThrows(NullPointerException.class, () -> EventNotificationCostBuilder.buildNotificationCostEvent(request, null));
+    void buildNotificationCostEventAllowsNullIunWithCurrentImplementation() {
+        List<NotificationDeliveryCost> notificationCosts = List.of(
+                NotificationDeliveryCostTestBuilder.builder().build()
+        );
+        List<PaymentInfo> payments = List.of();
+
+        var event = EventNotificationCostBuilder.buildNotificationCostEvent(null, notificationCosts, payments);
+
+        assertNotNull(event);
+        assertNotNull(event.getHeader());
+        assertNotNull(event.getPayload());
+        assertNull(event.getPayload().getIun());
+        assertEquals(notificationCosts, event.getPayload().getNotificationCosts());
+        assertEquals(payments, event.getPayload().getPayments());
     }
+
     @Test
-    void buildNotificationCostEventThrowsWhenRecipientsAreNull() {
-        NotificationCostRequest request = NotificationCostRequest.builder().recipients(null).build();
-        assertThrows(NullPointerException.class, () -> EventNotificationCostBuilder.buildNotificationCostEvent(request, "IUN"));
+    void buildNotificationCostEventAllowsNullNotificationCostsWithCurrentImplementation() {
+        String iun = "IUN";
+        List<PaymentInfo> payments = List.of();
+
+        var event = EventNotificationCostBuilder.buildNotificationCostEvent(iun, null, payments);
+
+        assertNotNull(event);
+        assertNotNull(event.getHeader());
+        assertNotNull(event.getPayload());
+        assertEquals(iun, event.getPayload().getIun());
+        assertNull(event.getPayload().getNotificationCosts());
+        assertEquals(payments, event.getPayload().getPayments());
     }
 }
