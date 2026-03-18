@@ -1,6 +1,7 @@
-package it.pagopa.pn.notificationcostservice.middleware.dao.paymentinfo.dynamo.mapper;
+package it.pagopa.pn.notificationcostservice.middleware.paymentinfo.dynamo.mapper;
 
-import it.pagopa.pn.notificationcostservice.middleware.dao.paymentinfo.dynamo.entity.PaymentInfoEntity;
+import it.pagopa.pn.notificationcostservice.middleware.dao.dynamo.entity.paymentinfo.PaymentInfoEntity;
+import it.pagopa.pn.notificationcostservice.middleware.dao.dynamo.mapper.paymentinfo.DtoToEntityPaymentInfoMapper;
 import it.pagopa.pn.notificationcostservice.model.paymentinfo.PaymentInfo;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;

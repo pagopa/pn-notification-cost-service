@@ -2,7 +2,7 @@ package it.pagopa.pn.notificationcostservice.service.impl;
 import it.pagopa.pn.api.dto.events.MomProducer;
 import it.pagopa.pn.notification_cost_service.generated.openapi.server.v1.dto.NotificationCostRecipientResponseDto;
 import it.pagopa.pn.notificationcostservice.exception.PnNotFoundException;
-import it.pagopa.pn.notificationcostservice.middleware.dao.notificationdeliverycost.NotificationDeliveryCostDao;
+import it.pagopa.pn.notificationcostservice.middleware.dao.NotificationDeliveryCostDao;
 import it.pagopa.pn.notificationcostservice.middleware.queue.consumer.event.notificationcost.NotificationCostInitializationEvent;
 import it.pagopa.pn.notificationcostservice.middleware.queue.utils.EventNotificationCostBuilder;
 import it.pagopa.pn.notificationcostservice.model.cost.CalculatedCosts;
