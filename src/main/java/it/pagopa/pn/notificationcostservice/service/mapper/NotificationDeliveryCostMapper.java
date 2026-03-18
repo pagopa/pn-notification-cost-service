@@ -18,13 +18,13 @@ import java.util.Optional;
 public class NotificationDeliveryCostMapper {
 
     public List<NotificationDeliveryCost> mapDtoToNotificationDeliveryCost(String iun, NewNotificationCostRequestDto dto) {
-        return dto.getRecipients().stream()
+        return dto.getCostRecipients().stream()
                 .map(recipient -> mapRecipientToNotificationDeliveryCost(iun, recipient))
                 .toList();
     }
 
     public List<PaymentInfo> mapDtoToPaymentInfo(String iun, NewNotificationCostRequestDto dto) {
-        return dto.getRecipients().stream()
+        return dto.getCostRecipients().stream()
                 .flatMap(recipient -> recipient.getPayments().stream()
                         .map(payment -> PaymentInfo.builder()
                                 .iun(iun)
