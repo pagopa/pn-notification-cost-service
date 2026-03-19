@@ -3,7 +3,6 @@ package it.pagopa.pn.notificationcostservice.rest;
 import it.pagopa.pn.notification_cost_service.generated.openapi.server.v1.api.NotificationCostRecipientApi;
 import it.pagopa.pn.notification_cost_service.generated.openapi.server.v1.dto.NewNotificationCostRequestDto;
 import it.pagopa.pn.notification_cost_service.generated.openapi.server.v1.dto.NotificationCostRecipientResponseDto;
-import it.pagopa.pn.notification_cost_service.generated.openapi.server.v1.dto.RequestAcceptedDto;
 import it.pagopa.pn.notificationcostservice.model.ValidationStatus;
 import it.pagopa.pn.notificationcostservice.service.NotificationCostService;
 import it.pagopa.pn.notificationcostservice.service.mapper.NotificationDeliveryCostMapper;
@@ -40,8 +39,7 @@ public class NotificationCostServiceController implements NotificationCostRecipi
                 .flatMap(request -> notificationCostService.saveNotificationCost(iun,mapper.mapDtoToNotificationDeliveryCost(iun,request)
                         ,paymentInfoMapper.mapDtoToPaymentInfo(iun,request)))
                 .thenReturn(ResponseEntity.accepted().body(
-                        new RequestAcceptedDto().status(ValidationStatus.OK.name())
-                ));
+                        ValidationStatus.OK.name())
+                );
     }
-
 }
