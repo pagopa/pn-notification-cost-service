@@ -1,4 +1,4 @@
-package it.pagopa.pn.notificationcostservice.middleware.notificationdeliverycost.dynamo.mapper;
+package it.pagopa.pn.notificationcostservice.middleware.dynamo.notificationdeliverycost.mapper;
 
 import it.pagopa.pn.notificationcostservice.model.notificationdeliverycost.BaseCost;
 import it.pagopa.pn.notificationcostservice.model.notificationdeliverycost.NotificationDeliveryCost;

@@ -35,6 +35,13 @@ public class PaymentInfoDaoDynamo extends BaseDao implements PaymentInfoDao {
         this.entityToDtoPaymentInfoMapper = entityToDtoPaymentInfoMapper;
     }
 
+    /**
+     * Il metodo si occupa di:
+     * - effettuare l’update dei dati di pagamenti correlati agli IUV sulla tabella 'pn-PaymentInfo'
+     *
+     * @param payments lista di pagamenti
+     * @return void
+     */
     @Override
     public Mono<Void> updateItem(List<PaymentInfo> payments) {
         if (payments == null || payments.isEmpty()) {

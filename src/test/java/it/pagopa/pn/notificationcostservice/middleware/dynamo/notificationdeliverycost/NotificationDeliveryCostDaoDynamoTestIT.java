@@ -1,7 +1,10 @@
-package it.pagopa.pn.notificationcostservice.middleware.notificationdeliverycost.dynamo;
+package it.pagopa.pn.notificationcostservice.middleware.dynamo.notificationdeliverycost;
 
 import it.pagopa.pn.notificationcostservice.LocalStackTestConfig;
 import it.pagopa.pn.notificationcostservice.MockAWSObjectsTest;
+import it.pagopa.pn.notificationcostservice.exception.PnDbConflictException;
+import it.pagopa.pn.notificationcostservice.middleware.dynamo.TestDao;
+import it.pagopa.pn.notificationcostservice.model.notificationdeliverycost.BaseCost;
 import it.pagopa.pn.notificationcostservice.model.notificationdeliverycost.NotificationDeliveryCost;
 import it.pagopa.pn.notificationcostservice.model.notificationdeliverycost.NotificationFeePolicy;
 import it.pagopa.pn.notificationcostservice.model.notificationdeliverycost.PagoPaIntMode;
@@ -19,9 +22,11 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.context.annotation.Import;
+import reactor.test.StepVerifier;
 import software.amazon.awssdk.enhanced.dynamodb.DynamoDbEnhancedAsyncClient;
 
 import java.time.Instant;
+import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.fail;
 
@@ -123,13 +128,84 @@ public class NotificationDeliveryCostDaoDynamoTestIT {
 
     @Test
     void getNotificationDeliveryCostItemWhenItemNotFound() {
-        String iun = "iun";
+        StepVerifier.create(dao.getNotificationDeliveryCostItem("iun", 0))
+                .expectError(PnNotFoundException.class)
+                .verify();
+    }
+
+    @Test
+    void putIfAbsentWhenItemDoesNotExist() {
+        String iun = "iun-put-if-absent-" + System.nanoTime();
         Integer recIndex = 0;
+        NotificationDeliveryCost notification = newNotificationDeliveryCost(iun, recIndex);
+
         try {
-            dao.getNotificationDeliveryCostItem(iun,recIndex).block();
-            Assertions.fail("Expected PnNotFoundException to be thrown");
-        } catch (Throwable e) {
-            Assertions.assertInstanceOf(PnNotFoundException.class, e);
+            StepVerifier.create(dao.putIfAbsent(List.of(notification)))
+                    .verifyComplete();
+
+            NotificationDeliveryCost elementFromDb = dao.getNotificationDeliveryCostItem(iun, recIndex).block();
+
+            Assertions.assertNotNull(elementFromDb);
+            Assertions.assertEquals(notification.getIun(), elementFromDb.getIun());
+            Assertions.assertEquals(notification.getRecIndex(), elementFromDb.getRecIndex());
+            Assertions.assertEquals(notification.getRecipientInternalId(), elementFromDb.getRecipientInternalId());
+            Assertions.assertEquals(notification.getSenderInternalId(), elementFromDb.getSenderInternalId());
+            Assertions.assertEquals(notification.getBaseCost().getPaFee(), elementFromDb.getBaseCost().getPaFee());
+            Assertions.assertEquals(notification.getBaseCost().getSendFee(), elementFromDb.getBaseCost().getSendFee());
+            Assertions.assertEquals(notification.getVat(), elementFromDb.getVat());
+            Assertions.assertEquals(notification.getNotificationFeePolicy(), elementFromDb.getNotificationFeePolicy());
+            Assertions.assertEquals(notification.getPagoPaIntMode(), elementFromDb.getPagoPaIntMode());
+        } catch (Exception e) {
+            fail(e);
+        } finally {
+            try {
+                testDao.delete(iun, recIndex);
+            } catch (Exception e) {
+                System.out.println("Nothing to remove");
+            }
         }
     }
+
+    @Test
+    void putIfAbsentWhenItemAlreadyExistsThrowsConflict() {
+        String iun = "iun-put-if-absent-conflict-" + System.nanoTime();
+        Integer recIndex = 1;
+        NotificationDeliveryCost notification = newNotificationDeliveryCost(iun, recIndex);
+
+        try {
+            StepVerifier.create(dao.putIfAbsent(List.of(notification)))
+                    .verifyComplete();
+
+            StepVerifier.create(dao.putIfAbsent(List.of(notification)))
+                    .expectError(PnDbConflictException.class)
+                    .verify();
+        } finally {
+            try {
+                testDao.delete(iun, recIndex);
+            } catch (Exception e) {
+                System.out.println("Nothing to remove");
+            }
+        }
+    }
+
+    private static NotificationDeliveryCost newNotificationDeliveryCost(String iun, Integer recIndex) {
+        return NotificationDeliveryCost.builder()
+                .iun(iun)
+                .recIndex(recIndex)
+                .recipientInternalId("recipientInternalId-" + recIndex)
+                .senderInternalId("senderInternalId-" + recIndex)
+                .baseCost(BaseCost.builder()
+                        .paFee(2)
+                        .sendFee(10)
+                        .build())
+                .vat(22)
+                .notificationFeePolicy(NotificationFeePolicy.DELIVERY_MODE)
+                .pagoPaIntMode(PagoPaIntMode.ASYNC)
+                .isDeleted(false)
+                .lastUpdate(Instant.now())
+                .ttl(10000L)
+                .build();
+    }
+
+
 }

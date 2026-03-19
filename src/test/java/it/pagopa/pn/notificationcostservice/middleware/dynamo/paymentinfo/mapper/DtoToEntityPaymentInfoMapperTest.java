@@ -1,4 +1,4 @@
-package it.pagopa.pn.notificationcostservice.middleware.paymentinfo.dynamo.mapper;
+package it.pagopa.pn.notificationcostservice.middleware.dynamo.paymentinfo.mapper;
 
 import it.pagopa.pn.notificationcostservice.middleware.dao.dynamo.entity.paymentinfo.PaymentInfoEntity;
 import it.pagopa.pn.notificationcostservice.middleware.dao.dynamo.mapper.paymentinfo.DtoToEntityPaymentInfoMapper;
