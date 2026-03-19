@@ -8,6 +8,7 @@ import it.pagopa.pn.notificationcostservice.model.notificationdeliverycost.Notif
 import it.pagopa.pn.notificationcostservice.model.paymentinfo.PaymentInfo;
 import it.pagopa.pn.notificationcostservice.service.NotificationCostService;
 import it.pagopa.pn.notificationcostservice.service.mapper.NotificationDeliveryCostMapper;
+import it.pagopa.pn.notificationcostservice.service.mapper.PaymentInfoMapper;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -35,6 +36,9 @@ class NotificationCostServiceControllerTest {
 
     @Mock
     private NotificationDeliveryCostMapper mapper;
+
+    @Mock
+    private PaymentInfoMapper paymentInfoMapper;
 
     private static final String TEST_IUN = "TEST-IUN-123";
     private static final Integer TEST_REC_INDEX = 0;
@@ -71,7 +75,7 @@ class NotificationCostServiceControllerTest {
         List<PaymentInfo> payments = List.of(mock(PaymentInfo.class));
 
         when(mapper.mapDtoToNotificationDeliveryCost(iun, requestDto)).thenReturn(notificationCosts);
-        when(mapper.mapDtoToPaymentInfo(iun, requestDto)).thenReturn(payments);
+        when(paymentInfoMapper.mapDtoToPaymentInfo(iun, requestDto)).thenReturn(payments);
         when(notificationCostService.saveNotificationCost(iun, notificationCosts, payments))
                 .thenReturn(Mono.empty());
 
@@ -87,7 +91,7 @@ class NotificationCostServiceControllerTest {
                 .verifyComplete();
 
         verify(mapper).mapDtoToNotificationDeliveryCost(iun, requestDto);
-        verify(mapper).mapDtoToPaymentInfo(iun, requestDto);
+        verify(paymentInfoMapper).mapDtoToPaymentInfo(iun, requestDto);
         verify(notificationCostService).saveNotificationCost(iun, notificationCosts, payments);
     }
 
@@ -99,7 +103,7 @@ class NotificationCostServiceControllerTest {
         IllegalStateException expected = new IllegalStateException("enqueue failed");
 
         when(mapper.mapDtoToNotificationDeliveryCost(TEST_IUN, requestDto)).thenReturn(notificationCosts);
-        when(mapper.mapDtoToPaymentInfo(TEST_IUN, requestDto)).thenReturn(payments);
+        when(paymentInfoMapper.mapDtoToPaymentInfo(TEST_IUN, requestDto)).thenReturn(payments);
         when(notificationCostService.saveNotificationCost(TEST_IUN, notificationCosts, payments))
                 .thenReturn(Mono.error(expected));
 
@@ -108,7 +112,7 @@ class NotificationCostServiceControllerTest {
                 .verify();
 
         verify(mapper).mapDtoToNotificationDeliveryCost(eq(TEST_IUN), same(requestDto));
-        verify(mapper).mapDtoToPaymentInfo(eq(TEST_IUN), same(requestDto));
+        verify(paymentInfoMapper).mapDtoToPaymentInfo(eq(TEST_IUN), same(requestDto));
         verify(notificationCostService).saveNotificationCost(TEST_IUN, notificationCosts, payments);
     }
 }
