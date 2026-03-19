@@ -1,7 +1,9 @@
 package it.pagopa.pn.notificationcostservice.rest;
 
 import it.pagopa.pn.notification_cost_service.generated.openapi.server.v1.api.NotificationCostRecipientApi;
+import it.pagopa.pn.notification_cost_service.generated.openapi.server.v1.dto.NewNotificationCostRequestDto;
 import it.pagopa.pn.notification_cost_service.generated.openapi.server.v1.dto.NotificationCostRecipientResponseDto;
+import it.pagopa.pn.notificationcostservice.model.ValidationStatus;
 import it.pagopa.pn.notificationcostservice.service.NotificationCostService;
 import lombok.AllArgsConstructor;
 import lombok.CustomLog;
@@ -25,4 +27,10 @@ public class NotificationCostServiceController implements NotificationCostRecipi
                 .map(ResponseEntity::ok);
     }
 
+    @Override
+    public Mono<ResponseEntity<String>> initializeNotificationCost(String iun,
+                                                                               Mono<NewNotificationCostRequestDto> notificationCostRequestDto,
+                                                                               ServerWebExchange exchange) {
+        return Mono.just(ResponseEntity.accepted().body(ValidationStatus.OK.toString()));
+    }
 }

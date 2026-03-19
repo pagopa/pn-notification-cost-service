@@ -1,4 +1,4 @@
-package it.pagopa.pn.notificationcostservice.middleware.dao.notificationdeliverycost.dynamo.entity.paymentinfo;
+package it.pagopa.pn.notificationcostservice.middleware.dao.paymentinfo.dynamo.entity;
 
 import lombok.*;
 import software.amazon.awssdk.enhanced.dynamodb.mapper.annotations.DynamoDbAttribute;
@@ -23,7 +23,7 @@ public class PaymentInfoEntity {
     private Integer recIndex;
 
     @Getter(onMethod=@__({@DynamoDbAttribute(COL_APPLY_COST)}))
-    private Boolean applyCost;
+    private boolean applyCost;
 
     @Getter(onMethod=@__({@DynamoDbAttribute(COL_IUN)}))
     private String iun;

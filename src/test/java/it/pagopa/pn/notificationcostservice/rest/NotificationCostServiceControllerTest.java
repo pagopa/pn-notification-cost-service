@@ -1,6 +1,8 @@
 package it.pagopa.pn.notificationcostservice.rest;
 
+import it.pagopa.pn.notification_cost_service.generated.openapi.server.v1.dto.NewNotificationCostRequestDto;
 import it.pagopa.pn.notification_cost_service.generated.openapi.server.v1.dto.NotificationCostRecipientResponseDto;
+import it.pagopa.pn.notificationcostservice.model.ValidationStatus;
 import it.pagopa.pn.notificationcostservice.service.NotificationCostService;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -9,14 +11,13 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.server.ServerWebExchange;
 import reactor.core.publisher.Mono;
 import reactor.test.StepVerifier;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
-
+import static org.mockito.Mockito.*;
 @ExtendWith(MockitoExtension.class)
 class NotificationCostServiceControllerTest {
 
@@ -49,6 +50,17 @@ class NotificationCostServiceControllerTest {
                 .verifyComplete();
 
         verify(notificationCostService).getNotificationCostRecipient(TEST_IUN, TEST_REC_INDEX);
+    }
+
+    @Test
+    void initializeNotificationCostTest() {
+        String iun = "iun";
+        NewNotificationCostRequestDto requestDto = new NewNotificationCostRequestDto();
+        ServerWebExchange exchange = mock(ServerWebExchange.class);
+        Mono<ResponseEntity<String>> result = controller.initializeNotificationCost(iun, Mono.just(requestDto), exchange);
+        StepVerifier.create(result)
+                .expectNext(ResponseEntity.accepted().body(ValidationStatus.OK.toString()))
+                .verifyComplete();
     }
 }
 

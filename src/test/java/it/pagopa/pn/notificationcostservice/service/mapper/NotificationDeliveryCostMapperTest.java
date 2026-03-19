@@ -1,12 +1,11 @@
 package it.pagopa.pn.notificationcostservice.service.mapper;
 
-import it.pagopa.pn.notification_cost_service.generated.openapi.server.v1.dto.AnalogCostDetailDto;
-import it.pagopa.pn.notification_cost_service.generated.openapi.server.v1.dto.AnalogCostNameDto;
-import it.pagopa.pn.notification_cost_service.generated.openapi.server.v1.dto.BaseCostDetailDto;
-import it.pagopa.pn.notification_cost_service.generated.openapi.server.v1.dto.NotificationCostRecipientResponseDto;
+import it.pagopa.pn.notification_cost_service.generated.openapi.server.v1.dto.*;
 import it.pagopa.pn.notificationcostservice.NotificationDeliveryCostTestBuilder;
 import it.pagopa.pn.notificationcostservice.model.cost.CalculatedCosts;
 import it.pagopa.pn.notificationcostservice.model.notificationdeliverycost.NotificationDeliveryCost;
+import it.pagopa.pn.notificationcostservice.model.notificationdeliverycost.NotificationFeePolicy;
+import it.pagopa.pn.notificationcostservice.model.notificationdeliverycost.PagoPaIntMode;
 import it.pagopa.pn.notificationcostservice.model.notificationdeliverycost.analogcost.FirstAnalogCost;
 import it.pagopa.pn.notificationcostservice.model.notificationdeliverycost.analogcost.SecondAnalogCost;
 import it.pagopa.pn.notificationcostservice.model.notificationdeliverycost.analogcost.SimpleRegisteredLetterCost;
@@ -14,13 +13,76 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.time.Instant;
+import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 
 class NotificationDeliveryCostMapperTest {
 
     private final NotificationDeliveryCostMapper mapper = new NotificationDeliveryCostMapper();
+
+    @Test
+    @DisplayName("mapDtoToNotificationDeliveryCost mappa tutti i recipient in NotificationDeliveryCost")
+    void shouldMapDtoToNotificationDeliveryCost() {
+        NewNotificationCostRequestDto request = new NewNotificationCostRequestDto()
+                .costRecipients(List.of(
+                        new RecipientCostDataDto(
+                                0,
+                                "recipient-1",
+                                "sender-1",
+                                150,
+                                100,
+                                50,
+                                NotificationFeePolicyDto.DELIVERY_MODE,
+                                PagoPaIntModeDto.SYNC,
+                                22
+                        ),
+                        new RecipientCostDataDto(
+                                1,
+                                "recipient-2",
+                                "sender-2",
+                                200,
+                                120,
+                                80,
+                                NotificationFeePolicyDto.FLAT_RATE,
+                                PagoPaIntModeDto.ASYNC,
+                                10
+                        )
+                ));
+
+        List<NotificationDeliveryCost> result = mapper.mapDtoToNotificationDeliveryCost("IUN-123", request);
+
+        assertThat(result).hasSize(2);
+
+        assertThat(result.getFirst().getIun()).isEqualTo("IUN-123");
+        assertThat(result.getFirst().getRecIndex()).isEqualTo(0);
+        assertThat(result.getFirst().getRecipientInternalId()).isEqualTo("recipient-1");
+        assertThat(result.getFirst().getSenderInternalId()).isEqualTo("sender-1");
+        assertThat(result.getFirst().getVat()).isEqualTo(22);
+        assertThat(result.getFirst().getPagoPaIntMode()).isEqualTo(PagoPaIntMode.SYNC);
+        assertThat(result.getFirst().getNotificationFeePolicy()).isEqualTo(NotificationFeePolicy.DELIVERY_MODE);
+        assertThat(result.getFirst().getBaseCost().getSendFee()).isEqualTo(100);
+        assertThat(result.getFirst().getBaseCost().getPaFee()).isEqualTo(50);
+
+        assertThat(result.get(1).getIun()).isEqualTo("IUN-123");
+        assertThat(result.get(1).getRecIndex()).isEqualTo(1);
+        assertThat(result.get(1).getRecipientInternalId()).isEqualTo("recipient-2");
+        assertThat(result.get(1).getSenderInternalId()).isEqualTo("sender-2");
+        assertThat(result.get(1).getVat()).isEqualTo(10);
+        assertThat(result.get(1).getPagoPaIntMode()).isEqualTo(PagoPaIntMode.ASYNC);
+        assertThat(result.get(1).getNotificationFeePolicy()).isEqualTo(NotificationFeePolicy.FLAT_RATE);
+        assertThat(result.get(1).getBaseCost().getSendFee()).isEqualTo(120);
+        assertThat(result.get(1).getBaseCost().getPaFee()).isEqualTo(80);
+    }
+
+    @Test
+    @DisplayName("mapDtoToNotificationDeliveryCost lancia NullPointerException se dto è null")
+    void shouldThrowWhenDtoIsNullInMapDtoToNotificationDeliveryCost() {
+        assertThatThrownBy(() -> mapper.mapDtoToNotificationDeliveryCost("IUN-123", null))
+                .isInstanceOf(NullPointerException.class);
+    }
 
     @Test
     @DisplayName("Dovrebbe mappare correttamente i costi base e i metadati generali")
