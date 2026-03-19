@@ -33,7 +33,7 @@ public class NotificationCostServiceController implements NotificationCostRecipi
     }
 
     @Override
-    public Mono<ResponseEntity<RequestAcceptedDto>> initializeNotificationCost(String iun,
+    public Mono<ResponseEntity<String>> initializeNotificationCost(String iun,
                                                                                Mono<NewNotificationCostRequestDto> notificationCostRequestDto,
                                                                                ServerWebExchange exchange) {
         return notificationCostRequestDto
@@ -43,4 +43,5 @@ public class NotificationCostServiceController implements NotificationCostRecipi
                         new RequestAcceptedDto().status(ValidationStatus.OK.name())
                 ));
     }
+
 }

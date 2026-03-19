@@ -80,6 +80,10 @@ paths:
       responses:
         '202':
           description: ACK - Richiesta elaborata correttamente
+          content:
+            text/plain:
+              schema:
+                type: string
         '400':
           description: Invalid input
           content:
