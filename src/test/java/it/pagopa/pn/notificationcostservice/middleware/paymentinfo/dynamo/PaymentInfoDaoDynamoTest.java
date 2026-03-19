@@ -67,20 +67,18 @@ public class PaymentInfoDaoDynamoTest {
     }
 
     @Test
-    void updateItem_nullList_returnsEmptyList() {
-        Mono<List<PaymentInfo>> result = dao.updateItem(null);
+    void updateItem_nullList_returnsEmpty() {
+        Mono<Void> result = dao.updateItem(null);
 
         StepVerifier.create(result)
-                .expectNext(Collections.emptyList())
                 .verifyComplete();
     }
 
     @Test
-    void updateItem_emptyList_returnsEmptyList() {
-        Mono<List<PaymentInfo>> result = dao.updateItem(Collections.emptyList());
+    void updateItem_emptyList_returnsEmpty() {
+        Mono<Void> result = dao.updateItem(Collections.emptyList());
 
         StepVerifier.create(result)
-                .expectNext(Collections.emptyList())
                 .verifyComplete();
     }
 
@@ -88,67 +86,44 @@ public class PaymentInfoDaoDynamoTest {
     void updateItem_singlePayment_success() {
         PaymentInfo paymentInfo = PaymentInfo.builder()
                 .iuv("IUV-123")
-                .iun("IUN-ABC")
-                .recIndex(1)
-                .applyCost(true)
                 .build();
 
         PaymentInfoEntity entity = new PaymentInfoEntity();
         entity.setIuv("IUV-123");
-        entity.setIun("IUN-ABC");
-        entity.setRecIndex(1);
-        entity.setApplyCost(true);
 
         when(dtoToEntityPaymentInfoMapper.dtoToEntity(paymentInfo)).thenReturn(entity);
         when(mockTable.updateItem(any(UpdateItemEnhancedRequest.class)))
                 .thenReturn(CompletableFuture.completedFuture(entity));
-        when(entityToDtoPaymentInfoMapper.entityToDto(entity)).thenReturn(paymentInfo);
 
         // WHEN
-        Mono<List<PaymentInfo>> result = dao.updateItem(List.of(paymentInfo));
+        Mono<Void> result = dao.updateItem(List.of(paymentInfo));
 
         // THEN
         StepVerifier.create(result)
-                .expectNext(List.of(paymentInfo))
                 .verifyComplete();
 
-        verify(dtoToEntityPaymentInfoMapper, times(1)).dtoToEntity(paymentInfo);
-        verify(mockTable, times(1)).updateItem(any(UpdateItemEnhancedRequest.class));
-        verify(entityToDtoPaymentInfoMapper, times(1)).entityToDto(entity);
+        verify(dtoToEntityPaymentInfoMapper).dtoToEntity(paymentInfo);
+        verify(mockTable).updateItem(any(UpdateItemEnhancedRequest.class));
     }
 
     @Test
     void updateItem_multiplePayments_success() {
+        PaymentInfo p1 = PaymentInfo.builder().iuv("IUV-1").build();
+        PaymentInfo p2 = PaymentInfo.builder().iuv("IUV-2").build();
+        PaymentInfoEntity e1 = new PaymentInfoEntity();
+        PaymentInfoEntity e2 = new PaymentInfoEntity();
 
-        PaymentInfo payment1 = PaymentInfo.builder().iuv("IUV-1").iun("IUN-1").recIndex(1).applyCost(true).build();
-        PaymentInfo payment2 = PaymentInfo.builder().iuv("IUV-2").iun("IUN-2").recIndex(2).applyCost(false).build();
-
-        PaymentInfoEntity entity1 = new PaymentInfoEntity();
-        entity1.setIuv("IUV-1");
-        entity1.setIun("IUN-1");
-        entity1.setRecIndex(1);
-        entity1.setApplyCost(true);
-
-        PaymentInfoEntity entity2 = new PaymentInfoEntity();
-        entity2.setIuv("IUV-2");
-        entity2.setIun("IUN-2");
-        entity2.setRecIndex(2);
-        entity2.setApplyCost(false);
-
-        when(dtoToEntityPaymentInfoMapper.dtoToEntity(payment1)).thenReturn(entity1);
-        when(dtoToEntityPaymentInfoMapper.dtoToEntity(payment2)).thenReturn(entity2);
+        when(dtoToEntityPaymentInfoMapper.dtoToEntity(p1)).thenReturn(e1);
+        when(dtoToEntityPaymentInfoMapper.dtoToEntity(p2)).thenReturn(e2);
         when(mockTable.updateItem(any(UpdateItemEnhancedRequest.class)))
-                .thenReturn(CompletableFuture.completedFuture(entity1))
-                .thenReturn(CompletableFuture.completedFuture(entity2));
-        when(entityToDtoPaymentInfoMapper.entityToDto(entity1)).thenReturn(payment1);
-        when(entityToDtoPaymentInfoMapper.entityToDto(entity2)).thenReturn(payment2);
+                .thenReturn(CompletableFuture.completedFuture(e1))
+                .thenReturn(CompletableFuture.completedFuture(e2));
 
         // WHEN
-        Mono<List<PaymentInfo>> result = dao.updateItem(List.of(payment1, payment2));
+        Mono<Void> result = dao.updateItem(List.of(p1, p2));
 
         // THEN
         StepVerifier.create(result)
-                .expectNextMatches(list -> list.size() == 2 && list.containsAll(List.of(payment1, payment2)))
                 .verifyComplete();
 
         verify(mockTable, times(2)).updateItem(any(UpdateItemEnhancedRequest.class));
@@ -156,15 +131,8 @@ public class PaymentInfoDaoDynamoTest {
 
     @Test
     void updateItem_conditionalCheckFailed_throwsPnDbConflictException() {
-        PaymentInfo paymentInfo = PaymentInfo.builder()
-                .iuv("IUV-123")
-                .iun("IUN-ABC")
-                .recIndex(1)
-                .applyCost(true)
-                .build();
-
+        PaymentInfo paymentInfo = PaymentInfo.builder().iuv("IUV-123").build();
         PaymentInfoEntity entity = new PaymentInfoEntity();
-        entity.setIuv("IUV-123");
 
         when(dtoToEntityPaymentInfoMapper.dtoToEntity(paymentInfo)).thenReturn(entity);
 
@@ -176,37 +144,11 @@ public class PaymentInfoDaoDynamoTest {
         when(mockTable.updateItem(any(UpdateItemEnhancedRequest.class))).thenReturn(failedFuture);
 
         // WHEN
-        Mono<List<PaymentInfo>> result = dao.updateItem(List.of(paymentInfo));
+        Mono<Void> result = dao.updateItem(List.of(paymentInfo));
 
         // THEN
         StepVerifier.create(result)
                 .expectError(PnDbConflictException.class)
-                .verify();
-    }
-
-    @Test
-    void updateItem_genericError_propagatesError() {
-        PaymentInfo paymentInfo = PaymentInfo.builder()
-                .iuv("IUV-123")
-                .iun("IUN-ABC")
-                .build();
-
-        PaymentInfoEntity entity = new PaymentInfoEntity();
-        entity.setIuv("IUV-123");
-
-        when(dtoToEntityPaymentInfoMapper.dtoToEntity(paymentInfo)).thenReturn(entity);
-
-        CompletableFuture<PaymentInfoEntity> failedFuture = new CompletableFuture<>();
-        failedFuture.completeExceptionally(new RuntimeException("Generic DynamoDB error"));
-
-        when(mockTable.updateItem(any(UpdateItemEnhancedRequest.class))).thenReturn(failedFuture);
-
-        // WHEN
-        Mono<List<PaymentInfo>> result = dao.updateItem(List.of(paymentInfo));
-
-        // THEN
-        StepVerifier.create(result)
-                .expectError(RuntimeException.class)
                 .verify();
     }
 }

@@ -6,5 +6,5 @@ import reactor.core.publisher.Mono;
 import java.util.List;
 
 public interface PaymentInfoDao {
-    Mono<List<PaymentInfo>> updateItem(List<PaymentInfo> payments);
+    Mono<Void> updateItem(List<PaymentInfo> payments);
 }
