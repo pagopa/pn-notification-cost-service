@@ -48,7 +48,6 @@ for qn in  $( echo $queues | tr " " "\n" ) ; do
         --queue-name $qn
 done
 
-
 echo "Tables created. Inserting test cases..."
 
 IUN1="IUN-STANDARD-MIX"
