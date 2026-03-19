@@ -26,30 +26,34 @@ class NotificationDeliveryCostMapperTest {
     @Test
     @DisplayName("mapDtoToNotificationDeliveryCost mappa tutti i recipient in NotificationDeliveryCost")
     void shouldMapDtoToNotificationDeliveryCost() {
+        RecipientCostDataDto recipient1 = new RecipientCostDataDto()
+                .recIndex(0)
+                .recipientInternalId("recipient-1")
+                .senderInternalId("sender-1")
+                .payments(List.of(new PaymentDataDto("IUV-1", true)))
+                .baseCost(150)
+                .sendFee(100)
+                .paFee(50)
+                .notificationFeePolicy(NotificationFeePolicyDto.DELIVERY_MODE)
+                .pagoPaIntMode(PagoPaIntModeDto.SYNC)
+                .vat(22);
+        RecipientCostDataDto recipient2 = new RecipientCostDataDto()
+                .recIndex(1)
+                .recipientInternalId("recipient-2")
+                .senderInternalId("sender-2")
+                .payments(List.of(new PaymentDataDto("IUV-2", true)))
+                .baseCost(200)
+                .sendFee(120)
+                .paFee(80)
+                .notificationFeePolicy(NotificationFeePolicyDto.FLAT_RATE)
+                .pagoPaIntMode(PagoPaIntModeDto.ASYNC)
+                .vat(10);
+
+
         NewNotificationCostRequestDto request = new NewNotificationCostRequestDto()
                 .costRecipients(List.of(
-                        new RecipientCostDataDto(
-                                0,
-                                "recipient-1",
-                                "sender-1",
-                                150,
-                                100,
-                                50,
-                                NotificationFeePolicyDto.DELIVERY_MODE,
-                                PagoPaIntModeDto.SYNC,
-                                22
-                        ),
-                        new RecipientCostDataDto(
-                                1,
-                                "recipient-2",
-                                "sender-2",
-                                200,
-                                120,
-                                80,
-                                NotificationFeePolicyDto.FLAT_RATE,
-                                PagoPaIntModeDto.ASYNC,
-                                10
-                        )
+                        recipient1,
+                        recipient2
                 ));
 
         List<NotificationDeliveryCost> result = mapper.mapDtoToNotificationDeliveryCost("IUN-123", request);
