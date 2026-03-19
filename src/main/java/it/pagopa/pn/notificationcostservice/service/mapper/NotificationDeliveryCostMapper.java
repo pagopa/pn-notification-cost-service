@@ -7,9 +7,7 @@ import it.pagopa.pn.notificationcostservice.model.notificationdeliverycost.Notif
 import it.pagopa.pn.notificationcostservice.model.notificationdeliverycost.NotificationFeePolicy;
 import it.pagopa.pn.notificationcostservice.model.notificationdeliverycost.PagoPaIntMode;
 import it.pagopa.pn.notificationcostservice.model.notificationdeliverycost.analogcost.AnalogCost;
-import it.pagopa.pn.notificationcostservice.model.paymentinfo.PaymentInfo;
 import org.springframework.stereotype.Component;
-
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
@@ -20,18 +18,6 @@ public class NotificationDeliveryCostMapper {
     public List<NotificationDeliveryCost> mapDtoToNotificationDeliveryCost(String iun, NewNotificationCostRequestDto dto) {
         return dto.getCostRecipients().stream()
                 .map(recipient -> mapRecipientToNotificationDeliveryCost(iun, recipient))
-                .toList();
-    }
-
-    public List<PaymentInfo> mapDtoToPaymentInfo(String iun, NewNotificationCostRequestDto dto) {
-        return dto.getCostRecipients().stream()
-                .flatMap(recipient -> recipient.getPayments().stream()
-                        .map(payment -> PaymentInfo.builder()
-                                .iun(iun)
-                                .recIndex(recipient.getRecIndex())
-                                .iuv(payment.getIuv())
-                                .applyCost(payment.getApplyCost())
-                                .build()))
                 .toList();
     }
 
