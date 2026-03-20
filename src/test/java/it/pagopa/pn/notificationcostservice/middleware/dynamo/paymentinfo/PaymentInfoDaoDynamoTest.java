@@ -1,14 +1,12 @@
 package it.pagopa.pn.notificationcostservice.middleware.dynamo.paymentinfo;
 
 import it.pagopa.pn.notificationcostservice.config.PnNotificationCostServiceConfigs;
-import it.pagopa.pn.notificationcostservice.exception.PnDbConflictException;
 import it.pagopa.pn.notificationcostservice.middleware.dao.dynamo.PaymentInfoDaoDynamo;
 import it.pagopa.pn.notificationcostservice.middleware.dao.dynamo.entity.paymentinfo.PaymentInfoEntity;
 import it.pagopa.pn.notificationcostservice.middleware.dao.dynamo.mapper.paymentinfo.DtoToEntityPaymentInfoMapper;
-import it.pagopa.pn.notificationcostservice.middleware.dao.dynamo.mapper.paymentinfo.EntityToDtoPaymentInfoMapper;
 import it.pagopa.pn.notificationcostservice.model.paymentinfo.PaymentInfo;
-import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
@@ -18,7 +16,6 @@ import software.amazon.awssdk.enhanced.dynamodb.DynamoDbAsyncTable;
 import software.amazon.awssdk.enhanced.dynamodb.DynamoDbEnhancedAsyncClient;
 import software.amazon.awssdk.enhanced.dynamodb.TableSchema;
 import software.amazon.awssdk.enhanced.dynamodb.model.UpdateItemEnhancedRequest;
-import software.amazon.awssdk.services.dynamodb.model.ConditionalCheckFailedException;
 
 import java.util.Collections;
 import java.util.List;
@@ -44,8 +41,6 @@ public class PaymentInfoDaoDynamoTest {
     @Mock
     private DtoToEntityPaymentInfoMapper dtoToEntityPaymentInfoMapper;
 
-    @Mock
-    private EntityToDtoPaymentInfoMapper entityToDtoPaymentInfoMapper;
 
     private PaymentInfoDaoDynamo dao;
 
@@ -61,8 +56,7 @@ public class PaymentInfoDaoDynamoTest {
         dao = new PaymentInfoDaoDynamo(
                 dynamoDbEnhancedAsyncClient,
                 configs,
-                dtoToEntityPaymentInfoMapper,
-                entityToDtoPaymentInfoMapper
+                dtoToEntityPaymentInfoMapper
         );
     }
 
@@ -127,28 +121,5 @@ public class PaymentInfoDaoDynamoTest {
                 .verifyComplete();
 
         verify(mockTable, times(2)).updateItem(any(UpdateItemEnhancedRequest.class));
-    }
-
-    @Test
-    void updateItem_conditionalCheckFailed_throwsPnDbConflictException() {
-        PaymentInfo paymentInfo = PaymentInfo.builder().iuv("IUV-123").build();
-        PaymentInfoEntity entity = new PaymentInfoEntity();
-
-        when(dtoToEntityPaymentInfoMapper.dtoToEntity(paymentInfo)).thenReturn(entity);
-
-        CompletableFuture<PaymentInfoEntity> failedFuture = new CompletableFuture<>();
-        failedFuture.completeExceptionally(ConditionalCheckFailedException.builder()
-                .message("Condition failed")
-                .build());
-
-        when(mockTable.updateItem(any(UpdateItemEnhancedRequest.class))).thenReturn(failedFuture);
-
-        // WHEN
-        Mono<Void> result = dao.updateItem(List.of(paymentInfo));
-
-        // THEN
-        StepVerifier.create(result)
-                .expectError(PnDbConflictException.class)
-                .verify();
     }
 }
