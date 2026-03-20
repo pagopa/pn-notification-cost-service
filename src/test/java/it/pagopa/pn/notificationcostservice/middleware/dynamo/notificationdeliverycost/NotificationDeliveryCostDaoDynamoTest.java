@@ -248,7 +248,7 @@ public class NotificationDeliveryCostDaoDynamoTest {
         PutItemEnhancedRequest<NotificationDeliveryCostEntity> request = captor.getValue();
         assertThat(request.item()).isEqualTo(entity);
         assertThat(request.conditionExpression()).isNotNull();
-        assertThat(request.conditionExpression().expression()).isEqualTo("attribute_not_exists(pk) && attribute_not_exists(sk)");
+        assertThat(request.conditionExpression().expression()).isEqualTo("attribute_not_exists(pk) AND attribute_not_exists(sk)");
     }
 
     @Test

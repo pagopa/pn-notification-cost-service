@@ -101,16 +101,19 @@ public class NotificationDeliveryCostDaoDynamo extends BaseDao implements Notifi
     }
 
     private PutItemEnhancedRequest<NotificationDeliveryCostEntity> putItemEnhancedRequest(NotificationDeliveryCostEntity entity) {
+        String condition = "attribute_not_exists(" + NotificationDeliveryCostEntity.COL_PK + ") AND " +
+                "attribute_not_exists(" + NotificationDeliveryCostEntity.COL_SK + ")";
+
         return PutItemEnhancedRequest.builder(NotificationDeliveryCostEntity.class)
                 .item(entity)
                 .conditionExpression(
                         Expression.builder()
-                                .expression("attribute_not_exists(" + NotificationDeliveryCostEntity.COL_PK + ") " + "&& " +
-                                        "attribute_not_exists(" + NotificationDeliveryCostEntity.COL_SK + ")")
+                                .expression(condition)
                                 .build()
                 )
                 .build();
     }
+
 
     private CompletableFuture<NotificationDeliveryCostEntity> retrieveItem(String iun, Integer recIndex) {
         GetItemEnhancedRequest getItemEnhancedRequest = GetItemEnhancedRequest.builder()
