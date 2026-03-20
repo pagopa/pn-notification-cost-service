@@ -1,19 +1,19 @@
 package it.pagopa.pn.notificationcostservice.middleware.dynamo.notificationdeliverycost;
 
+import it.pagopa.pn.commons.exceptions.PnIdConflictException;
 import it.pagopa.pn.notificationcostservice.LocalStackTestConfig;
 import it.pagopa.pn.notificationcostservice.MockAWSObjectsTest;
-import it.pagopa.pn.notificationcostservice.exception.PnDbConflictException;
+import it.pagopa.pn.notificationcostservice.exception.PnNotFoundException;
+import it.pagopa.pn.notificationcostservice.middleware.dao.dynamo.NotificationDeliveryCostDaoDynamo;
+import it.pagopa.pn.notificationcostservice.middleware.dao.dynamo.entity.notificationdeliverycost.BaseCostEntity;
+import it.pagopa.pn.notificationcostservice.middleware.dao.dynamo.entity.notificationdeliverycost.NotificationDeliveryCostEntity;
+import it.pagopa.pn.notificationcostservice.middleware.dao.dynamo.entity.notificationdeliverycost.analogcost.FirstAnalogCostEntity;
+import it.pagopa.pn.notificationcostservice.middleware.dao.dynamo.entity.notificationdeliverycost.analogcost.SecondAnalogCostEntity;
 import it.pagopa.pn.notificationcostservice.middleware.dynamo.TestDao;
 import it.pagopa.pn.notificationcostservice.model.notificationdeliverycost.BaseCost;
 import it.pagopa.pn.notificationcostservice.model.notificationdeliverycost.NotificationDeliveryCost;
 import it.pagopa.pn.notificationcostservice.model.notificationdeliverycost.NotificationFeePolicy;
 import it.pagopa.pn.notificationcostservice.model.notificationdeliverycost.PagoPaIntMode;
-import it.pagopa.pn.notificationcostservice.exception.PnNotFoundException;
-import it.pagopa.pn.notificationcostservice.middleware.dao.dynamo.NotificationDeliveryCostDaoDynamo;
-import it.pagopa.pn.notificationcostservice.middleware.dao.dynamo.entity.notificationdeliverycost.BaseCostEntity;
-import it.pagopa.pn.notificationcostservice.middleware.dao.dynamo.entity.notificationdeliverycost.analogcost.FirstAnalogCostEntity;
-import it.pagopa.pn.notificationcostservice.middleware.dao.dynamo.entity.notificationdeliverycost.NotificationDeliveryCostEntity;
-import it.pagopa.pn.notificationcostservice.middleware.dao.dynamo.entity.notificationdeliverycost.analogcost.SecondAnalogCostEntity;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Disabled;
@@ -177,7 +177,7 @@ public class NotificationDeliveryCostDaoDynamoTestIT {
                     .verifyComplete();
 
             StepVerifier.create(dao.putIfAbsent(List.of(notification)))
-                    .expectError(PnDbConflictException.class)
+                    .expectError(PnIdConflictException.class)
                     .verify();
         } finally {
             try {

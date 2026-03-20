@@ -1,8 +1,8 @@
 package it.pagopa.pn.notificationcostservice.middleware.dynamo.notificationdeliverycost;
 
+import it.pagopa.pn.commons.exceptions.PnIdConflictException;
 import it.pagopa.pn.notificationcostservice.NotificationDeliveryCostTestBuilder;
 import it.pagopa.pn.notificationcostservice.config.PnNotificationCostServiceConfigs;
-import it.pagopa.pn.notificationcostservice.exception.PnDbConflictException;
 import it.pagopa.pn.notificationcostservice.exception.PnNotFoundException;
 import it.pagopa.pn.notificationcostservice.middleware.dao.dynamo.NotificationDeliveryCostDaoDynamo;
 import it.pagopa.pn.notificationcostservice.middleware.dao.dynamo.entity.notificationdeliverycost.BaseCostEntity;
@@ -248,7 +248,7 @@ public class NotificationDeliveryCostDaoDynamoTest {
         PutItemEnhancedRequest<NotificationDeliveryCostEntity> request = captor.getValue();
         assertThat(request.item()).isEqualTo(entity);
         assertThat(request.conditionExpression()).isNotNull();
-        assertThat(request.conditionExpression().expression()).isEqualTo("attribute_not_exists(sk)");
+        assertThat(request.conditionExpression().expression()).isEqualTo("attribute_not_exists(pk) && attribute_not_exists(sk)");
     }
 
     @Test
@@ -277,7 +277,7 @@ public class NotificationDeliveryCostDaoDynamoTest {
                 .thenReturn(failedFuture);
 
         StepVerifier.create(dao.putIfAbsent(List.of(notification)))
-                .expectError(PnDbConflictException.class)
+                .expectError(PnIdConflictException.class)
                 .verify();
 
         verify(dtoToEntityNotificationDeliveryCostMapper, times(1)).dto2Entity(notification);
