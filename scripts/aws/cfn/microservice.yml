@@ -272,9 +272,9 @@ Resources:
       Parameters:
         DashboardName: !Sub "${ProjectName}-notification-cost-service"
         DynamoDBTableNames: !Join
-        - ','
-        - - !Ref NotificationDeliveryCostTableName
-          - !Ref PaymentInfoTableName
+          - ','
+          - - !Ref NotificationDeliveryCostTableName
+            - !Ref PaymentInfoTableName
         AlarmArns: !Join
           - ','
           - - !GetAtt NotificationCostServiceMicroservice.Outputs.FatalLogsMetricAlarmArn

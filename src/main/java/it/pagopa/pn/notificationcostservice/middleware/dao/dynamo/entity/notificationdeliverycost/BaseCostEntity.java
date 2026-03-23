@@ -1,4 +1,4 @@
-package it.pagopa.pn.notificationcostservice.middleware.dao.notificationdeliverycost.dynamo.entity.notificationdeliverycost;
+package it.pagopa.pn.notificationcostservice.middleware.dao.dynamo.entity.notificationdeliverycost;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;

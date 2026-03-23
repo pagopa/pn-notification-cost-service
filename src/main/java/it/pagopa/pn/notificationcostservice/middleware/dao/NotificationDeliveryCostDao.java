@@ -1,4 +1,4 @@
-package it.pagopa.pn.notificationcostservice.middleware.dao.notificationdeliverycost;
+package it.pagopa.pn.notificationcostservice.middleware.dao;
 
 import it.pagopa.pn.notificationcostservice.model.notificationdeliverycost.NotificationDeliveryCost;
 import reactor.core.publisher.Mono;

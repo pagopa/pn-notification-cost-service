@@ -1,4 +1,4 @@
-package it.pagopa.pn.notificationcostservice.middleware.dao.notificationdeliverycost.dynamo;
+package it.pagopa.pn.notificationcostservice.middleware.dao.dynamo;
 
 import software.amazon.awssdk.enhanced.dynamodb.Key;
 

@@ -1,4 +1,4 @@
-package it.pagopa.pn.notificationcostservice.middleware.dao.paymentinfo.dynamo.entity;
+package it.pagopa.pn.notificationcostservice.middleware.dao.dynamo.entity.paymentinfo;
 
 import lombok.*;
 import software.amazon.awssdk.enhanced.dynamodb.mapper.annotations.DynamoDbAttribute;

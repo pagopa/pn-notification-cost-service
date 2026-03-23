@@ -1,6 +1,6 @@
-package it.pagopa.pn.notificationcostservice.middleware.dao.paymentinfo.dynamo.mapper;
+package it.pagopa.pn.notificationcostservice.middleware.dao.dynamo.mapper.paymentinfo;
 
-import it.pagopa.pn.notificationcostservice.middleware.dao.paymentinfo.dynamo.entity.PaymentInfoEntity;
+import it.pagopa.pn.notificationcostservice.middleware.dao.dynamo.entity.paymentinfo.PaymentInfoEntity;
 import it.pagopa.pn.notificationcostservice.model.paymentinfo.PaymentInfo;
 import org.springframework.stereotype.Component;
 import java.util.Objects;
