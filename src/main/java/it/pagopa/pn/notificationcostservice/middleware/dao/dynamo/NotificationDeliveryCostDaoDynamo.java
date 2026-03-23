@@ -14,10 +14,9 @@ import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import software.amazon.awssdk.enhanced.dynamodb.DynamoDbAsyncTable;
 import software.amazon.awssdk.enhanced.dynamodb.DynamoDbEnhancedAsyncClient;
-import software.amazon.awssdk.enhanced.dynamodb.Expression;
 import software.amazon.awssdk.enhanced.dynamodb.TableSchema;
 import software.amazon.awssdk.enhanced.dynamodb.model.GetItemEnhancedRequest;
-import software.amazon.awssdk.enhanced.dynamodb.model.PutItemEnhancedRequest;
+import software.amazon.awssdk.enhanced.dynamodb.model.UpdateItemEnhancedRequest;
 import software.amazon.awssdk.services.dynamodb.model.ConditionalCheckFailedException;
 
 import java.util.HashMap;
@@ -72,48 +71,45 @@ public class NotificationDeliveryCostDaoDynamo extends BaseDao implements Notifi
      * @return void
      */
     @Override
-    public Mono<Void> putIfAbsent(List<NotificationDeliveryCost> notificationDeliveryCosts) {
+    public Mono<Void> updateNotificationDeliveryCostsItem(List<NotificationDeliveryCost> notificationDeliveryCosts) {
         if (notificationDeliveryCosts == null || notificationDeliveryCosts.isEmpty()) {
             return Mono.empty();
         }
         return Flux.fromIterable(notificationDeliveryCosts)
                 .map(dtoToEntityNotificationDeliveryCostMapper::dto2Entity)
-                .flatMap(this::putIfAbsent)
+                .flatMap(this::updateNotNull)
                 .then();
 
     }
 
-    private Mono<Void> putIfAbsent(NotificationDeliveryCostEntity entity) {
-        return Mono.fromFuture(notificationDeliveryCostTable.putItem(putItemEnhancedRequest(entity)))
+    /**
+     * Aggiornamento di un'entità, aggiornando solo i campi non impostati su null
+     */
+    private Mono<NotificationDeliveryCostEntity> updateNotNull(NotificationDeliveryCostEntity entity) {
+        return Mono.fromFuture(notificationDeliveryCostTable.updateItem(putItemEnhancedRequest(entity))
+                        .thenApply(item -> entity))
                 .doOnError(e -> log.error("Error putting item with iun: {} and recIndex:{}", entity.getIun(), entity.getRecIndex(), e))
                 .onErrorMap(ConditionalCheckFailedException.class,
                         t ->
-                                new PnIdConflictException(duplicatedErrors(entity.getIun(), entity.getRecIndex(), entity)));
+                                new PnIdConflictException(duplicatedErrors(entity)));
     }
 
-    private Map<String, String> duplicatedErrors(String iunDuplicated, Integer recIndexDuplicated, NotificationDeliveryCostEntity entity) {
+    private Map<String, String> duplicatedErrors(NotificationDeliveryCostEntity entity) {
         Map<String, String> duplicatedErrors = new HashMap<>();
-        if (Objects.nonNull(iunDuplicated) && Objects.nonNull(recIndexDuplicated)) {
+        if (Objects.nonNull(entity.getIun()) && Objects.nonNull(entity.getRecIndex())) {
             String keyValueError= "pk: "+entity.getIun()+" sk: "+ entity.getRecIndex();
             duplicatedErrors.put("Duplicated notification delivery cost with key", keyValueError);
         }
         return duplicatedErrors;
     }
 
-    private PutItemEnhancedRequest<NotificationDeliveryCostEntity> putItemEnhancedRequest(NotificationDeliveryCostEntity entity) {
-        String condition = "attribute_not_exists(" + NotificationDeliveryCostEntity.COL_PK + ") AND " +
-                "attribute_not_exists(" + NotificationDeliveryCostEntity.COL_SK + ")";
+    private UpdateItemEnhancedRequest<NotificationDeliveryCostEntity> putItemEnhancedRequest(NotificationDeliveryCostEntity entity) {
 
-        return PutItemEnhancedRequest.builder(NotificationDeliveryCostEntity.class)
+        return UpdateItemEnhancedRequest.builder(NotificationDeliveryCostEntity.class)
                 .item(entity)
-                .conditionExpression(
-                        Expression.builder()
-                                .expression(condition)
-                                .build()
-                )
+                .ignoreNulls(true)
                 .build();
     }
-
 
     private CompletableFuture<NotificationDeliveryCostEntity> retrieveItem(String iun, Integer recIndex) {
         GetItemEnhancedRequest getItemEnhancedRequest = GetItemEnhancedRequest.builder()
