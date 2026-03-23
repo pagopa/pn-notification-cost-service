@@ -7,5 +7,5 @@ import java.util.List;
 
 public interface NotificationDeliveryCostDao {
     Mono<NotificationDeliveryCost> getNotificationDeliveryCostItem(String iun, Integer recIndex);
-    Mono<Void> putIfAbsent(List<NotificationDeliveryCost> notificationPayments);
+    Mono<Void> putIfAbsent(List<NotificationDeliveryCost> notificationDeliveryCosts);
 }
