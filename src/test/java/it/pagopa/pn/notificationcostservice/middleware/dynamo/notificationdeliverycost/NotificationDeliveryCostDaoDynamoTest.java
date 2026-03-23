@@ -1,6 +1,5 @@
 package it.pagopa.pn.notificationcostservice.middleware.dynamo.notificationdeliverycost;
 
-import it.pagopa.pn.notificationcostservice.NotificationDeliveryCostTestBuilder;
 import it.pagopa.pn.notificationcostservice.config.PnNotificationCostServiceConfigs;
 import it.pagopa.pn.notificationcostservice.exception.PnNotFoundException;
 import it.pagopa.pn.notificationcostservice.middleware.dao.dynamo.NotificationDeliveryCostDaoDynamo;
@@ -8,7 +7,6 @@ import it.pagopa.pn.notificationcostservice.middleware.dao.dynamo.entity.notific
 import it.pagopa.pn.notificationcostservice.middleware.dao.dynamo.entity.notificationdeliverycost.NotificationDeliveryCostEntity;
 import it.pagopa.pn.notificationcostservice.middleware.dao.dynamo.entity.notificationdeliverycost.analogcost.FirstAnalogCostEntity;
 import it.pagopa.pn.notificationcostservice.middleware.dao.dynamo.entity.notificationdeliverycost.analogcost.SecondAnalogCostEntity;
-import it.pagopa.pn.notificationcostservice.middleware.dao.dynamo.mapper.notificationdeliverycost.DtoToEntityNotificationDeliveryCostMapper;
 import it.pagopa.pn.notificationcostservice.middleware.dao.dynamo.mapper.notificationdeliverycost.EntityToDtoNotificationDeliveryCostMapper;
 import it.pagopa.pn.notificationcostservice.model.notificationdeliverycost.BaseCost;
 import it.pagopa.pn.notificationcostservice.model.notificationdeliverycost.NotificationDeliveryCost;
@@ -34,7 +32,6 @@ import java.time.Instant;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 
-import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.*;
 
@@ -56,9 +53,6 @@ class NotificationDeliveryCostDaoDynamoTest {
     @Mock
     private EntityToDtoNotificationDeliveryCostMapper entityToDtoMapper;
 
-    @Mock
-    private DtoToEntityNotificationDeliveryCostMapper dtoToEntityNotificationDeliveryCostMapper;
-
     private NotificationDeliveryCostDaoDynamo dao;
 
     @BeforeEach
@@ -73,8 +67,7 @@ class NotificationDeliveryCostDaoDynamoTest {
         dao = new NotificationDeliveryCostDaoDynamo(
                 dynamoDbEnhancedAsyncClient,
                 configs,
-                entityToDtoMapper,
-                dtoToEntityNotificationDeliveryCostMapper
+                entityToDtoMapper
         );
     }
 
@@ -177,7 +170,6 @@ class NotificationDeliveryCostDaoDynamoTest {
                 .verifyComplete();
 
         verifyNoInteractions(mockTable);
-        verifyNoInteractions(dtoToEntityNotificationDeliveryCostMapper);
     }
 
     @Test
@@ -186,7 +178,6 @@ class NotificationDeliveryCostDaoDynamoTest {
                 .verifyComplete();
 
         verifyNoInteractions(mockTable);
-        verifyNoInteractions(dtoToEntityNotificationDeliveryCostMapper);
     }
 
     @Test
@@ -194,25 +185,17 @@ class NotificationDeliveryCostDaoDynamoTest {
         String iun = "test-iun-123";
         int recIndex = 0;
 
-        NotificationDeliveryCost notification = NotificationDeliveryCostTestBuilder.builder()
-                .withIun(iun)
-                .withRecIndex(recIndex)
-                .build();
-
         NotificationDeliveryCostEntity entity = newNotificationDeliveryCostEntity(iun, recIndex);
 
-        when(dtoToEntityNotificationDeliveryCostMapper.dto2Entity(notification))
-                .thenReturn(entity);
         when(mockTable.updateItem(
                 ArgumentMatchers.<UpdateItemEnhancedRequest<NotificationDeliveryCostEntity>>any()
         )).thenReturn(CompletableFuture.completedFuture(entity));
 
-        Mono<Void> result = dao.updateNotificationDeliveryCostsItem(List.of(notification));
+        Mono<Void> result = dao.updateNotificationDeliveryCostsItem(List.of(entity));
 
         StepVerifier.create(result)
                 .verifyComplete();
 
-        verify(dtoToEntityNotificationDeliveryCostMapper, times(1)).dto2Entity(notification);
         verify(mockTable, times(1)).updateItem(
                 ArgumentMatchers.<UpdateItemEnhancedRequest<NotificationDeliveryCostEntity>>argThat(
                         request -> request != null && entity.equals(request.item())
@@ -222,32 +205,18 @@ class NotificationDeliveryCostDaoDynamoTest {
 
     @Test
     void updateNotificationDeliveryCostsItem_multipleNotifications_success() {
-        NotificationDeliveryCost n1 = NotificationDeliveryCostTestBuilder.builder()
-                .withIun("iun-1")
-                .withRecIndex(0)
-                .build();
-
-        NotificationDeliveryCost n2 = NotificationDeliveryCostTestBuilder.builder()
-                .withIun("iun-2")
-                .withRecIndex(1)
-                .build();
-
         NotificationDeliveryCostEntity e1 = newNotificationDeliveryCostEntity("iun-1", 0);
         NotificationDeliveryCostEntity e2 = newNotificationDeliveryCostEntity("iun-2", 1);
 
-        when(dtoToEntityNotificationDeliveryCostMapper.dto2Entity(n1)).thenReturn(e1);
-        when(dtoToEntityNotificationDeliveryCostMapper.dto2Entity(n2)).thenReturn(e2);
         when(mockTable.updateItem(
                 ArgumentMatchers.<UpdateItemEnhancedRequest<NotificationDeliveryCostEntity>>any()
         ))
                 .thenReturn(CompletableFuture.completedFuture(e1))
                 .thenReturn(CompletableFuture.completedFuture(e2));
 
-        StepVerifier.create(dao.updateNotificationDeliveryCostsItem(List.of(n1, n2)))
+        StepVerifier.create(dao.updateNotificationDeliveryCostsItem(List.of(e1, e2)))
                 .verifyComplete();
 
-        verify(dtoToEntityNotificationDeliveryCostMapper).dto2Entity(n1);
-        verify(dtoToEntityNotificationDeliveryCostMapper).dto2Entity(n2);
         verify(mockTable, times(2)).updateItem(
                 ArgumentMatchers.<UpdateItemEnhancedRequest<NotificationDeliveryCostEntity>>any()
         );

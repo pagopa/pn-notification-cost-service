@@ -1,13 +1,13 @@
 package it.pagopa.pn.notificationcostservice.middleware.queue.consumer.handler.notificationcost;
 
 import it.pagopa.pn.api.dto.events.notificationcost.validation.PnNotificationCostValidationEvent;
-import it.pagopa.pn.commons.exceptions.PnIdConflictException;
-import it.pagopa.pn.notificationcostservice.middleware.dao.NotificationDeliveryCostDao;
 import it.pagopa.pn.notificationcostservice.middleware.dao.PaymentInfoDao;
 import it.pagopa.pn.notificationcostservice.middleware.eventbus.EventBridgeProducer;
 import it.pagopa.pn.notificationcostservice.middleware.queue.consumer.event.notificationcost.NotificationCostInitializationEvent;
+import it.pagopa.pn.notificationcostservice.model.cost.CostUpdatePhaseInt;
 import it.pagopa.pn.notificationcostservice.model.notificationdeliverycost.NotificationDeliveryCost;
 import it.pagopa.pn.notificationcostservice.model.paymentinfo.PaymentInfo;
+import it.pagopa.pn.notificationcostservice.service.NotificationCostUpdaterService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Configuration;
@@ -22,7 +22,7 @@ import static it.pagopa.pn.notificationcostservice.middleware.eventbus.utils.Not
 @RequiredArgsConstructor
 public class NotificationCostInitializationEventHandler {
 
-    private final NotificationDeliveryCostDao notificationDeliveryCostDao;
+    private final NotificationCostUpdaterService  notificationCostUpdaterService;
     private final PaymentInfoDao paymentInfoDao;
     private final EventBridgeProducer<PnNotificationCostValidationEvent> producer;
 
@@ -62,20 +62,14 @@ public class NotificationCostInitializationEventHandler {
     }
 
     private Mono<Void> saveNotificationCosts(List<NotificationDeliveryCost> notificationCosts) {
-        return notificationDeliveryCostDao.putIfAbsent(notificationCosts)
-                .onErrorResume(PnIdConflictException.class, ex -> {
-                    log.warn("Conflict while saving notification costs for iun={}", notificationCosts.getFirst().getIun(), ex);
-                    return Mono.empty();
-                })
-                .doOnError(ex -> {
-                    if (!(ex instanceof PnIdConflictException)) {
-                        log.error("Error saving notification costs", ex);
-                    }
-                });
+        return notificationCostUpdaterService.updateCostByPhase(CostUpdatePhaseInt.VALIDATION,notificationCosts)
+                .doOnSuccess(ignored -> log.info("Successfully saved notification costs for iun={} and recIndex={}", notificationCosts.getFirst().getIun(),notificationCosts.getFirst().getRecIndex()))
+                .doOnError(ex -> log.error("Error saving notification costs", ex));
     }
 
     private Mono<Void> updatePaymentsInfo(List<PaymentInfo> payments) {
         return paymentInfoDao.updateItem(payments)
+                .doOnSuccess(ignored -> log.info("Successfully updated payments info for iun={}", payments.getFirst().getIun()))
                 .doOnError(ex -> log.error("Error updating payments info", ex));
     }
 
