@@ -5,7 +5,7 @@ import it.pagopa.pn.notification_cost_service.generated.openapi.server.v1.dto.No
 import it.pagopa.pn.notificationcostservice.exception.PnNotFoundException;
 import it.pagopa.pn.notificationcostservice.middleware.dao.NotificationDeliveryCostDao;
 import it.pagopa.pn.notificationcostservice.middleware.queue.consumer.event.notificationcost.NotificationCostInitializationEvent;
-import it.pagopa.pn.notificationcostservice.middleware.queue.utils.EventNotificationCostBuilder;
+import it.pagopa.pn.notificationcostservice.middleware.queue.consumer.event.utils.NotificationCostEventBuilder;
 import it.pagopa.pn.notificationcostservice.model.cost.CalculatedCosts;
 import it.pagopa.pn.notificationcostservice.model.notificationdeliverycost.NotificationDeliveryCost;
 import it.pagopa.pn.notificationcostservice.model.paymentinfo.PaymentInfo;
@@ -18,8 +18,10 @@ import org.springframework.stereotype.Service;
 import reactor.core.publisher.Mono;
 import reactor.core.scheduler.Schedulers;
 import reactor.util.retry.Retry;
+
 import java.time.Duration;
 import java.util.List;
+
 import static it.pagopa.pn.notificationcostservice.exception.PnNotificationCostServiceExceptionCodes.ERROR_CODE_NOTIFICATIONDELIVERYCOST_DELETED;
 
 @Slf4j
@@ -51,7 +53,7 @@ public class NotificationCostServiceImpl implements NotificationCostService {
     public Mono<Void> saveNotificationCost(String iun,List<NotificationDeliveryCost> notificationCosts, List<PaymentInfo> payments) {
         log.info("Start to save notification cost for iun: {}", iun);
         return Mono.fromRunnable(() -> {
-                    var event = EventNotificationCostBuilder.buildNotificationCostEvent(iun,notificationCosts,payments);
+                    var event = NotificationCostEventBuilder.buildNotificationCostEvent(iun,notificationCosts,payments);
                     notificationCostInitialization.push(event);
                 })
                 .subscribeOn(Schedulers.boundedElastic())

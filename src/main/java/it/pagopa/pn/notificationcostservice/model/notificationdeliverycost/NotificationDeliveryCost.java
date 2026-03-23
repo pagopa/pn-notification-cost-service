@@ -5,20 +5,20 @@ import it.pagopa.pn.notificationcostservice.model.notificationdeliverycost.analo
 import it.pagopa.pn.notificationcostservice.model.notificationdeliverycost.analogcost.SecondAnalogCost;
 import it.pagopa.pn.notificationcostservice.model.notificationdeliverycost.analogcost.SimpleRegisteredLetterCost;
 import it.pagopa.pn.notificationcostservice.model.utils.IntegerInterval;
-import lombok.Builder;
-import lombok.Data;
-import lombok.EqualsAndHashCode;
-import lombok.ToString;
+import lombok.*;
+
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
-import static it.pagopa.pn.notificationcostservice.utils.DomainValidationUtils.validateNonNullableField;
+
 import static it.pagopa.pn.notificationcostservice.utils.DomainValidationUtils.validateIntervalIntField;
+import static it.pagopa.pn.notificationcostservice.utils.DomainValidationUtils.validateNonNullableField;
 
 @Data
 @EqualsAndHashCode
 @ToString
+@NoArgsConstructor
 public class NotificationDeliveryCost {
     private String iun;
     private int recIndex;

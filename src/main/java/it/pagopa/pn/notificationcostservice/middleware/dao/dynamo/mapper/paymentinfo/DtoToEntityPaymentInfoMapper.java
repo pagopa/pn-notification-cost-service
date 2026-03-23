@@ -3,6 +3,7 @@ package it.pagopa.pn.notificationcostservice.middleware.dao.dynamo.mapper.paymen
 import it.pagopa.pn.notificationcostservice.middleware.dao.dynamo.entity.paymentinfo.PaymentInfoEntity;
 import it.pagopa.pn.notificationcostservice.model.paymentinfo.PaymentInfo;
 import org.springframework.stereotype.Component;
+
 import java.util.Objects;
 
 @Component

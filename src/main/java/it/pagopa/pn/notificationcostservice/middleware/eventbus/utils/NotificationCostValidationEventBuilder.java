@@ -1,0 +1,26 @@
+package it.pagopa.pn.notificationcostservice.middleware.eventbus.utils;
+
+import it.pagopa.pn.api.dto.events.notificationcost.utils.ValidationStatus;
+import it.pagopa.pn.api.dto.events.notificationcost.validation.PnNotificationCostValidationEvent;
+import it.pagopa.pn.api.dto.events.notificationcost.validation.PnNotificationCostValidationEventPayload;
+import lombok.NoArgsConstructor;
+
+@NoArgsConstructor
+public class NotificationCostValidationEventBuilder {
+
+    public static PnNotificationCostValidationEvent buildOkValidationEvent(String iun) {
+        return PnNotificationCostValidationEvent.builder()
+                .detail(
+                        PnNotificationCostValidationEvent.Detail.builder()
+                                .clientId("pn-notification-cost-service")
+                                .pnNotificationCostValidationPayload(
+                                        PnNotificationCostValidationEventPayload.builder()
+                                                .iun(iun)
+                                                .status(ValidationStatus.OK)
+                                                .build()
+                                )
+                                .build()
+                )
+                .build();
+    }
+}

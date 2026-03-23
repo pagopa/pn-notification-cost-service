@@ -1,10 +1,10 @@
 package it.pagopa.pn.notificationcostservice.middleware.dao.dynamo.entity.notificationdeliverycost;
 
-import it.pagopa.pn.notificationcostservice.model.notificationdeliverycost.NotificationFeePolicy;
-import it.pagopa.pn.notificationcostservice.model.notificationdeliverycost.PagoPaIntMode;
 import it.pagopa.pn.notificationcostservice.middleware.dao.dynamo.entity.notificationdeliverycost.analogcost.FirstAnalogCostEntity;
 import it.pagopa.pn.notificationcostservice.middleware.dao.dynamo.entity.notificationdeliverycost.analogcost.SecondAnalogCostEntity;
 import it.pagopa.pn.notificationcostservice.middleware.dao.dynamo.entity.notificationdeliverycost.analogcost.SimpleRegisteredLetterCostEntity;
+import it.pagopa.pn.notificationcostservice.model.notificationdeliverycost.NotificationFeePolicy;
+import it.pagopa.pn.notificationcostservice.model.notificationdeliverycost.PagoPaIntMode;
 import lombok.*;
 import software.amazon.awssdk.enhanced.dynamodb.mapper.annotations.DynamoDbAttribute;
 import software.amazon.awssdk.enhanced.dynamodb.mapper.annotations.DynamoDbBean;

@@ -1,7 +1,7 @@
 package it.pagopa.pn.notificationcostservice.middleware.queue.consumer.event.notificationcost;
 
 import it.pagopa.pn.notificationcostservice.NotificationDeliveryCostTestBuilder;
-import it.pagopa.pn.notificationcostservice.middleware.queue.utils.EventNotificationCostBuilder;
+import it.pagopa.pn.notificationcostservice.middleware.queue.consumer.event.utils.NotificationCostEventBuilder;
 import it.pagopa.pn.notificationcostservice.model.notificationdeliverycost.NotificationDeliveryCost;
 import it.pagopa.pn.notificationcostservice.model.paymentinfo.PaymentInfo;
 import org.junit.jupiter.api.Test;
@@ -29,7 +29,7 @@ class NotificationCostInitializationEventTest {
         );
 
         NotificationCostInitializationEvent original =
-                EventNotificationCostBuilder.buildNotificationCostEvent("IUN-COPY", notificationCosts, payments);
+                NotificationCostEventBuilder.buildNotificationCostEvent("IUN-COPY", notificationCosts, payments);
 
         NotificationCostInitializationEvent copy = original.toBuilder().build();
 

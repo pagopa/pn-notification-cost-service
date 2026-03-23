@@ -3,6 +3,7 @@ package it.pagopa.pn.notificationcostservice.model.notificationdeliverycost;
 import it.pagopa.pn.notificationcostservice.exception.PnDomainObjectValidationException;
 import lombok.Builder;
 import lombok.Data;
+import lombok.NoArgsConstructor;
 import lombok.ToString;
 
 import java.util.ArrayList;
@@ -12,6 +13,7 @@ import static it.pagopa.pn.notificationcostservice.utils.DomainValidationUtils.v
 
 @ToString
 @Data
+@NoArgsConstructor
 public class BaseCost {
     private int sendFee;
     private int paFee;

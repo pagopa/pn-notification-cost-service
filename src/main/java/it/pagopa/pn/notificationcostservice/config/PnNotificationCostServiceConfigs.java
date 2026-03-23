@@ -18,6 +18,7 @@ public class PnNotificationCostServiceConfigs {
     private NotificationDeliveryCostTable notificationDeliveryCostTable;
     private PaymentInfoTable paymentInfoTable;
     private Topics topics;
+    private EventBus eventBus;
 
     @Data
     public static class NotificationDeliveryCostTable {
@@ -31,6 +32,13 @@ public class PnNotificationCostServiceConfigs {
     @Data
     public static class Topics {
         private String pnNotificationCostToUpdate;
+    }
+
+    @Data
+    public static class EventBus {
+        private String name;
+        private String source;
+        private String outcomeEventDetailType;
     }
 
     @PostConstruct
