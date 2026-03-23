@@ -1,4 +1,4 @@
-package it.pagopa.pn.notificationcostservice.middleware.paymentinfo.dynamo;
+package it.pagopa.pn.notificationcostservice.middleware.dynamo.paymentinfo;
 
 import it.pagopa.pn.notificationcostservice.config.PnNotificationCostServiceConfigs;
 import it.pagopa.pn.notificationcostservice.middleware.dao.dynamo.PaymentInfoDaoDynamo;

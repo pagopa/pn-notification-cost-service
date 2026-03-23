@@ -1,4 +1,4 @@
-package it.pagopa.pn.notificationcostservice.middleware.notificationdeliverycost.dynamo;
+package it.pagopa.pn.notificationcostservice.middleware.dynamo;
 
 import it.pagopa.pn.notificationcostservice.middleware.dao.dynamo.BaseDao;
 import it.pagopa.pn.notificationcostservice.middleware.dao.dynamo.entity.notificationdeliverycost.NotificationDeliveryCostEntity;
@@ -12,7 +12,7 @@ import software.amazon.awssdk.enhanced.dynamodb.model.PutItemEnhancedRequest;
 import java.util.concurrent.ExecutionException;
 
 @SpringBootTest
-class TestDao extends BaseDao {
+public class TestDao extends BaseDao {
 
     DynamoDbAsyncTable<NotificationDeliveryCostEntity> table;
 
