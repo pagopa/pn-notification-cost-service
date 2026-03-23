@@ -1,6 +1,5 @@
 package it.pagopa.pn.notificationcostservice.middleware.dynamo.notificationdeliverycost;
 
-import it.pagopa.pn.commons.exceptions.PnIdConflictException;
 import it.pagopa.pn.notificationcostservice.NotificationDeliveryCostTestBuilder;
 import it.pagopa.pn.notificationcostservice.config.PnNotificationCostServiceConfigs;
 import it.pagopa.pn.notificationcostservice.exception.PnNotFoundException;
@@ -30,7 +29,6 @@ import software.amazon.awssdk.enhanced.dynamodb.DynamoDbEnhancedAsyncClient;
 import software.amazon.awssdk.enhanced.dynamodb.TableSchema;
 import software.amazon.awssdk.enhanced.dynamodb.model.GetItemEnhancedRequest;
 import software.amazon.awssdk.enhanced.dynamodb.model.UpdateItemEnhancedRequest;
-import software.amazon.awssdk.services.dynamodb.model.ConditionalCheckFailedException;
 
 import java.time.Instant;
 import java.util.List;
@@ -219,42 +217,6 @@ class NotificationDeliveryCostDaoDynamoTest {
                 ArgumentMatchers.<UpdateItemEnhancedRequest<NotificationDeliveryCostEntity>>argThat(
                         request -> request != null && entity.equals(request.item())
                 )
-        );
-    }
-
-    @Test
-    void updateNotificationDeliveryCostsItem_conditionalCheckFailed_throwsPnIdConflictException() {
-        String iun = "test-iun-123";
-        int recIndex = 0;
-
-        NotificationDeliveryCost notification = NotificationDeliveryCostTestBuilder.builder()
-                .withIun(iun)
-                .withRecIndex(recIndex)
-                .build();
-
-        NotificationDeliveryCostEntity entity = newNotificationDeliveryCostEntity(iun, recIndex);
-
-        when(dtoToEntityNotificationDeliveryCostMapper.dto2Entity(notification))
-                .thenReturn(entity);
-
-        CompletableFuture<NotificationDeliveryCostEntity> failedFuture = new CompletableFuture<>();
-        failedFuture.completeExceptionally(
-                ConditionalCheckFailedException.builder()
-                        .message("Condition failed")
-                        .build()
-        );
-
-        when(mockTable.updateItem(
-                ArgumentMatchers.<UpdateItemEnhancedRequest<NotificationDeliveryCostEntity>>any()
-        )).thenReturn(failedFuture);
-
-        StepVerifier.create(dao.updateNotificationDeliveryCostsItem(List.of(notification)))
-                .expectError(PnIdConflictException.class)
-                .verify();
-
-        verify(dtoToEntityNotificationDeliveryCostMapper, times(1)).dto2Entity(notification);
-        verify(mockTable, times(1)).updateItem(
-                ArgumentMatchers.<UpdateItemEnhancedRequest<NotificationDeliveryCostEntity>>any()
         );
     }
 

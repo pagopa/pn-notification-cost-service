@@ -1,6 +1,5 @@
 package it.pagopa.pn.notificationcostservice.middleware.dao.dynamo;
 
-import it.pagopa.pn.commons.exceptions.PnIdConflictException;
 import it.pagopa.pn.notificationcostservice.config.PnNotificationCostServiceConfigs;
 import it.pagopa.pn.notificationcostservice.exception.PnNotFoundException;
 import it.pagopa.pn.notificationcostservice.middleware.dao.NotificationDeliveryCostDao;
@@ -17,12 +16,8 @@ import software.amazon.awssdk.enhanced.dynamodb.DynamoDbEnhancedAsyncClient;
 import software.amazon.awssdk.enhanced.dynamodb.TableSchema;
 import software.amazon.awssdk.enhanced.dynamodb.model.GetItemEnhancedRequest;
 import software.amazon.awssdk.enhanced.dynamodb.model.UpdateItemEnhancedRequest;
-import software.amazon.awssdk.services.dynamodb.model.ConditionalCheckFailedException;
 
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
-import java.util.Objects;
 import java.util.concurrent.CompletableFuture;
 
 import static it.pagopa.pn.notificationcostservice.exception.PnNotificationCostServiceExceptionCodes.ERROR_CODE_NOTIFICATIONDELIVERYCOST_NOTFOUND;
@@ -83,24 +78,12 @@ public class NotificationDeliveryCostDaoDynamo extends BaseDao implements Notifi
     }
 
     /**
-     * Aggiornamento di un'entità, aggiornando solo i campi non impostati su null
+     * Aggiornamento dell'entità, aggiornando solo i campi non impostati su null
      */
     private Mono<NotificationDeliveryCostEntity> updateNotNull(NotificationDeliveryCostEntity entity) {
         return Mono.fromFuture(notificationDeliveryCostTable.updateItem(putItemEnhancedRequest(entity))
                         .thenApply(item -> entity))
-                .doOnError(e -> log.error("Error putting item with iun: {} and recIndex:{}", entity.getIun(), entity.getRecIndex(), e))
-                .onErrorMap(ConditionalCheckFailedException.class,
-                        t ->
-                                new PnIdConflictException(duplicatedErrors(entity)));
-    }
-
-    private Map<String, String> duplicatedErrors(NotificationDeliveryCostEntity entity) {
-        Map<String, String> duplicatedErrors = new HashMap<>();
-        if (Objects.nonNull(entity.getIun()) && Objects.nonNull(entity.getRecIndex())) {
-            String keyValueError= "pk: "+entity.getIun()+" sk: "+ entity.getRecIndex();
-            duplicatedErrors.put("Duplicated notification delivery cost with key", keyValueError);
-        }
-        return duplicatedErrors;
+                .doOnError(e -> log.error("Error putting item with iun: {} and recIndex:{}", entity.getIun(), entity.getRecIndex(), e));
     }
 
     private UpdateItemEnhancedRequest<NotificationDeliveryCostEntity> putItemEnhancedRequest(NotificationDeliveryCostEntity entity) {
