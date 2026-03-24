@@ -3,15 +3,18 @@ package it.pagopa.pn.notificationcostservice.middleware.queue.consumer.utils;
 import it.pagopa.pn.api.dto.events.StandardEventHeader;
 import it.pagopa.pn.commons.utils.MDCUtils;
 import it.pagopa.pn.notificationcostservice.middleware.queue.consumer.event.notificationcost.NotificationCostInitializationEvent;
-import lombok.NoArgsConstructor;
 import org.slf4j.MDC;
 import org.springframework.messaging.Message;
 import org.springframework.messaging.MessageHeaders;
 
 import java.util.UUID;
 
-@NoArgsConstructor
+
 public class ConsumerUtils {
+
+    private ConsumerUtils(){
+        // utility class, prevent instantiation
+    }
 
     public static void setMdc(Message<?> message) {
         MessageHeaders messageHeaders = message.getHeaders();
