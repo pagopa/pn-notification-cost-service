@@ -56,7 +56,7 @@ paths:
             application/problem+json:
               schema:
                 $ref: '#/components/schemas/Problem'
-  "/notification-cost-private/cost/{iun}":
+  "/notification-cost-private/cost/initialize/{iun}":
     post:
       operationId: initializeNotificationCost
       summary: "Initialize notification cost for all recipients"
@@ -117,7 +117,6 @@ components:
         - recipientInternalId
         - baseCost
         - senderInternalId
-        - sendFee
         - paFee
         - notificationFeePolicy
         - pagoPaIntMode
@@ -145,11 +144,6 @@ components:
           format: int32
           minimum: 0
           description: Costo base dato da sendFee + paFee (in eurocent)
-        sendFee:
-          type: integer
-          format: int32
-          minimum: 0
-          description: Costo base di SeND per notificazione (in eurocent)
         paFee:
           type: integer
           format: int32

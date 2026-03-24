@@ -2,6 +2,7 @@ package it.pagopa.pn.notificationcostservice.service.mapper;
 
 import it.pagopa.pn.notification_cost_service.generated.openapi.server.v1.dto.*;
 import it.pagopa.pn.notificationcostservice.NotificationDeliveryCostTestBuilder;
+import it.pagopa.pn.notificationcostservice.config.PnNotificationCostServiceConfigs;
 import it.pagopa.pn.notificationcostservice.model.cost.CalculatedCosts;
 import it.pagopa.pn.notificationcostservice.model.notificationdeliverycost.NotificationDeliveryCost;
 import it.pagopa.pn.notificationcostservice.model.notificationdeliverycost.NotificationFeePolicy;
@@ -9,8 +10,10 @@ import it.pagopa.pn.notificationcostservice.model.notificationdeliverycost.PagoP
 import it.pagopa.pn.notificationcostservice.model.notificationdeliverycost.analogcost.FirstAnalogCost;
 import it.pagopa.pn.notificationcostservice.model.notificationdeliverycost.analogcost.SecondAnalogCost;
 import it.pagopa.pn.notificationcostservice.model.notificationdeliverycost.analogcost.SimpleRegisteredLetterCost;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import org.mockito.Mockito;
 
 import java.time.Instant;
 import java.util.List;
@@ -21,7 +24,17 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 
 class NotificationDeliveryCostMapperTest {
 
-    private final NotificationDeliveryCostMapper mapper = new NotificationDeliveryCostMapper();
+    private PnNotificationCostServiceConfigs configs;
+
+    private NotificationDeliveryCostMapper mapper;
+
+    @BeforeEach
+    void init(){
+        configs= Mockito.mock(PnNotificationCostServiceConfigs.class);
+        Integer sendFee = 100;
+        Mockito.when(configs.getSendFee()).thenReturn(sendFee);
+        mapper= new NotificationDeliveryCostMapper(configs);
+    }
 
     @Test
     @DisplayName("mapDtoToNotificationDeliveryCost mappa tutti i recipient in NotificationDeliveryCost")
@@ -32,7 +45,6 @@ class NotificationDeliveryCostMapperTest {
                 .senderInternalId("sender-1")
                 .payments(List.of(new PaymentDataDto("IUV-1", true)))
                 .baseCost(150)
-                .sendFee(100)
                 .paFee(50)
                 .notificationFeePolicy(NotificationFeePolicyDto.DELIVERY_MODE)
                 .pagoPaIntMode(PagoPaIntModeDto.SYNC)
@@ -43,7 +55,6 @@ class NotificationDeliveryCostMapperTest {
                 .senderInternalId("sender-2")
                 .payments(List.of(new PaymentDataDto("IUV-2", true)))
                 .baseCost(200)
-                .sendFee(120)
                 .paFee(80)
                 .notificationFeePolicy(NotificationFeePolicyDto.FLAT_RATE)
                 .pagoPaIntMode(PagoPaIntModeDto.ASYNC)
