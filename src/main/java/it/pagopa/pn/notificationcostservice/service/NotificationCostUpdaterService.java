@@ -8,5 +8,5 @@ import java.util.List;
 
 
 public interface NotificationCostUpdaterService {
-    Mono<Void> updateCostByPhase(CostUpdatePhaseInt updateCostPhase, List<NotificationDeliveryCost> notificationDeliveryCost);
+    Mono<Void> updateCostByPhase(CostUpdatePhaseInt updateCostPhase, List<NotificationDeliveryCost> notificationDeliveryCosts);
 }
