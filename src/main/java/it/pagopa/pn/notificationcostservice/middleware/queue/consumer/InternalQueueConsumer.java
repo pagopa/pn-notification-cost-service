@@ -24,7 +24,12 @@ public class InternalQueueConsumer {
         log.logStartingProcess(processName);
         setMdc(message);
         try {
-            log.info("Handle pnNotificationDeliveryCostEventConsumer, with content {}", message);
+            log.info("Handle pnNotificationDeliveryCostEventConsumer, messageId={}, payloadType={}",
+                    message.getHeaders().getId(),
+                    message.getPayload() != null ? message.getPayload().getClass().getSimpleName() : "null");
+            if (log.isDebugEnabled()) {
+                log.debug("Full message content for pnNotificationDeliveryCostEventConsumer: {}", message);
+            }
             router.handleEvent(message).block();
             log.logEndingProcess(processName);
 
