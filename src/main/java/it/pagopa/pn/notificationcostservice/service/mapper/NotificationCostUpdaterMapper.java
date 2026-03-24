@@ -12,19 +12,16 @@ public class NotificationCostUpdaterMapper {
             CostUpdatePhaseInt updateCostPhase,
             NotificationDeliveryCost notificationDeliveryCost
     ) {
-
-        NotificationDeliveryCostEntity entity = buildEntityToUpdate(notificationDeliveryCost);
-
         switch (updateCostPhase) {
             // verranno aggiunti altri stati
             case VALIDATION:
-                return entity;
+                return buildEntityToUpdatePhaseValidation(notificationDeliveryCost);
             default:
                 throw new IllegalArgumentException("Invalid updateCostPhase: " + updateCostPhase);
         }
     }
 
-    private NotificationDeliveryCostEntity buildEntityToUpdate(NotificationDeliveryCost notificationDeliveryCost) {
+    private NotificationDeliveryCostEntity buildEntityToUpdatePhaseValidation(NotificationDeliveryCost notificationDeliveryCost) {
         NotificationDeliveryCostEntity entity = new NotificationDeliveryCostEntity();
         entity.setIun(notificationDeliveryCost.getIun());
         entity.setRecIndex(notificationDeliveryCost.getRecIndex());
@@ -37,6 +34,8 @@ public class NotificationCostUpdaterMapper {
         entity.setVat(notificationDeliveryCost.getVat());
         entity.setNotificationFeePolicy(notificationDeliveryCost.getNotificationFeePolicy());
         entity.setPagoPaIntMode(notificationDeliveryCost.getPagoPaIntMode());
+        entity.setSenderInternalId(notificationDeliveryCost.getSenderInternalId());
+        entity.setRecipientInternalId(notificationDeliveryCost.getRecipientInternalId());
 
         // non voglio aggiornarli
         entity.setFirstAnalogCost(null);

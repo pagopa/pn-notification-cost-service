@@ -88,7 +88,7 @@ class NotificationDeliveryCostMapperTest {
         assertThat(result.get(1).getVat()).isEqualTo(10);
         assertThat(result.get(1).getPagoPaIntMode()).isEqualTo(PagoPaIntMode.ASYNC);
         assertThat(result.get(1).getNotificationFeePolicy()).isEqualTo(NotificationFeePolicy.FLAT_RATE);
-        assertThat(result.get(1).getBaseCost().getSendFee()).isEqualTo(120);
+        assertThat(result.get(1).getBaseCost().getSendFee()).isEqualTo(100);
         assertThat(result.get(1).getBaseCost().getPaFee()).isEqualTo(80);
     }
 

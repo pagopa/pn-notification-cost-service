@@ -67,9 +67,9 @@ class NotificationCostUpdaterServiceImplTest {
         when(notificationCostUpdaterMapper.mapNotificationCostUpdater(CostUpdatePhaseInt.VALIDATION, notification2))
                 .thenReturn(entity2);
 
-        when(notificationDeliveryCostDao.updateNotificationDeliveryCostsItem(List.of(entity1)))
+        when(notificationDeliveryCostDao.updateNotificationDeliveryCostNotNull(entity1))
                 .thenReturn(Mono.empty());
-        when(notificationDeliveryCostDao.updateNotificationDeliveryCostsItem(List.of(entity2)))
+        when(notificationDeliveryCostDao.updateNotificationDeliveryCostNotNull(entity2))
                 .thenReturn(Mono.empty());
 
         StepVerifier.create(service.updateCostByPhase(
@@ -82,11 +82,11 @@ class NotificationCostUpdaterServiceImplTest {
         inOrder.verify(notificationCostUpdaterMapper)
                 .mapNotificationCostUpdater(CostUpdatePhaseInt.VALIDATION, notification1);
         inOrder.verify(notificationDeliveryCostDao)
-                .updateNotificationDeliveryCostsItem(List.of(entity1));
+                .updateNotificationDeliveryCostNotNull(entity1);
         inOrder.verify(notificationCostUpdaterMapper)
                 .mapNotificationCostUpdater(CostUpdatePhaseInt.VALIDATION, notification2);
         inOrder.verify(notificationDeliveryCostDao)
-                .updateNotificationDeliveryCostsItem(List.of(entity2));
+                .updateNotificationDeliveryCostNotNull(entity2);
 
         verifyNoMoreInteractions(notificationCostUpdaterMapper, notificationDeliveryCostDao);
     }
@@ -121,7 +121,7 @@ class NotificationCostUpdaterServiceImplTest {
 
         when(notificationCostUpdaterMapper.mapNotificationCostUpdater(CostUpdatePhaseInt.VALIDATION, notification))
                 .thenReturn(entity);
-        when(notificationDeliveryCostDao.updateNotificationDeliveryCostsItem(List.of(entity)))
+        when(notificationDeliveryCostDao.updateNotificationDeliveryCostNotNull(entity))
                 .thenReturn(Mono.error(expectedException));
 
         StepVerifier.create(service.updateCostByPhase(
@@ -136,7 +136,7 @@ class NotificationCostUpdaterServiceImplTest {
         verify(notificationCostUpdaterMapper)
                 .mapNotificationCostUpdater(CostUpdatePhaseInt.VALIDATION, notification);
         verify(notificationDeliveryCostDao)
-                .updateNotificationDeliveryCostsItem(List.of(entity));
+                .updateNotificationDeliveryCostNotNull(entity);
         verifyNoMoreInteractions(notificationCostUpdaterMapper, notificationDeliveryCostDao);
     }
 
@@ -150,7 +150,7 @@ class NotificationCostUpdaterServiceImplTest {
 
         when(notificationCostUpdaterMapper.mapNotificationCostUpdater(CostUpdatePhaseInt.VALIDATION, notification1))
                 .thenReturn(entity1);
-        when(notificationDeliveryCostDao.updateNotificationDeliveryCostsItem(List.of(entity1)))
+        when(notificationDeliveryCostDao.updateNotificationDeliveryCostNotNull(entity1))
                 .thenReturn(Mono.error(expectedException));
 
         StepVerifier.create(service.updateCostByPhase(
@@ -165,7 +165,7 @@ class NotificationCostUpdaterServiceImplTest {
         verify(notificationCostUpdaterMapper)
                 .mapNotificationCostUpdater(CostUpdatePhaseInt.VALIDATION, notification1);
         verify(notificationDeliveryCostDao)
-                .updateNotificationDeliveryCostsItem(List.of(entity1));
+                .updateNotificationDeliveryCostNotNull(entity1);
 
         verify(notificationCostUpdaterMapper, never())
                 .mapNotificationCostUpdater(CostUpdatePhaseInt.VALIDATION, notification2);

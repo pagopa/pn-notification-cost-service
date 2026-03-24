@@ -24,7 +24,6 @@ import reactor.test.StepVerifier;
 import software.amazon.awssdk.enhanced.dynamodb.DynamoDbEnhancedAsyncClient;
 
 import java.time.Instant;
-import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.fail;
 
@@ -139,7 +138,7 @@ public class NotificationDeliveryCostDaoDynamoTestIT {
         NotificationDeliveryCostEntity notification = newNotificationDeliveryCostEntity(iun, recIndex);
 
         try {
-            StepVerifier.create(dao.updateNotificationDeliveryCostsItem(List.of(notification)))
+            StepVerifier.create(dao.updateNotificationDeliveryCostNotNull(notification))
                     .verifyComplete();
 
             NotificationDeliveryCost elementFromDb = dao.getNotificationDeliveryCostItem(iun, recIndex).block();
@@ -166,7 +165,7 @@ public class NotificationDeliveryCostDaoDynamoTestIT {
     }
 
     @Test
-    void updateNotificationDeliveryCostsItem_whenItemAlreadyExists_updatesOnlyNonNullFields() {
+    void updateNotificationDeliveryCost_whenNotNullAlreadyExists_updatesOnlyNonNullFields() {
         String iun = "iun-update-existing-" + System.nanoTime();
         int recIndex = 1;
 
@@ -205,10 +204,10 @@ public class NotificationDeliveryCostDaoDynamoTestIT {
                 .build();
 
         try {
-            StepVerifier.create(dao.updateNotificationDeliveryCostsItem(List.of(original)))
+            StepVerifier.create(dao.updateNotificationDeliveryCostNotNull(original))
                     .verifyComplete();
 
-            StepVerifier.create(dao.updateNotificationDeliveryCostsItem(List.of(updated)))
+            StepVerifier.create(dao.updateNotificationDeliveryCostNotNull(updated))
                     .verifyComplete();
 
             NotificationDeliveryCost elementFromDb = dao.getNotificationDeliveryCostItem(iun, recIndex).block();

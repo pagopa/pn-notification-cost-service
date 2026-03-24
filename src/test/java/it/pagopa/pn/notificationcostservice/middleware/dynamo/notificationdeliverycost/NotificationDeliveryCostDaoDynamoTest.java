@@ -20,6 +20,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentMatchers;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import reactor.test.StepVerifier;
 import software.amazon.awssdk.enhanced.dynamodb.DynamoDbAsyncTable;
@@ -29,7 +30,6 @@ import software.amazon.awssdk.enhanced.dynamodb.model.GetItemEnhancedRequest;
 import software.amazon.awssdk.enhanced.dynamodb.model.UpdateItemEnhancedRequest;
 
 import java.time.Instant;
-import java.util.List;
 import java.util.concurrent.CompletableFuture;
 
 import static org.mockito.ArgumentMatchers.anyString;
@@ -165,23 +165,27 @@ class NotificationDeliveryCostDaoDynamoTest {
     }
 
     @Test
-    void updateNotificationDeliveryCostsItem_nullList_returnsEmpty() {
-        StepVerifier.create(dao.updateNotificationDeliveryCostsItem(null))
-                .verifyComplete();
+    void updateNotificationDeliveryCostNotNull_dynamoDbError() {
+        NotificationDeliveryCostEntity entity = newNotificationDeliveryCostEntity("test-iun-123", 0);
 
-        verifyNoInteractions(mockTable);
+        CompletableFuture<NotificationDeliveryCostEntity> failedFuture = new CompletableFuture<>();
+        failedFuture.completeExceptionally(new RuntimeException("DynamoDB update error"));
+
+        when(mockTable.updateItem(
+                ArgumentMatchers.<UpdateItemEnhancedRequest<NotificationDeliveryCostEntity>>any()
+        )).thenReturn(failedFuture);
+
+        StepVerifier.create(dao.updateNotificationDeliveryCostNotNull(entity))
+                .expectError(RuntimeException.class)
+                .verify();
+
+        verify(mockTable, times(1)).updateItem(
+                ArgumentMatchers.<UpdateItemEnhancedRequest<NotificationDeliveryCostEntity>>any()
+        );
     }
 
     @Test
-    void updateNotificationDeliveryCostsItem_emptyList_returnsEmpty() {
-        StepVerifier.create(dao.updateNotificationDeliveryCostsItem(List.of()))
-                .verifyComplete();
-
-        verifyNoInteractions(mockTable);
-    }
-
-    @Test
-    void updateNotificationDeliveryCostsItem_success() {
+    void updateNotificationDeliveryCostNotNull_success() {
         String iun = "test-iun-123";
         int recIndex = 0;
 
@@ -191,9 +195,8 @@ class NotificationDeliveryCostDaoDynamoTest {
                 ArgumentMatchers.<UpdateItemEnhancedRequest<NotificationDeliveryCostEntity>>any()
         )).thenReturn(CompletableFuture.completedFuture(entity));
 
-        Mono<Void> result = dao.updateNotificationDeliveryCostsItem(List.of(entity));
-
-        StepVerifier.create(result)
+        StepVerifier.create(dao.updateNotificationDeliveryCostNotNull(entity))
+                .expectNext(entity)
                 .verifyComplete();
 
         verify(mockTable, times(1)).updateItem(
@@ -204,7 +207,7 @@ class NotificationDeliveryCostDaoDynamoTest {
     }
 
     @Test
-    void updateNotificationDeliveryCostsItem_multipleNotifications_success() {
+    void updateNotificationDeliveryCostNotNull_multipleNotifications_success() {
         NotificationDeliveryCostEntity e1 = newNotificationDeliveryCostEntity("iun-1", 0);
         NotificationDeliveryCostEntity e2 = newNotificationDeliveryCostEntity("iun-2", 1);
 
@@ -214,7 +217,12 @@ class NotificationDeliveryCostDaoDynamoTest {
                 .thenReturn(CompletableFuture.completedFuture(e1))
                 .thenReturn(CompletableFuture.completedFuture(e2));
 
-        StepVerifier.create(dao.updateNotificationDeliveryCostsItem(List.of(e1, e2)))
+        StepVerifier.create(Flux.concat(
+                        dao.updateNotificationDeliveryCostNotNull(e1),
+                        dao.updateNotificationDeliveryCostNotNull(e2)
+                ))
+                .expectNext(e1)
+                .expectNext(e2)
                 .verifyComplete();
 
         verify(mockTable, times(2)).updateItem(
