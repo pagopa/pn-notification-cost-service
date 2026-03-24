@@ -4,7 +4,7 @@ ENDPOINT="http://localhost:4566"
 REGION="us-east-1"
 PROFILE="default"
 
-echo " - Creating Tables..."
+echo "### 1. CREATING TABLES ###"
 
 aws --profile $PROFILE --region $REGION --endpoint-url=$ENDPOINT \
     dynamodb create-table --table-name pn-NotificationDeliveryCost \
@@ -13,57 +13,35 @@ aws --profile $PROFILE --region $REGION --endpoint-url=$ENDPOINT \
     --provisioned-throughput ReadCapacityUnits=5,WriteCapacityUnits=5
 
 aws --profile $PROFILE --region $REGION --endpoint-url=$ENDPOINT \
-    dynamodb create-table \
-    --table-name pn-PaymentInfo \
-    --attribute-definitions \
-        AttributeName=pk,AttributeType=S \
-    --key-schema \
-        AttributeName=pk,KeyType=HASH \
-    --provisioned-throughput \
-        ReadCapacityUnits=10,WriteCapacityUnits=5
+    dynamodb create-table --table-name pn-PaymentInfo \
+    --attribute-definitions AttributeName=pk,AttributeType=S \
+    --key-schema AttributeName=pk,KeyType=HASH \
+    --provisioned-throughput ReadCapacityUnits=10,WriteCapacityUnits=5
 
-echo "### CREATE QUEUES ###"
-
+echo "### 2. CREATE QUEUES ###"
 queues="pn-notification-cost-to-update pn-notification-cost-outcome"
 
-for qn in $( echo $queues | tr " " "\n" ) ; do
-    echo creating queue $qn ...
-
+for qn in $queues ; do
+    echo "Creating queue: $qn..."
     aws --profile $PROFILE --region $REGION --endpoint-url=$ENDPOINT \
-        sqs create-queue \
-        --attributes '{"DelaySeconds":"2"}' \
-        --queue-name $qn
+        sqs create-queue --attributes '{"DelaySeconds":"2"}' --queue-name $qn
 done
 
-echo "Tables created. Inserting test cases..."
-
-echo "### CREATE EVENT BUS - pn-CoreEventBus ###"
+echo "### 3. EVENT BUS SETUP ###"
 event_bus_name="pn-CoreEventBus"
-aws --profile default --region us-east-1 --endpoint-url http://localstack:4566 \
+rule_name="notification-cost-service"
+aws --profile $PROFILE --region $REGION --endpoint-url=$ENDPOINT \
   events create-event-bus --name $event_bus_name
 
-echo "### CREATE EVENT BUS RULE - pn-notification-cost-service ###"
-rule_name_notification_cost_service="notification-cost-service"
 notification_cost_service_pattern='{"source": ["pn-notification-cost-service"], "detail-type": ["NotificationCostServiceOutcomeEvent"], "detail": {"clientId":["pn-notification-cost-service"]}}'
 aws --profile $PROFILE --region $REGION --endpoint-url=$ENDPOINT \
-  events put-rule \
-  --name $rule_name_notification_cost_service \
-  --event-pattern "$notification_cost_service_pattern" \
-  --event-bus-name $event_bus_name
+  events put-rule --name $rule_name --event-pattern "$notification_cost_service_pattern" --event-bus-name $event_bus_name
 
-echo "### ENABLE RULE NOTIFICATION COST SERVICE ###"
 aws --profile $PROFILE --region $REGION --endpoint-url=$ENDPOINT \
-  events enable-rule \
-  --name $rule_name_notification_cost_service \
-  --event-bus-name $event_bus_name
-
-echo "### ADD TARGET TO RULE NOTIFICATION COST SERVICE ###"
+events enable-rule --name $rule_name --event-bus-name $event_bus_name
 target_arn="arn:aws:sqs:us-east-1:000000000000:pn-notification-cost-outcome"
-
 aws --profile $PROFILE --region $REGION --endpoint-url=$ENDPOINT \
-  events put-targets \
-  --rule $rule_name_notification_cost_service \
-  --targets "Id"="1","Arn"="$target_arn","InputPath"="$.detail" \
-  --event-bus-name $event_bus_name
+  events put-targets --rule $rule_name --event-bus-name $event_bus_name \
+  --targets "Id"="1","Arn"="$target_arn","InputPath"="$.detail"
 
 echo "Initialization terminated correctly."
