@@ -9,7 +9,7 @@ info:
 paths:
   "/notification-cost-private/cost/{iun}/recipient/{recIndex}":
     get:
-      operationId: NotificationCostRecipient
+      operationId: getNotificationCost
       summary: Retrieve notification cost for recipient
       description: >-
         Servizio che restituisce il costo di notificazione per il singolo destinatario

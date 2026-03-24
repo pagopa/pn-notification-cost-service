@@ -50,7 +50,7 @@ class NotificationCostServiceControllerTest {
                 .thenReturn(Mono.just(response));
 
         Mono<ResponseEntity<NotificationCostRecipientResponseDto>> result =
-                controller.notificationCostRecipient(TEST_IUN, TEST_REC_INDEX, null);
+                controller.getNotificationCost(TEST_IUN, TEST_REC_INDEX, null);
 
         StepVerifier.create(result)
                 .assertNext(responseEntity -> {
