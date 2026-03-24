@@ -3,11 +3,12 @@ package it.pagopa.pn.notificationcostservice.middleware.eventbus.utils;
 import it.pagopa.pn.api.dto.events.notificationcost.utils.ValidationStatus;
 import it.pagopa.pn.api.dto.events.notificationcost.validation.PnNotificationCostValidationEvent;
 import it.pagopa.pn.api.dto.events.notificationcost.validation.PnNotificationCostValidationEventPayload;
-import lombok.NoArgsConstructor;
 
-@NoArgsConstructor
 public class NotificationCostValidationEventBuilder {
 
+    private NotificationCostValidationEventBuilder() {
+        // utility class, prevent instantiation
+    }
     public static PnNotificationCostValidationEvent buildOkValidationEvent(String iun) {
         return PnNotificationCostValidationEvent.builder()
                 .detail(
