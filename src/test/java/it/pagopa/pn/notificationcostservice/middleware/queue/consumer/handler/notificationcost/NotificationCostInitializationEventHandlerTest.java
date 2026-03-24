@@ -19,6 +19,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import reactor.core.publisher.Mono;
 import reactor.test.StepVerifier;
+import reactor.test.publisher.PublisherProbe;
 
 import java.util.List;
 
@@ -144,10 +145,13 @@ class NotificationCostInitializationEventHandlerTest {
 
         RuntimeException expectedException = new RuntimeException("save failed");
 
+        PublisherProbe<Void> paymentUpdateProbe = PublisherProbe.empty();
+        PublisherProbe<Void> outcomeEventProbe = PublisherProbe.empty();
+
         when(notificationCostUpdaterService.updateCostByPhase(CostUpdatePhaseInt.VALIDATION, notificationCosts))
                 .thenReturn(Mono.error(expectedException));
-        when(paymentInfoDao.updateItem(payments)).thenReturn(Mono.empty());
-        when(producer.sendEvent(any(PnNotificationCostValidationEvent.class))).thenReturn(Mono.empty());
+        when(paymentInfoDao.updateItem(payments)).thenReturn(paymentUpdateProbe.mono());
+        when(producer.sendEvent(any(PnNotificationCostValidationEvent.class))).thenReturn(outcomeEventProbe.mono());
 
         StepVerifier.create(handler.handleNotificationCostInitializationEvent(payload))
                 .expectErrorMatches(ex ->
@@ -157,8 +161,9 @@ class NotificationCostInitializationEventHandlerTest {
 
         verify(notificationCostUpdaterService)
                 .updateCostByPhase(CostUpdatePhaseInt.VALIDATION, notificationCosts);
-        verify(paymentInfoDao).updateItem(payments);
-        verify(producer).sendEvent(any(PnNotificationCostValidationEvent.class));
+
+        paymentUpdateProbe.assertWasNotSubscribed();
+        outcomeEventProbe.assertWasNotSubscribed();
     }
 
     @Test
@@ -169,10 +174,12 @@ class NotificationCostInitializationEventHandlerTest {
 
         RuntimeException expectedException = new RuntimeException("update failed");
 
+        PublisherProbe<Void> outcomeEventProbe = PublisherProbe.empty();
+
         when(notificationCostUpdaterService.updateCostByPhase(CostUpdatePhaseInt.VALIDATION, notificationCosts))
                 .thenReturn(Mono.empty());
         when(paymentInfoDao.updateItem(payments)).thenReturn(Mono.error(expectedException));
-        when(producer.sendEvent(any(PnNotificationCostValidationEvent.class))).thenReturn(Mono.empty());
+        when(producer.sendEvent(any(PnNotificationCostValidationEvent.class))).thenReturn(outcomeEventProbe.mono());
 
         StepVerifier.create(handler.handleNotificationCostInitializationEvent(payload))
                 .expectErrorMatches(ex ->
@@ -183,7 +190,8 @@ class NotificationCostInitializationEventHandlerTest {
         verify(notificationCostUpdaterService)
                 .updateCostByPhase(CostUpdatePhaseInt.VALIDATION, notificationCosts);
         verify(paymentInfoDao).updateItem(payments);
-        verify(producer).sendEvent(any(PnNotificationCostValidationEvent.class));
+
+        outcomeEventProbe.assertWasNotSubscribed();
     }
 
     @Test

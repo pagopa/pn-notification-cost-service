@@ -10,14 +10,14 @@ import it.pagopa.pn.notificationcostservice.model.paymentinfo.PaymentInfo;
 import it.pagopa.pn.notificationcostservice.service.NotificationCostUpdaterService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.context.annotation.Configuration;
+import org.springframework.stereotype.Component;
 import reactor.core.publisher.Mono;
 
 import java.util.List;
 
 import static it.pagopa.pn.notificationcostservice.middleware.eventbus.utils.NotificationCostValidationEventBuilder.buildOkValidationEvent;
 
-@Configuration
+@Component
 @Slf4j
 @RequiredArgsConstructor
 public class NotificationCostInitializationEventHandler {

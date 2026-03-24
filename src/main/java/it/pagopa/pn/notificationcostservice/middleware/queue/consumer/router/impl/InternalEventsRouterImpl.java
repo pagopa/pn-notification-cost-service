@@ -35,9 +35,8 @@ public class InternalEventsRouterImpl implements InternalEventsRouter {
                     .handleNotificationCostInitializationEvent(notificationPayload);
         }
         return Mono.error(new PnEventRouterException(
-                "Event type must be provided",
-                ERROR_CODE_NOTIFICATIONCOSTSERVICE_ROUTER_EVENT_TYPE_MISSING
-        ));
+                String.format("Unsupported internal event payload type or unexpected eventType: %s", payload.getEventType()),
+                ERROR_CODE_NOTIFICATIONCOSTSERVICE_ROUTER_EVENT_TYPE_MISSING));
     }
 
 }

@@ -50,7 +50,7 @@ done
 
 echo "### CREATE EVENT BUS - pn-CoreEventBus ###"
 event_bus_name="pn-CoreEventBus"
-aws --profile default --region us-east-1 --endpoint-url=$ENDPOINT \
+aws --profile $PROFILE --region $REGION --endpoint-url=$ENDPOINT \
   events create-event-bus --name $event_bus_name
 
 echo "Tables created. Inserting test cases..."

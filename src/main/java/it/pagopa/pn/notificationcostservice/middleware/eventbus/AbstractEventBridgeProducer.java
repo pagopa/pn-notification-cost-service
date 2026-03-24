@@ -63,7 +63,7 @@ public abstract class AbstractEventBridgeProducer<T extends GenericEventBridgeEv
             return objectMapper.writeValueAsString(event.getDetail());
         } catch (JsonProcessingException e) {
             throw new EventBridgeSendException(
-                    String.format("Error serializing event detail for event bus: %s", eventBusName)
+                    String.format("Error serializing event detail for event bus: %s", eventBusName),e
             );
         }
     }

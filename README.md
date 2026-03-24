@@ -5,7 +5,7 @@
 
 ### Consumer
 
-Il consumer ascolta la coda SQS `pnCostToUpdate` e gestisce gli eventi `NOTIFICATION_COST_INITIALIZATION`.
+Il consumer ascolta la coda SQS `pn-notification-cost-to-update` e gestisce gli eventi `NOTIFICATION_COST_INITIALIZATION`.
 
 #### Consumer `InternalQueueConsumer`
 Per ogni messaggio ricevuto:
@@ -50,8 +50,10 @@ Al completamento della gestione, il servizio pubblica un evento su EventBridge c
 Per eseguire correttamente lo script, è necessario configurare l'ambiente come segue:
 
 ### Ambiente locale:
-È necessario avviare LocalStack eseguendo il file `init-for-consumer.sh`, quindi lanciare il comando:
-`sudo docker compose up localstack`
+È necessario prima avviare LocalStack e successivamente eseguire lo script di inizializzazione del consumer:
+1. Avviare LocalStack con il comando (in un terminale separato):  
+   `sudo docker compose up localstack`
+2. Una volta che LocalStack è in esecuzione ed è raggiungibile su `http://localhost:4566`, eseguire da host lo script `init-for-consumer.sh` per inizializzare le risorse necessarie al consumer.
 
 ### pn-NotificationDeliveryCost
 
