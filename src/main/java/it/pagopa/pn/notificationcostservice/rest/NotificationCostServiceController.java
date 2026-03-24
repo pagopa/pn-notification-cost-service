@@ -23,21 +23,20 @@ public class NotificationCostServiceController implements NotificationCostRecipi
     private final NotificationDeliveryCostMapper mapper;
     private final PaymentInfoMapper paymentInfoMapper;
 
-    @Override
-    public Mono<ResponseEntity<NotificationCostRecipientResponseDto>> notificationCostRecipient(String iun,
-                                                                                             Integer recIndex,
-                                                                                             final ServerWebExchange exchange) {
+    public Mono<ResponseEntity<NotificationCostRecipientResponseDto>> getNotificationCost(String iun,
+                                                                                          Integer recIndex,
+                                                                                          final ServerWebExchange exchange) {
         return notificationCostService.getNotificationCostRecipient(iun, recIndex)
                 .map(ResponseEntity::ok);
     }
 
     @Override
     public Mono<ResponseEntity<String>> initializeNotificationCost(String iun,
-                                                                               Mono<NewNotificationCostRequestDto> notificationCostRequestDto,
-                                                                               ServerWebExchange exchange) {
+                                                                   Mono<NewNotificationCostRequestDto> notificationCostRequestDto,
+                                                                   ServerWebExchange exchange) {
         return notificationCostRequestDto
-                .flatMap(request -> notificationCostService.saveNotificationCost(iun,mapper.mapDtoToNotificationDeliveryCost(iun,request)
-                        ,paymentInfoMapper.mapDtoToPaymentInfo(iun,request)))
+                .flatMap(request -> notificationCostService.saveNotificationCost(iun, mapper.mapDtoToNotificationDeliveryCost(iun, request)
+                        , paymentInfoMapper.mapDtoToPaymentInfo(iun, request)))
                 .thenReturn(ResponseEntity.accepted().body(
                         ValidationStatus.OK.name())
                 );
