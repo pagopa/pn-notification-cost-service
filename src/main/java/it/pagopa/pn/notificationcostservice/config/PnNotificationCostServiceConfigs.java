@@ -18,6 +18,7 @@ public class PnNotificationCostServiceConfigs {
     private NotificationDeliveryCostTable notificationDeliveryCostTable;
     private PaymentInfoTable paymentInfoTable;
     private Topics topics;
+    private Integer sendFee;
 
     @Data
     public static class NotificationDeliveryCostTable {
