@@ -195,10 +195,6 @@ Parameters:
   NotificationDeliveryCostTableArn:
     Type: String
     Description: 'ARN of dynamodb table containing cost of notification delivery '
-  # --- Sqs ---
-  PnNotificationCostToUpdateQueueName:
-    Type: String
-    Description: 'The name of the SQS queue used to communicate with pn-notification-cost-service module.'
 
   PnNotificationCostToUpdateQueueARN:
     Type: String
@@ -208,19 +204,15 @@ Parameters:
     Type: String
     Description: 'Notification cost to update queue URL'
 
-  PnNotificationCostToUpdateQueueAlarmARN:
-    Type: String
-    Description: 'Identify the resource that the policy applies to.'
-
   MicroserviceBucketBaseKey:
     Type: String
     Default: ''
     Description: 'Base key of the microservice in the s3 bucket'
 
   CostEventUpdateLambdaBatchSize:
-    Type: String
-    Default: "60"
-    Description: 'BatchSize asseveration event source mapping'
+    Type: Number
+    Default: 60
+    Description: 'BatchSize event source mapping'
 
   CdcKinesisSourceStreamKeyId:
     Type: String
@@ -238,8 +230,8 @@ Parameters:
     Description: 'Name of the bucket where the microservice files are copied during deploy'
 
   CostEventUpdateLambdaMaximumBatchingWindowInSeconds:
-    Type: String
-    Default: "20"
+    Type: Number
+    Default: 20
     Description: 'MaximumBatchingWindow asseveration event source mapping'
 
   CostEventUpdateLambdaMaximumRecordAge:
@@ -430,7 +422,7 @@ Resources:
     Type: AWS::Lambda::EventSourceMapping
     DependsOn: CostEventUpdateLambdaPolicy
     Properties:
-      BatchSize: !Sub ${CostEventUpdateLambdaBatchSize}
+      BatchSize: !Ref CostEventUpdateLambdaBatchSize
       BisectBatchOnFunctionError: true
       EventSourceArn: !Sub arn:aws:kinesis:${AWS::Region}:${AWS::AccountId}:stream/${CdcKinesisSourceStreamName}
       FunctionName: !Ref CostEventUpdateLambda
@@ -445,17 +437,17 @@ Resources:
                 - ', "<", '
                 - !Ref NewWorkflowLambdasEnabledEnd
                 - ']}] } } }'
-      MaximumBatchingWindowInSeconds: !Sub ${CostEventUpdateLambdaMaximumBatchingWindowInSeconds}
+      MaximumBatchingWindowInSeconds: !Ref CostEventUpdateLambdaMaximumBatchingWindowInSeconds
       MaximumRecordAgeInSeconds: !Ref CostEventUpdateLambdaMaximumRecordAge
       StartingPosition: TRIM_HORIZON
       DestinationConfig:
         OnFailure:
           Destination: !Sub arn:aws:s3:::${ESMKinesisFailureNotificationsBucketName}
 
-  PaperEventsCostUpdateKinesisFailuresAlarm:
+  CostEventUpdateKinesisFailuresAlarm:
     Type: AWS::CloudWatch::Alarm
     Properties:
-      AlarmName: !Sub "${ProjectName}-PaperEventsCostUpdate-ESM-Alarm"
+      AlarmName: !Sub "${ProjectName}-CostEventUpdate-ESM-Alarm"
       AlarmDescription: "CloudWatch alarm for when CostEventUpdateLambda has Kinesis stream read failures, which can indicate problems with the function processing or with the stream itself."
       TreatMissingData: notBreaching
       AlarmActions:
