@@ -20,6 +20,10 @@ Parameters:
     Type: String
     Description: 'keep track of used projects commitIds'
   
+  AlarmSNSTopicName:
+    Type: String
+    Description: ''
+
   #Log
   LogRetention:
     Type: Number
@@ -57,6 +61,18 @@ Resources:
         Enabled: true
       PointInTimeRecoverySpecification:
         PointInTimeRecoveryEnabled: true
+  #Sqs queues
+  PnNotificationCostToUpdateQueue:
+    Type: AWS::CloudFormation::Stack
+    UpdateReplacePolicy: Retain
+    DeletionPolicy: Retain
+    Properties:
+      TemplateURL: !Sub "${TemplateBucketBaseUrl}/fragments/sqs-queue.yaml"
+      Parameters:
+        QueueName: !Sub '${ProjectName}-notification-cost-to-update'
+        HasDLQ: "true"
+        AlarmSNSTopicName: !Ref AlarmSNSTopicName
+        VisibilityTimeout: 60
   #Log Group
   PnNotificationCostServiceLogGroup:
     Type: AWS::CloudFormation::Stack
@@ -69,7 +85,25 @@ Resources:
         LogsKinesisSourceStreamArn: !Ref LogsKinesisSourceStreamArn
         LogGroupRetention: !Ref LogRetention
 
+  CostEventUpdateLambdaLogGroup:
+    Type: AWS::CloudFormation::Stack
+    UpdateReplacePolicy: Retain
+    DeletionPolicy: Retain
+    Properties:
+      TemplateURL: !Sub "${TemplateBucketBaseUrl}/fragments/log-group.yaml"
+      Parameters:
+        LogGroupName: !Sub "${ProjectName}-cost-event-update"
+        LogsKinesisSourceStreamArn: !Ref LogsKinesisSourceStreamArn
+        LogGroupRetention: !Ref LogRetention
+        LogGroupPrefix: '/aws/lambda'
+
 Outputs:
+  PaperEventsCostUpdateLambdaName:
+    Value: !Sub "${ProjectName}-paperEventsCostUpdate-workflow"
+
+  CostEventUpdateLambdaName:
+    Value: !Sub "${ProjectName}-cost-event-update"
+
   # DynamoDB tables
   NotificationDeliveryCostTableName:
     Description: Name of dynamodb table containing cost of notification delivery
@@ -81,3 +115,19 @@ Outputs:
   # Log group exports
   EcsNotificationCostServiceLogGroup:
     Value: !GetAtt PnNotificationCostServiceLogGroup.Outputs.LogGroupName
+  # Sqs
+  PnNotificationCostToUpdateQueueName:
+    Value: !GetAtt PnNotificationCostToUpdateQueue.Outputs.QueueName
+    Description: pn-Notification-Cost-To-Update queue name
+  PnNotificationCostToUpdateQueueURL:
+    Value: !GetAtt PnNotificationCostToUpdateQueue.Outputs.QueueURL
+    Description: pn-Notification-Cost-To-Update queue URL
+  PnNotificationCostToUpdateQueueARN:
+    Value: !GetAtt PnNotificationCostToUpdateQueue.Outputs.QueueARN
+    Description: pn-Notification-Cost-To-Update queue ARN
+  PnNotificationCostToUpdateQueueAlarmARN:
+    Value: !GetAtt PnNotificationCostToUpdateQueue.Outputs.SqsDLQAlarmArn
+    Description: pn-Notification-Cost-To-Update alarm ARN
+  PnNotificationCostToUpdateQueueAgeAlarmARN:
+    Value: !GetAtt PnNotificationCostToUpdateQueue.Outputs.SqsAgeAlarmArn
+    Description: pn-Notification-Cost-To-Update age alarm ARN

@@ -195,6 +195,77 @@ Parameters:
   NotificationDeliveryCostTableArn:
     Type: String
     Description: 'ARN of dynamodb table containing cost of notification delivery '
+  # --- Sqs ---
+  PnNotificationCostToUpdateQueueName:
+    Type: String
+    Description: 'The name of the SQS queue used to communicate with pn-notification-cost-service module.'
+
+  PnNotificationCostToUpdateQueueARN:
+    Type: String
+    Description: 'Identify the resource that the policy applies to.'
+
+  PnNotificationCostToUpdateQueueURL:
+    Type: String
+    Description: 'Notification cost to update queue URL'
+
+  PnNotificationCostToUpdateQueueAlarmARN:
+    Type: String
+    Description: 'Identify the resource that the policy applies to.'
+
+  MicroserviceBucketBaseKey:
+    Type: String
+    Default: ''
+    Description: 'Base key of the microservice in the s3 bucket'
+
+  CostEventUpdateLambdaBatchSize:
+    Type: String
+    Default: "60"
+    Description: 'BatchSize asseveration event source mapping'
+
+  CdcKinesisSourceStreamKeyId:
+    Type: String
+    Default: ''
+    Description: 'KMS Key ID for the CDC Kinesis stream'
+
+  ESMKinesisFailureNotificationsBucketName:
+    Type: String
+    Description: "S3 bucket name for ESM Kinesis failure notifications"
+
+  # OpenApi Bucket params
+  MicroserviceBucketName:
+    Type: String
+    Default: ''
+    Description: 'Name of the bucket where the microservice files are copied during deploy'
+
+  CostEventUpdateLambdaMaximumBatchingWindowInSeconds:
+    Type: String
+    Default: "20"
+    Description: 'MaximumBatchingWindow asseveration event source mapping'
+
+  CostEventUpdateLambdaMaximumRecordAge:
+    Type: Number
+    Description: "Maximum record age in seconds for CostEventUpdateLambdaKinesisSource"
+    Default: 604800 # 7 days
+
+  NewWorkflowLambdasEnabledStart:
+    Type: String
+    Description: 'Start date in EPOCH millis format (important!) for lambdas enabled'
+
+  NewWorkflowLambdasEnabledEnd:
+    Type: String
+    Description: 'End date in EPOCH millis format (important!) for lambdas enabled'
+
+  CdcKinesisSourceStreamName:
+    Type: String
+    Description: 'Name of the kinesis stream where CDC are sent'
+
+  UpdateCostFeatureDate:
+    Type: String
+    Description: 'Feature date from which activate the feature flag'
+
+  CostEventUpdateLambdaName:
+    Type: String
+    Description: 'Name of the cost event update lambda'
 
 Resources:
   # PN-Notification-Cost-Service microservice
@@ -250,7 +321,10 @@ Resources:
         DashboardName: !Sub "${ProjectName}-notification-cost-service"
         DynamoDBTableNames: !Ref NotificationDeliveryCostTableName
         AlarmArns: !GetAtt NotificationCostServiceMicroservice.Outputs.FatalLogsMetricAlarmArn
-        LogGroupsNames: !Sub '/aws/ecs/${ProjectName}-notification-cost-service'
+        LogGroupsNames: !Join
+          - ','
+          - - !Sub '/aws/ecs/${ProjectName}-notification-cost-service'
+            - !Sub '/aws/lambda/${CostEventUpdateLambdaName}'
 
   # Grant operational rights to Pn-NotificationCostService microservice
   NotificationCostServiceMicroserviceTaskManagedPolicy:
@@ -266,3 +340,146 @@ Resources:
               - 'dynamodb:UpdateItem'
             Resource:
               - !Sub "${NotificationDeliveryCostTableArn}"
+
+  #########################################################
+  ###               CostEventUpdateLambda               ###
+  #########################################################
+
+  # Lambda function
+  CostEventUpdateLambda:
+    Type: AWS::Lambda::Function
+    Properties:
+      FunctionName: !Ref CostEventUpdateLambdaName
+      Runtime: nodejs22.x
+      Handler: "index.handler"
+      Code:
+        S3Bucket: !Ref MicroserviceBucketName
+        S3Key: !Sub "${MicroserviceBucketBaseKey}/functions_zip/costEventUpdate.zip"
+      Role: !GetAtt CostEventUpdateLambdaRole.Arn
+      Environment:
+        Variables:
+          REGION: !Sub ${AWS::Region}
+          FEATURE_DATE: !Ref UpdateCostFeatureDate
+          QUEUE_URL: !Ref PnNotificationCostToUpdateQueueURL
+      TracingConfig:
+        Mode: Active
+      Layers:
+        - !Sub "arn:aws:lambda:${AWS::Region}:339249233099:layer:LambdaInsightsExtension:13"
+      Timeout: 10
+
+  # Lambda function role
+  CostEventUpdateLambdaRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: !Sub ${ProjectName}-CostEventUpdateLambdaRole
+      AssumeRolePolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service:
+                - lambda.amazonaws.com
+            Action:
+              - sts:AssumeRole
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole
+
+  # Lambda function IAM policy
+  CostEventUpdateLambdaPolicy:
+    Type: AWS::IAM::Policy
+    Properties:
+      PolicyName: !Sub ${ProjectName}-CostEventUpdateLambdaPolicy
+      Roles:
+        - !Ref CostEventUpdateLambdaRole
+      PolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          - Effect: Allow
+            Action:
+              - kinesis:DescribeStream
+              - kinesis:DescribeStreamSummary
+              - kinesis:GetShardIterator
+              - kinesis:GetRecords
+              - kinesis:ListShards
+              - kinesis:ListStreams
+              - kinesis:SubscribeToShard
+            Resource: !Sub arn:aws:kinesis:${AWS::Region}:${AWS::AccountId}:stream/${CdcKinesisSourceStreamName}
+          - Action: kms:Decrypt
+            Effect: Allow
+            Resource: !Sub arn:aws:kms:${AWS::Region}:${AWS::AccountId}:key/${CdcKinesisSourceStreamKeyId}
+          - Effect: Allow
+            Action:
+              - sqs:ChangeMessageVisibility
+              - sqs:GetQueueAttributes
+              - sqs:GetQueueUrl
+              - sqs:SendMessage
+            Resource:
+              !Ref PnNotificationCostToUpdateQueueARN
+          - Effect: Allow
+            Action:
+              - s3:ListBucket
+              - s3:GetBucketLocation
+            Resource: !Sub arn:aws:s3:::${ESMKinesisFailureNotificationsBucketName}
+          - Effect: Allow
+            Action:
+              - s3:PutObject
+            Resource: !Sub arn:aws:s3:::${ESMKinesisFailureNotificationsBucketName}/*
+
+    # CDC to Cost Event Update
+  CostEventUpdateLambdaKinesisSource:
+    Type: AWS::Lambda::EventSourceMapping
+    DependsOn: CostEventUpdateLambdaPolicy
+    Properties:
+      BatchSize: !Sub ${CostEventUpdateLambdaBatchSize}
+      BisectBatchOnFunctionError: true
+      EventSourceArn: !Sub arn:aws:kinesis:${AWS::Region}:${AWS::AccountId}:stream/${CdcKinesisSourceStreamName}
+      FunctionName: !Ref CostEventUpdateLambda
+      FunctionResponseTypes:
+        - ReportBatchItemFailures
+      FilterCriteria:
+        Filters:
+          - Pattern: !Join
+              - ''
+              - - '{ "data" : { "tableName" : [ "pn-Timelines" ], "eventName": [ "INSERT" ], "dynamodb": { "ApproximateCreationDateTime": [{ "numeric": [ ">=", '
+                - !Ref NewWorkflowLambdasEnabledStart
+                - ', "<", '
+                - !Ref NewWorkflowLambdasEnabledEnd
+                - ']}] } } }'
+      MaximumBatchingWindowInSeconds: !Sub ${CostEventUpdateLambdaMaximumBatchingWindowInSeconds}
+      MaximumRecordAgeInSeconds: !Ref CostEventUpdateLambdaMaximumRecordAge
+      StartingPosition: TRIM_HORIZON
+      DestinationConfig:
+        OnFailure:
+          Destination: !Sub arn:aws:s3:::${ESMKinesisFailureNotificationsBucketName}
+
+  PaperEventsCostUpdateKinesisFailuresAlarm:
+    Type: AWS::CloudWatch::Alarm
+    Properties:
+      AlarmName: !Sub "${ProjectName}-PaperEventsCostUpdate-ESM-Alarm"
+      AlarmDescription: "CloudWatch alarm for when CostEventUpdateLambda has Kinesis stream read failures, which can indicate problems with the function processing or with the stream itself."
+      TreatMissingData: notBreaching
+      AlarmActions:
+        - !Ref AlarmSNSTopicArn
+      OKActions:
+        - !Ref AlarmSNSTopicArn
+      Dimensions:
+        - Value: !Ref CostEventUpdateLambda
+          Name: FunctionName
+        - Value: !Ref CdcKinesisSourceStreamName
+          Name: StreamName
+      DatapointsToAlarm: 1
+      ComparisonOperator: GreaterThanOrEqualToThreshold
+      EvaluationPeriods: 6
+      Period: 600
+      Namespace: ESM/Kinesis
+      MetricName: ProcessingFailures
+      Statistic: Maximum
+      Threshold: 1
+
+  CostEventUpdateLambdaAlarms:
+    Type: AWS::CloudFormation::Stack
+    Properties:
+      TemplateURL: !Sub "${TemplateBucketBaseUrl}/fragments/lambda-alarms.yaml"
+      Parameters:
+        FunctionName: !Ref CostEventUpdateLambda
+        AlarmSNSTopicArn: !Ref AlarmSNSTopicArn

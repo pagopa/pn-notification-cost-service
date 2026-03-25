@@ -7,6 +7,10 @@
     "MemoryAmount": "4GB",
     "MinTasksNumber": "2",
     "MaxTasksNumber": "4",
-    "AutoscalingThreshold": "2500"
+    "NewWorkflowLambdasEnabledStart": "1753881000000",
+    "NewWorkflowLambdasEnabledEnd": "4070908800000",
+    "CdcKinesisSourceStreamKeyId": "3bc181f8-9590-49c1-a783-fe6ead65adab",
+    "AutoscalingThreshold": "2500",
+    "UpdateCostFeatureDate" : "01/01/9999"
   }
 }
