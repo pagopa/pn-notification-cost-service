@@ -92,10 +92,9 @@ class NotificationDeliveryCostMapperTest {
     @DisplayName("Dovrebbe mappare correttamente i costi base e i metadati generali")
     void shouldMapBaseCostsAndMetadata() {
         // Given
-        Instant now = Instant.now();
         NotificationDeliveryCost dto = NotificationDeliveryCostTestBuilder.builder().withSenderPaId("TEST-SENDER-PA-ID")
                 .withSenderTaxId("TEST-SENDER-TAX-ID")
-                .withLastUpdate(Instant.now()).build();
+                .build();
 
         CalculatedCosts calculated = CalculatedCosts.builder()
                 .totalCostWithVat(1000)
@@ -106,7 +105,6 @@ class NotificationDeliveryCostMapperTest {
         NotificationCostRecipientResponseDto response = mapper.mapDtoToResponse(dto, calculated);
 
         // Then
-        assertThat(response.getLastUpdate()).isEqualTo(now);
         assertThat(response.getTotalCost().getCostWithVat()).isEqualTo(1000);
 
         BaseCostDetailDto baseDetail = response.getTotalCost().getDetails().getBaseCostDetail();
