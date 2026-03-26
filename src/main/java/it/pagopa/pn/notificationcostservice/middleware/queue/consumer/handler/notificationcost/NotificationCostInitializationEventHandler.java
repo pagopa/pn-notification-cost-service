@@ -1,6 +1,7 @@
 package it.pagopa.pn.notificationcostservice.middleware.queue.consumer.handler.notificationcost;
 
 import it.pagopa.pn.api.dto.events.notificationcost.validation.PnNotificationCostValidationEvent;
+import it.pagopa.pn.commons.exceptions.PnInternalException;
 import it.pagopa.pn.notificationcostservice.middleware.dao.PaymentInfoDao;
 import it.pagopa.pn.notificationcostservice.middleware.eventbus.EventBridgeProducer;
 import it.pagopa.pn.notificationcostservice.middleware.queue.consumer.event.notificationcost.NotificationCostInitializationEvent;
@@ -15,6 +16,7 @@ import reactor.core.publisher.Mono;
 
 import java.util.List;
 
+import static it.pagopa.pn.notificationcostservice.exception.PnNotificationCostServiceExceptionCodes.ERROR_CODE_NOTIFICATIONCOSTSERVICE_INTERNAL_SERVER_ERROR;
 import static it.pagopa.pn.notificationcostservice.middleware.eventbus.utils.NotificationCostValidationEventBuilder.buildOkValidationEvent;
 
 @Component
@@ -33,13 +35,14 @@ public class NotificationCostInitializationEventHandler {
         List<PaymentInfo> payments = payload.getPayments();
 
         if (notificationCosts == null || notificationCosts.isEmpty() || payments == null || payments.isEmpty()) {
-            log.warn(
+            log.error(
                     "Skipping NotificationCostInitializationEvent for iun={} because notificationCosts or payments are null/empty. notificationCostsSize={}, paymentsSize={}",
                     payload.getIun(),
                     notificationCosts != null ? notificationCosts.size() : null,
                     payments != null ? payments.size() : null
             );
-            return Mono.empty();
+            return Mono.error(new PnInternalException("Missing required data for iun:"+  payload.getIun(),
+                    ERROR_CODE_NOTIFICATIONCOSTSERVICE_INTERNAL_SERVER_ERROR));
         }
 
         log.info(

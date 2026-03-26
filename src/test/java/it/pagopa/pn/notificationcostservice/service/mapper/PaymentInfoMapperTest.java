@@ -4,7 +4,9 @@ import it.pagopa.pn.notification_cost_service.generated.openapi.server.v1.dto.*;
 import it.pagopa.pn.notificationcostservice.model.paymentinfo.PaymentInfo;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+
 import java.util.List;
+
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
@@ -19,7 +21,6 @@ public class PaymentInfoMapperTest {
                 .recipientInternalId("recipient-1")
                 .senderInternalId("sender-1")
                 .payments(List.of(new PaymentDataDto("IUV-1", true)))
-                .baseCost(150)
                 .paFee(50)
                 .notificationFeePolicy(NotificationFeePolicyDto.DELIVERY_MODE)
                 .pagoPaIntMode(PagoPaIntModeDto.SYNC)
@@ -30,7 +31,6 @@ public class PaymentInfoMapperTest {
                 .recipientInternalId("recipient-2")
                 .senderInternalId("sender-2")
                 .payments(List.of(new PaymentDataDto("IUV-2", false)))
-                .baseCost(150)
                 .paFee(50)
                 .notificationFeePolicy(NotificationFeePolicyDto.DELIVERY_MODE)
                 .pagoPaIntMode(PagoPaIntModeDto.SYNC)
@@ -70,7 +70,6 @@ public class PaymentInfoMapperTest {
                 .recipientInternalId("recipient-1")
                 .senderInternalId("sender-1")
                 .payments(null)
-                .baseCost(150)
                 .paFee(50)
                 .notificationFeePolicy(NotificationFeePolicyDto.DELIVERY_MODE)
                 .pagoPaIntMode(PagoPaIntModeDto.SYNC)

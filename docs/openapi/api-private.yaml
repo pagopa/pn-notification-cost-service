@@ -115,7 +115,6 @@ components:
       required:
         - recIndex
         - recipientInternalId
-        - baseCost
         - senderInternalId
         - paFee
         - notificationFeePolicy
@@ -139,11 +138,6 @@ components:
           maxItems: 100
           items:
             $ref: '#/components/schemas/PaymentData'
-        baseCost:
-          type: integer
-          format: int32
-          minimum: 0
-          description: Costo base dato da sendFee + paFee (in eurocent)
         paFee:
           type: integer
           format: int32

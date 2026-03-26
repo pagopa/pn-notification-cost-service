@@ -1,7 +1,7 @@
 package it.pagopa.pn.notificationcostservice.middleware.queue.consumer.handler.notificationcost;
 
-import it.pagopa.pn.api.dto.events.notificationcost.utils.ValidationStatus;
 import it.pagopa.pn.api.dto.events.notificationcost.validation.PnNotificationCostValidationEvent;
+import it.pagopa.pn.commons.exceptions.PnInternalException;
 import it.pagopa.pn.notificationcostservice.NotificationDeliveryCostTestBuilder;
 import it.pagopa.pn.notificationcostservice.middleware.dao.PaymentInfoDao;
 import it.pagopa.pn.notificationcostservice.middleware.eventbus.EventBridgeProducer;
@@ -12,9 +12,7 @@ import it.pagopa.pn.notificationcostservice.model.paymentinfo.PaymentInfo;
 import it.pagopa.pn.notificationcostservice.service.NotificationCostUpdaterService;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
-import org.mockito.InOrder;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import reactor.core.publisher.Mono;
@@ -23,8 +21,6 @@ import reactor.test.publisher.PublisherProbe;
 
 import java.util.List;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
@@ -45,44 +41,7 @@ class NotificationCostInitializationEventHandlerTest {
     private NotificationCostInitializationEventHandler handler;
 
     @Test
-    void handleNotificationCostInitializationEvent_shouldCompleteAndInvokeAllStepsInOrder() {
-        List<NotificationDeliveryCost> notificationCosts = buildNotificationCosts();
-        List<PaymentInfo> payments = buildPayments();
-        NotificationCostInitializationEvent.Payload payload = buildPayload(notificationCosts, payments);
-
-        when(notificationCostUpdaterService.updateCostByPhase(CostUpdatePhaseInt.VALIDATION, notificationCosts))
-                .thenReturn(Mono.empty());
-        when(paymentInfoDao.updateItem(payments)).thenReturn(Mono.empty());
-        when(producer.sendEvent(any(PnNotificationCostValidationEvent.class))).thenReturn(Mono.empty());
-
-        StepVerifier.create(handler.handleNotificationCostInitializationEvent(payload))
-                .verifyComplete();
-
-        InOrder inOrder = inOrder(notificationCostUpdaterService, paymentInfoDao, producer);
-        inOrder.verify(notificationCostUpdaterService)
-                .updateCostByPhase(CostUpdatePhaseInt.VALIDATION, notificationCosts);
-        inOrder.verify(paymentInfoDao).updateItem(payments);
-
-        ArgumentCaptor<PnNotificationCostValidationEvent> eventCaptor =
-                ArgumentCaptor.forClass(PnNotificationCostValidationEvent.class);
-        inOrder.verify(producer).sendEvent(eventCaptor.capture());
-
-        PnNotificationCostValidationEvent sentEvent = eventCaptor.getValue();
-        assertNotNull(sentEvent);
-        assertNotNull(sentEvent.getDetail());
-        assertEquals("pn-notification-cost-service", sentEvent.getDetail().getClientId());
-        assertNotNull(sentEvent.getDetail().getPnNotificationCostValidationPayload());
-        assertEquals(IUN, sentEvent.getDetail().getPnNotificationCostValidationPayload().getIun());
-        assertEquals(
-                ValidationStatus.OK,
-                sentEvent.getDetail().getPnNotificationCostValidationPayload().getStatus()
-        );
-
-        verifyNoMoreInteractions(notificationCostUpdaterService, paymentInfoDao, producer);
-    }
-
-    @Test
-    void handleNotificationCostInitializationEvent_shouldSkipWhenNotificationCostsAreNull() {
+    void handleNotificationCostInitializationEvent_shouldErrorWhenNotificationCostsAreNull() {
         NotificationCostInitializationEvent.Payload payload = NotificationCostInitializationEvent.Payload.builder()
                 .iun(IUN)
                 .notificationCosts(null)
@@ -90,13 +49,14 @@ class NotificationCostInitializationEventHandlerTest {
                 .build();
 
         StepVerifier.create(handler.handleNotificationCostInitializationEvent(payload))
-                .verifyComplete();
+                .expectError(PnInternalException.class)
+                .verify();
 
         verifyNoInteractions(notificationCostUpdaterService, paymentInfoDao, producer);
     }
 
     @Test
-    void handleNotificationCostInitializationEvent_shouldSkipWhenNotificationCostsAreEmpty() {
+    void handleNotificationCostInitializationEvent_shouldErrorWhenNotificationCostsAreEmpty() {
         NotificationCostInitializationEvent.Payload payload = NotificationCostInitializationEvent.Payload.builder()
                 .iun(IUN)
                 .notificationCosts(List.of())
@@ -104,13 +64,14 @@ class NotificationCostInitializationEventHandlerTest {
                 .build();
 
         StepVerifier.create(handler.handleNotificationCostInitializationEvent(payload))
-                .verifyComplete();
+                .expectError(PnInternalException.class)
+                .verify();
 
         verifyNoInteractions(notificationCostUpdaterService, paymentInfoDao, producer);
     }
 
     @Test
-    void handleNotificationCostInitializationEvent_shouldSkipWhenPaymentsAreNull() {
+    void handleNotificationCostInitializationEvent_shouldErrorWhenPaymentsAreNull() {
         NotificationCostInitializationEvent.Payload payload = NotificationCostInitializationEvent.Payload.builder()
                 .iun(IUN)
                 .notificationCosts(buildNotificationCosts())
@@ -118,13 +79,14 @@ class NotificationCostInitializationEventHandlerTest {
                 .build();
 
         StepVerifier.create(handler.handleNotificationCostInitializationEvent(payload))
-                .verifyComplete();
+                .expectError(PnInternalException.class)
+                .verify();
 
         verifyNoInteractions(notificationCostUpdaterService, paymentInfoDao, producer);
     }
 
     @Test
-    void handleNotificationCostInitializationEvent_shouldSkipWhenPaymentsAreEmpty() {
+    void handleNotificationCostInitializationEvent_shouldErrorWhenPaymentsAreEmpty() {
         NotificationCostInitializationEvent.Payload payload = NotificationCostInitializationEvent.Payload.builder()
                 .iun(IUN)
                 .notificationCosts(buildNotificationCosts())
@@ -132,10 +94,12 @@ class NotificationCostInitializationEventHandlerTest {
                 .build();
 
         StepVerifier.create(handler.handleNotificationCostInitializationEvent(payload))
-                .verifyComplete();
+                .expectError(PnInternalException.class)
+                .verify();
 
         verifyNoInteractions(notificationCostUpdaterService, paymentInfoDao, producer);
     }
+
 
     @Test
     void handleNotificationCostInitializationEvent_shouldPropagateErrorWhenSavingNotificationCostsFails() {

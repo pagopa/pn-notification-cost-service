@@ -1,5 +1,6 @@
 package it.pagopa.pn.notificationcostservice.service.impl;
 
+import it.pagopa.pn.commons.exceptions.PnInternalException;
 import it.pagopa.pn.notificationcostservice.middleware.dao.NotificationDeliveryCostDao;
 import it.pagopa.pn.notificationcostservice.model.cost.CostUpdatePhaseInt;
 import it.pagopa.pn.notificationcostservice.model.notificationdeliverycost.NotificationDeliveryCost;
@@ -13,6 +14,8 @@ import reactor.core.publisher.Mono;
 
 import java.util.List;
 
+import static it.pagopa.pn.notificationcostservice.exception.PnNotificationCostServiceExceptionCodes.ERROR_CODE_NOTIFICATIONCOSTSERVICE_INTERNAL_SERVER_ERROR;
+
 @Slf4j
 @AllArgsConstructor
 @Service
@@ -25,8 +28,9 @@ public class NotificationCostUpdaterServiceImpl implements NotificationCostUpdat
     public Mono<Void> updateCostByPhase(CostUpdatePhaseInt updateCostPhase,
                                         List<NotificationDeliveryCost> notificationDeliveryCosts) {
         if (notificationDeliveryCosts == null || notificationDeliveryCosts.isEmpty()) {
-            log.info("Skipping notification delivery cost update: phase={}, no items to process", updateCostPhase);
-            return Mono.empty();
+            log.error("Skipping notification delivery cost update: phase={}, no items to process", updateCostPhase);
+            return Mono.error(new PnInternalException("Missing required data " + notificationDeliveryCosts + " for phase: " + updateCostPhase,
+                    ERROR_CODE_NOTIFICATIONCOSTSERVICE_INTERNAL_SERVER_ERROR));
         }
         return Flux.fromIterable(notificationDeliveryCosts)
                 .map(notificationDeliveryCost ->
