@@ -9,7 +9,6 @@ import it.pagopa.pn.notificationcostservice.middleware.dao.dynamo.entity.notific
 import it.pagopa.pn.notificationcostservice.middleware.dao.dynamo.entity.notificationdeliverycost.analogcost.FirstAnalogCostEntity;
 import it.pagopa.pn.notificationcostservice.middleware.dao.dynamo.entity.notificationdeliverycost.analogcost.SecondAnalogCostEntity;
 import it.pagopa.pn.notificationcostservice.middleware.dynamo.TestDao;
-import it.pagopa.pn.notificationcostservice.model.notificationdeliverycost.BaseCost;
 import it.pagopa.pn.notificationcostservice.model.notificationdeliverycost.NotificationDeliveryCost;
 import it.pagopa.pn.notificationcostservice.model.notificationdeliverycost.NotificationFeePolicy;
 import it.pagopa.pn.notificationcostservice.model.notificationdeliverycost.PagoPaIntMode;
@@ -25,7 +24,6 @@ import reactor.test.StepVerifier;
 import software.amazon.awssdk.enhanced.dynamodb.DynamoDbEnhancedAsyncClient;
 
 import java.time.Instant;
-import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.fail;
 
@@ -114,6 +112,7 @@ public class NotificationDeliveryCostDaoDynamoTestIT {
                         .build())
                 .simpleRegisteredLetterCost(null)
                 .recipientInternalId("recipientInternalId")
+                .senderPaId("senderInternalId")
                 .build();
     }
 
@@ -136,10 +135,10 @@ public class NotificationDeliveryCostDaoDynamoTestIT {
     void updateNotNullWhenItemDoesNotExist() {
         String iun = "iun-put-if-absent-" + System.nanoTime();
         Integer recIndex = 0;
-        NotificationDeliveryCost notification = newNotificationDeliveryCost(iun, recIndex);
+        NotificationDeliveryCostEntity notification = newNotificationDeliveryCostEntity(iun, recIndex);
 
         try {
-            StepVerifier.create(dao.updateNotificationDeliveryCostsItem(List.of(notification)))
+            StepVerifier.create(dao.updateNotificationDeliveryCostNotNull(notification))
                     .verifyComplete();
 
             NotificationDeliveryCost elementFromDb = dao.getNotificationDeliveryCostItem(iun, recIndex).block();
@@ -148,7 +147,7 @@ public class NotificationDeliveryCostDaoDynamoTestIT {
             Assertions.assertEquals(notification.getIun(), elementFromDb.getIun());
             Assertions.assertEquals(notification.getRecIndex(), elementFromDb.getRecIndex());
             Assertions.assertEquals(notification.getRecipientInternalId(), elementFromDb.getRecipientInternalId());
-            Assertions.assertEquals(notification.getSenderInternalId(), elementFromDb.getSenderInternalId());
+            Assertions.assertEquals(notification.getSenderPaId(), elementFromDb.getSenderPaId());
             Assertions.assertEquals(notification.getBaseCost().getPaFee(), elementFromDb.getBaseCost().getPaFee());
             Assertions.assertEquals(notification.getBaseCost().getSendFee(), elementFromDb.getBaseCost().getSendFee());
             Assertions.assertEquals(notification.getVat(), elementFromDb.getVat());
@@ -166,16 +165,16 @@ public class NotificationDeliveryCostDaoDynamoTestIT {
     }
 
     @Test
-    void updateNotificationDeliveryCostsItem_whenItemAlreadyExists_updatesOnlyNonNullFields() {
+    void updateNotificationDeliveryCost_whenNotNullAlreadyExists_updatesOnlyNonNullFields() {
         String iun = "iun-update-existing-" + System.nanoTime();
         int recIndex = 1;
 
-        NotificationDeliveryCost original = NotificationDeliveryCost.builder()
+        NotificationDeliveryCostEntity original = NotificationDeliveryCostEntity.builder()
                 .iun(iun)
                 .recIndex(recIndex)
                 .recipientInternalId("recipient-original")
-                .senderInternalId("sender-original")
-                .baseCost(BaseCost.builder()
+                .senderPaId("sender-original")
+                .baseCost(BaseCostEntity.builder()
                         .paFee(2)
                         .sendFee(10)
                         .build())
@@ -187,12 +186,12 @@ public class NotificationDeliveryCostDaoDynamoTestIT {
                 .ttl(10000L)
                 .build();
 
-        NotificationDeliveryCost updated = NotificationDeliveryCost.builder()
+        NotificationDeliveryCostEntity updated = NotificationDeliveryCostEntity.builder()
                 .iun(iun)
                 .recIndex(recIndex)
                 .recipientInternalId("recipient-updated")
-                .senderInternalId(null)
-                .baseCost(BaseCost.builder()
+                .senderPaId(null)
+                .baseCost(BaseCostEntity.builder()
                         .paFee(5)
                         .sendFee(15)
                         .build())
@@ -205,17 +204,17 @@ public class NotificationDeliveryCostDaoDynamoTestIT {
                 .build();
 
         try {
-            StepVerifier.create(dao.updateNotificationDeliveryCostsItem(List.of(original)))
+            StepVerifier.create(dao.updateNotificationDeliveryCostNotNull(original))
                     .verifyComplete();
 
-            StepVerifier.create(dao.updateNotificationDeliveryCostsItem(List.of(updated)))
+            StepVerifier.create(dao.updateNotificationDeliveryCostNotNull(updated))
                     .verifyComplete();
 
             NotificationDeliveryCost elementFromDb = dao.getNotificationDeliveryCostItem(iun, recIndex).block();
 
             Assertions.assertNotNull(elementFromDb);
             Assertions.assertEquals("recipient-updated", elementFromDb.getRecipientInternalId());
-            Assertions.assertEquals("sender-original", elementFromDb.getSenderInternalId());
+            Assertions.assertEquals("sender-original", elementFromDb.getSenderPaId());
             Assertions.assertEquals(5, elementFromDb.getBaseCost().getPaFee());
             Assertions.assertEquals(15, elementFromDb.getBaseCost().getSendFee());
             Assertions.assertEquals(20000L, elementFromDb.getTtl());
@@ -231,26 +230,4 @@ public class NotificationDeliveryCostDaoDynamoTestIT {
             }
         }
     }
-
-
-    private static NotificationDeliveryCost newNotificationDeliveryCost(String iun, Integer recIndex) {
-        return NotificationDeliveryCost.builder()
-                .iun(iun)
-                .recIndex(recIndex)
-                .recipientInternalId("recipientInternalId-" + recIndex)
-                .senderInternalId("senderInternalId-" + recIndex)
-                .baseCost(BaseCost.builder()
-                        .paFee(2)
-                        .sendFee(10)
-                        .build())
-                .vat(22)
-                .notificationFeePolicy(NotificationFeePolicy.DELIVERY_MODE)
-                .pagoPaIntMode(PagoPaIntMode.ASYNC)
-                .isDeleted(false)
-                .lastUpdate(Instant.now())
-                .ttl(10000L)
-                .build();
-    }
-
-
 }

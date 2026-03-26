@@ -47,7 +47,7 @@ class EntityToDtoNotificationDeliveryCostDaoMapperTest {
                 .recIndex(0)
                 .recipientInternalId("recipientId")
                 .baseCost(baseCostEntity)
-                .senderInternalId("sender")
+                .senderPaId("sender")
                 .firstAnalogCost(firstCost)
                 .secondAnalogCost(secondCost)
                 .isDeleted(false)
@@ -63,7 +63,7 @@ class EntityToDtoNotificationDeliveryCostDaoMapperTest {
         assertEquals(entity.getIun(), dto.getIun());
         assertEquals(entity.getRecIndex(), dto.getRecIndex());
         assertEquals(entity.getRecipientInternalId(), dto.getRecipientInternalId());
-        assertEquals(entity.getSenderInternalId(), dto.getSenderInternalId());
+        assertEquals(entity.getSenderPaId(), dto.getSenderPaId());
 
         // Verifica BaseCost
         assertEquals(entity.getBaseCost().getSendFee(), dto.getBaseCost().getSendFee());
@@ -104,7 +104,7 @@ class EntityToDtoNotificationDeliveryCostDaoMapperTest {
                 .recIndex(0)
                 .recipientInternalId("recipientId")
                 .baseCost(baseCostEntity)
-                .senderInternalId("sender")
+                .senderPaId("sender")
                 .firstAnalogCost(null)
                 .secondAnalogCost(null)
                 .simpleRegisteredLetterCost(null)

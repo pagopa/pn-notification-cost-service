@@ -251,6 +251,9 @@ Resources:
         ContainerEnvEntry5: !Sub 'PN_NOTIFICATIONCOSTSERVICE_NOTIFICATIONDELIVERYCOSTTABLE_TABLENAME=${NotificationDeliveryCostTableName}'
         ContainerEnvEntry6: !Sub 'PN_NOTIFICATIONCOSTSERVICE_PAYMENTINFOTABLE_TABLENAME=${PaymentInfoTableName}'
         ContainerEnvEntry7: !Sub 'PN_NOTIFICATIONCOSTSERVICE_TOPICS_PNNOTIFICATIONCOSTTOUPDATE=${PnNotificationCostToUpdateQueueName}'
+        ContainerEnvEntry8: !Sub 'PN_NOTIFICATIONCOSTSERVICE_EVENTBUS_NAME=arn:aws:events:${AWS::Region}:${AWS::AccountId}:event-bus/${ProjectName}-CoreEventBus'
+        ContainerEnvEntry9: 'PN_NOTIFICATIONCOSTSERVICE_EVENTBUS_SOURCE=pn-notification-cost-service'
+        ContainerEnvEntry10: 'PN_NOTIFICATIONCOSTSERVICE_EVENTBUS_OUTCOMEEVENTDETAILTYPE=NotificationCostServiceOutcomeEvent'
         ApplicativeEnvFileChecksum: !Ref ApplicativeEnvFileChecksum
         JavaToolOptions: '-Dreactor.netty.ioWorkerCount=50'
         MappedPaths: '/notification-cost-private/*'
@@ -303,3 +306,8 @@ Resources:
               - sqs:ReceiveMessage
             Resource:
               - !Ref PnNotificationCostToUpdateQueueARN
+          - Effect: Allow
+            Action:
+              - events:PutEvents
+            Resource:
+              - !Sub arn:aws:events:${AWS::Region}:${AWS::AccountId}:event-bus/${ProjectName}-CoreEventBus

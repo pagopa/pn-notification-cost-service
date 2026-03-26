@@ -4,12 +4,10 @@ import it.pagopa.pn.notificationcostservice.config.PnNotificationCostServiceConf
 import it.pagopa.pn.notificationcostservice.exception.PnNotFoundException;
 import it.pagopa.pn.notificationcostservice.middleware.dao.NotificationDeliveryCostDao;
 import it.pagopa.pn.notificationcostservice.middleware.dao.dynamo.entity.notificationdeliverycost.NotificationDeliveryCostEntity;
-import it.pagopa.pn.notificationcostservice.middleware.dao.dynamo.mapper.notificationdeliverycost.DtoToEntityNotificationDeliveryCostMapper;
 import it.pagopa.pn.notificationcostservice.middleware.dao.dynamo.mapper.notificationdeliverycost.EntityToDtoNotificationDeliveryCostMapper;
 import it.pagopa.pn.notificationcostservice.model.notificationdeliverycost.NotificationDeliveryCost;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
-import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import software.amazon.awssdk.enhanced.dynamodb.DynamoDbAsyncTable;
 import software.amazon.awssdk.enhanced.dynamodb.DynamoDbEnhancedAsyncClient;
@@ -17,7 +15,6 @@ import software.amazon.awssdk.enhanced.dynamodb.TableSchema;
 import software.amazon.awssdk.enhanced.dynamodb.model.GetItemEnhancedRequest;
 import software.amazon.awssdk.enhanced.dynamodb.model.UpdateItemEnhancedRequest;
 
-import java.util.List;
 import java.util.concurrent.CompletableFuture;
 
 import static it.pagopa.pn.notificationcostservice.exception.PnNotificationCostServiceExceptionCodes.ERROR_CODE_NOTIFICATIONDELIVERYCOST_NOTFOUND;
@@ -29,15 +26,12 @@ public class NotificationDeliveryCostDaoDynamo extends BaseDao implements Notifi
     DynamoDbEnhancedAsyncClient dynamoDbEnhancedAsyncClient;
     DynamoDbAsyncTable<NotificationDeliveryCostEntity> notificationDeliveryCostTable;
     EntityToDtoNotificationDeliveryCostMapper entityToDto;
-    DtoToEntityNotificationDeliveryCostMapper dtoToEntityNotificationDeliveryCostMapper;
 
     public NotificationDeliveryCostDaoDynamo(DynamoDbEnhancedAsyncClient dynamoDbEnhancedAsyncClient,
-                                             PnNotificationCostServiceConfigs awsConfigs, EntityToDtoNotificationDeliveryCostMapper entityToDto,
-                                             DtoToEntityNotificationDeliveryCostMapper dtoToEntityNotificationDeliveryCostMapper) {
+                                             PnNotificationCostServiceConfigs awsConfigs, EntityToDtoNotificationDeliveryCostMapper entityToDto) {
         this.notificationDeliveryCostTable = dynamoDbEnhancedAsyncClient.table(awsConfigs.getNotificationDeliveryCostTable().getTableName(), TableSchema.fromBean(NotificationDeliveryCostEntity.class));
         this.dynamoDbEnhancedAsyncClient = dynamoDbEnhancedAsyncClient;
         this.entityToDto = entityToDto;
-        this.dtoToEntityNotificationDeliveryCostMapper = dtoToEntityNotificationDeliveryCostMapper;
     }
 
     /**
@@ -57,37 +51,21 @@ public class NotificationDeliveryCostDaoDynamo extends BaseDao implements Notifi
                 .map(entityToDto::entity2Dto)
                 .doOnError(e -> log.error("Error retrieving item with iun: {}", iun, e));
     }
-
     /**
      * Il metodo si occupa di:
-     * - effettuare l’update dei dati di pagamenti correlati alla notifica e del baseCost sulla tabella 'pn-NotificationDeliveryCost'.
+     * - effettuare l’update dei dati di pagamenti correlati alla notifica e del baseCost sulla tabella 'pn-NotificationDeliveryCost'
+     *   Aggiornamento dell'entità, aggiornando solo i campi non impostati su null
      *
-     * @param notificationDeliveryCosts lista di pagamenti correlati alla notifica
+     * @param entity lista di pagamenti correlati alla notifica
      * @return void
      */
     @Override
-    public Mono<Void> updateNotificationDeliveryCostsItem(List<NotificationDeliveryCost> notificationDeliveryCosts) {
-        if (notificationDeliveryCosts == null || notificationDeliveryCosts.isEmpty()) {
-            return Mono.empty();
-        }
-        return Flux.fromIterable(notificationDeliveryCosts)
-                .map(dtoToEntityNotificationDeliveryCostMapper::dto2Entity)
-                .flatMap(this::updateNotNull)
-                .then();
-
-    }
-
-    /**
-     * Aggiornamento dell'entità, aggiornando solo i campi non impostati su null
-     */
-    private Mono<NotificationDeliveryCostEntity> updateNotNull(NotificationDeliveryCostEntity entity) {
-        return Mono.fromFuture(notificationDeliveryCostTable.updateItem(putItemEnhancedRequest(entity))
-                        .thenApply(item -> entity))
+    public Mono<NotificationDeliveryCostEntity> updateNotificationDeliveryCostNotNull(NotificationDeliveryCostEntity entity) {
+        return Mono.fromFuture(notificationDeliveryCostTable.updateItem(updateItemEnhancedRequest(entity)))
                 .doOnError(e -> log.error("Error putting item with iun: {} and recIndex:{}", entity.getIun(), entity.getRecIndex(), e));
     }
 
-    private UpdateItemEnhancedRequest<NotificationDeliveryCostEntity> putItemEnhancedRequest(NotificationDeliveryCostEntity entity) {
-
+    private UpdateItemEnhancedRequest<NotificationDeliveryCostEntity> updateItemEnhancedRequest(NotificationDeliveryCostEntity entity) {
         return UpdateItemEnhancedRequest.builder(NotificationDeliveryCostEntity.class)
                 .item(entity)
                 .ignoreNulls(true)

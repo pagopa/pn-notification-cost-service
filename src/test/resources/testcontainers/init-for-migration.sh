@@ -24,7 +24,7 @@ aws --profile $PROFILE --region $REGION --endpoint-url=$ENDPOINT \
     --key-schema AttributeName=iun,KeyType=HASH \
     --provisioned-throughput ReadCapacityUnits=5,WriteCapacityUnits=5
 
-aws --profile default --region us-east-1 --endpoint-url=http://localstack:4566 \
+aws --profile $PROFILE --region $REGION --endpoint-url=$ENDPOINT \
     dynamodb create-table \
     --table-name pn-PaymentInfo \
     --attribute-definitions \
@@ -42,11 +42,16 @@ for qn in  $( echo $queues | tr " " "\n" ) ; do
 
     echo creating queue $qn ...
 
-    aws --profile default --region us-east-1 --endpoint-url http://localstack:4566 \
+    aws --profile $PROFILE --region $REGION --endpoint-url=$ENDPOINT \
         sqs create-queue \
         --attributes '{"DelaySeconds":"2"}' \
         --queue-name $qn
 done
+
+echo "### CREATE EVENT BUS - pn-CoreEventBus ###"
+event_bus_name="pn-CoreEventBus"
+aws --profile $PROFILE --region $REGION --endpoint-url=$ENDPOINT \
+  events create-event-bus --name $event_bus_name
 
 echo "Tables created. Inserting test cases..."
 

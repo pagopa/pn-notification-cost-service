@@ -2,13 +2,13 @@ package it.pagopa.pn.notificationcostservice.middleware.dao.dynamo.mapper.notifi
 
 import it.pagopa.pn.notificationcostservice.middleware.dao.dynamo.entity.notificationdeliverycost.BaseCostEntity;
 import it.pagopa.pn.notificationcostservice.middleware.dao.dynamo.entity.notificationdeliverycost.NotificationDeliveryCostEntity;
-import it.pagopa.pn.notificationcostservice.model.notificationdeliverycost.analogcost.FirstAnalogCost;
-import it.pagopa.pn.notificationcostservice.model.notificationdeliverycost.analogcost.SecondAnalogCost;
-import it.pagopa.pn.notificationcostservice.model.notificationdeliverycost.analogcost.SimpleRegisteredLetterCost;
-import it.pagopa.pn.notificationcostservice.model.notificationdeliverycost.NotificationDeliveryCost;
 import it.pagopa.pn.notificationcostservice.middleware.dao.dynamo.entity.notificationdeliverycost.analogcost.FirstAnalogCostEntity;
 import it.pagopa.pn.notificationcostservice.middleware.dao.dynamo.entity.notificationdeliverycost.analogcost.SecondAnalogCostEntity;
 import it.pagopa.pn.notificationcostservice.middleware.dao.dynamo.entity.notificationdeliverycost.analogcost.SimpleRegisteredLetterCostEntity;
+import it.pagopa.pn.notificationcostservice.model.notificationdeliverycost.NotificationDeliveryCost;
+import it.pagopa.pn.notificationcostservice.model.notificationdeliverycost.analogcost.FirstAnalogCost;
+import it.pagopa.pn.notificationcostservice.model.notificationdeliverycost.analogcost.SecondAnalogCost;
+import it.pagopa.pn.notificationcostservice.model.notificationdeliverycost.analogcost.SimpleRegisteredLetterCost;
 import org.springframework.stereotype.Component;
 
 import java.util.Objects;
@@ -24,7 +24,8 @@ public class DtoToEntityNotificationDeliveryCostMapper {
                 .isDeleted(notificationDeliveryCost.getIsDeleted())
                 .lastUpdate(notificationDeliveryCost.getLastUpdate())
                 .ttl(notificationDeliveryCost.getTtl())
-                .senderInternalId(notificationDeliveryCost.getSenderInternalId())
+                .senderPaId(notificationDeliveryCost.getSenderPaId())
+                .senderTaxId(notificationDeliveryCost.getSenderTaxId())
                 .pagoPaIntMode(notificationDeliveryCost.getPagoPaIntMode())
                 .vat(notificationDeliveryCost.getVat())
                 .firstAnalogCost(mapFirstAnalogCost(notificationDeliveryCost.getFirstAnalogCost()))

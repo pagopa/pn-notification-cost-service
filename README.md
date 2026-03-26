@@ -3,6 +3,58 @@
 
 ---
 
+### Consumer
+
+Il consumer ascolta la coda SQS `pn-notification-cost-to-update` e gestisce gli eventi `NOTIFICATION_COST_INITIALIZATION`.
+
+#### Consumer `InternalQueueConsumer`
+Per ogni messaggio ricevuto:
+
+- avvia il processo `UPDATE NOTIFICATION COST`
+- imposta il contesto di logging (MDC) con informazioni utili come `messageId`, `traceId` e `iun`
+- delega la gestione del messaggio al router interno
+- al termine dell’elaborazione pubblica un evento di outcome su EventBridge con stato `OK`
+- in caso di errore, traccia l’eccezione nei log e rilancia l’errore
+
+La gestione è asincrona: l’API pubblica un messaggio in coda e il consumer esegue la persistenza reale dei dati.
+
+#### Router
+Il router ha la responsabilità di instradare il messaggio verso l’handler corretto in base al tipo evento.
+
+Nel dettaglio:
+
+- estrae il tipo evento dal messaggio tramite la configurazione di routing
+- se il tipo evento è `NOTIFICATION_COST_INITIALIZATION`, inoltra il payload al relativo handler
+- recupera `eventId` e `iun` per arricchire il contesto MDC prima della lavorazione
+- se il tipo evento non è presente o non è supportato, genera un errore di routing
+
+Attualmente il router supporta il solo evento:
+
+- `NOTIFICATION_COST_INITIALIZATION`
+
+#### NotificationCostInitializationEventHandler
+L’handler che gestisce `NOTIFICATION_COST_INITIALIZATION`:
+
+- estrae `iun`, `notificationCosts` e `payments`
+- salva i record nella tabella `NotificationDeliveryCost`
+- aggiorna i record nella tabella `PaymentInfo`
+- gestisce eventuali errori di persistenza con log dedicati
+
+#### Evento finale pubblicato
+Al completamento della gestione, il servizio pubblica un evento su EventBridge contenente:
+
+- `iun`
+- `status = OK`
+
+# Esecuzione dello script
+Per eseguire correttamente lo script, è necessario configurare l'ambiente come segue:
+
+### Ambiente locale:
+È necessario prima avviare LocalStack e successivamente eseguire lo script di inizializzazione del consumer:
+1. Avviare LocalStack con il comando (in un terminale separato):  
+   `sudo docker compose up localstack`
+2. Una volta che LocalStack è in esecuzione ed è raggiungibile su `http://localhost:4566`, eseguire da host lo script `init-for-consumer.sh` per inizializzare le risorse necessarie al consumer.
+
 ### pn-NotificationDeliveryCost
 
 ### Configurazione

@@ -115,13 +115,12 @@ components:
       required:
         - recIndex
         - recipientInternalId
-        - baseCost
-        - senderInternalId
+        - senderPaId
+        - senderTaxId
         - paFee
         - notificationFeePolicy
         - pagoPaIntMode
         - vat
-        - payments
       properties:
         recIndex:
           type: integer
@@ -130,20 +129,16 @@ components:
         recipientInternalId:
           type: string
           description: ID anonimizzato del destinatario
-        senderInternalId:
+        senderPaId:
           type: string
-          description: ID anonimizzato del mittente
+          description: Identificativo (non IPA) della PA mittente che ha eseguito l'onboarding su SelfCare.
+        senderTaxId:
+          type: string
+          description: Codice Fiscale identificativo dell’ente
         payments:
           type: array
-          minItems: 1
-          maxItems: 100
           items:
             $ref: '#/components/schemas/PaymentData'
-        baseCost:
-          type: integer
-          format: int32
-          minimum: 0
-          description: Costo base dato da sendFee + paFee (in eurocent)
         paFee:
           type: integer
           format: int32

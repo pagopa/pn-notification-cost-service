@@ -1,14 +1,14 @@
 package it.pagopa.pn.notificationcostservice.middleware.dao.dynamo.mapper.notificationdeliverycost;
 
+import it.pagopa.pn.notificationcostservice.middleware.dao.dynamo.entity.notificationdeliverycost.NotificationDeliveryCostEntity;
+import it.pagopa.pn.notificationcostservice.middleware.dao.dynamo.entity.notificationdeliverycost.analogcost.FirstAnalogCostEntity;
+import it.pagopa.pn.notificationcostservice.middleware.dao.dynamo.entity.notificationdeliverycost.analogcost.SecondAnalogCostEntity;
+import it.pagopa.pn.notificationcostservice.middleware.dao.dynamo.entity.notificationdeliverycost.analogcost.SimpleRegisteredLetterCostEntity;
 import it.pagopa.pn.notificationcostservice.model.notificationdeliverycost.BaseCost;
 import it.pagopa.pn.notificationcostservice.model.notificationdeliverycost.NotificationDeliveryCost;
 import it.pagopa.pn.notificationcostservice.model.notificationdeliverycost.analogcost.FirstAnalogCost;
 import it.pagopa.pn.notificationcostservice.model.notificationdeliverycost.analogcost.SecondAnalogCost;
 import it.pagopa.pn.notificationcostservice.model.notificationdeliverycost.analogcost.SimpleRegisteredLetterCost;
-import it.pagopa.pn.notificationcostservice.middleware.dao.dynamo.entity.notificationdeliverycost.NotificationDeliveryCostEntity;
-import it.pagopa.pn.notificationcostservice.middleware.dao.dynamo.entity.notificationdeliverycost.analogcost.FirstAnalogCostEntity;
-import it.pagopa.pn.notificationcostservice.middleware.dao.dynamo.entity.notificationdeliverycost.analogcost.SecondAnalogCostEntity;
-import it.pagopa.pn.notificationcostservice.middleware.dao.dynamo.entity.notificationdeliverycost.analogcost.SimpleRegisteredLetterCostEntity;
 import org.springframework.stereotype.Component;
 
 import java.util.Objects;
@@ -27,7 +27,8 @@ public class EntityToDtoNotificationDeliveryCostMapper {
                 .isDeleted(entity.getIsDeleted())
                 .ttl(entity.getTtl())
                 .vat(entity.getVat())
-                .senderInternalId(entity.getSenderInternalId())
+                .senderPaId(entity.getSenderPaId())
+                .senderTaxId(entity.getSenderTaxId())
                 .pagoPaIntMode(entity.getPagoPaIntMode())
                 .lastUpdate(entity.getLastUpdate())
                 .baseCost(mapBaseCost(entity))
