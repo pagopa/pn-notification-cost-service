@@ -1,0 +1,310 @@
+const { expect } = require("chai");
+const fs = require("fs");
+
+const { mapEvents } = require("../app/lib/eventMapper");
+
+const EVENT_TYPE = "COST_UPDATE";
+
+function loadEventFixture() {
+  const eventJSON = fs.readFileSync(
+    "./src/test/events/eventMapper.send_analog_domicile.json"
+  );
+  return JSON.parse(eventJSON);
+}
+
+function expectCommonMessageAttributes(messageAttributes, iun) {
+  expect(messageAttributes).to.have.all.keys(
+    "publisher",
+    "iun",
+    "eventId",
+    "createdAt",
+    "eventType"
+  );
+  expect(messageAttributes.publisher.DataType).equal("String");
+  expect(messageAttributes.publisher.StringValue).equal("notificationCostService");
+  expect(messageAttributes.iun.DataType).equal("String");
+  expect(messageAttributes.iun.StringValue).equal(iun);
+  expect(messageAttributes.eventId.DataType).equal("String");
+  expect(messageAttributes.eventId.StringValue).to.exist;
+  expect(messageAttributes.createdAt.DataType).equal("String");
+  expect(messageAttributes.createdAt.StringValue).to.exist;
+  expect(messageAttributes.eventType.DataType).equal("String");
+  expect(messageAttributes.eventType.StringValue).equal(EVENT_TYPE);
+}
+
+describe("event mapper tests", function () {
+  const iun = "VWKQ-WQNT-VJZG-202308-K-1";
+
+  it("test SEND_ANALOG_DOMICILE ATTEMPT_0 mapping", async () => {
+    let event = loadEventFixture();
+
+    const events = [event];
+
+    const res = await mapEvents(events);
+
+    expect(res).length(1);
+
+    // Check MessageBody fields
+    let body = JSON.parse(res[0].MessageBody);
+    expect(body).to.have.all.keys("iun", "eventType", "recIndex", "cost", "productType", "costUpdatePhase");
+    expect(body.iun).equal(iun);
+    expect(body.eventType).equal(EVENT_TYPE);
+    expect(body.recIndex).equal("0");
+    expect(body.costUpdatePhase).equal("SEND_ANALOG_DOMICILE_ATTEMPT_0");
+    expect(body.cost).equal("926");
+    expect(body.productType).equal("AR_REGISTERED_LETTER");
+
+    // Check message attributes
+    expect(res[0]).to.have.all.keys('Id', 'MessageBody', 'MessageAttributes');
+    expect(res[0].Id).equal("test-seq-1");
+
+    // Check all MessageAttributes
+    expectCommonMessageAttributes(res[0].MessageAttributes, iun);
+  });
+
+  it("test SEND_ANALOG_DOMICILE ATTEMPT_1 and different recIndex mapping", async () => {
+    let event = loadEventFixture();
+
+    // change ATTEMPT to 1
+    event.dynamodb.NewImage.timelineElementId.S =
+      event.dynamodb.NewImage.timelineElementId.S.replace(
+        "ATTEMPT_0",
+        "ATTEMPT_1"
+      );
+
+    // change recIndex to 1
+    event.dynamodb.NewImage.details.M.recIndex.N = "1";
+
+    const events = [event];
+
+    const res = await mapEvents(events);
+
+    expect(res).length(1);
+
+    let body = JSON.parse(res[0].MessageBody);
+    expect(body).to.have.all.keys("iun", "eventType", "recIndex", "cost", "productType", "costUpdatePhase");
+    expect(body.iun).equal(iun);
+    expect(body.eventType).equal(EVENT_TYPE);
+    expect(body.recIndex).equal("1");
+    expect(body.costUpdatePhase).equal("SEND_ANALOG_DOMICILE_ATTEMPT_1");
+    expect(body.cost).equal("926");
+    expect(body.productType).equal("AR_REGISTERED_LETTER");
+
+    // Check message attributes
+    expect(res[0]).to.have.all.keys('Id', 'MessageBody', 'MessageAttributes');
+    expectCommonMessageAttributes(res[0].MessageAttributes, iun);
+  });
+
+  it("test SEND_SIMPLE_REGISTERED_LETTER mapping", async () => {
+    let event = loadEventFixture();
+
+    // change category to SEND_SIMPLE_REGISTERED_LETTER
+    event.dynamodb.NewImage.category.S = "SEND_SIMPLE_REGISTERED_LETTER";
+
+    // change the timelineElementId
+    event.dynamodb.NewImage.timelineElementId.S =
+      "SEND_SIMPLE_REGISTERED_LETTER.IUN_" + iun + ".RECINDEX_0";
+
+    const events = [event];
+
+    const res = await mapEvents(events);
+
+    expect(res).length(1);
+
+    let body = JSON.parse(res[0].MessageBody);
+    expect(body).to.have.all.keys("iun", "eventType", "recIndex", "cost", "productType", "costUpdatePhase");
+    expect(body.iun).equal(iun);
+    expect(body.eventType).equal(EVENT_TYPE);
+    expect(body.recIndex).equal("0");
+    expect(body.costUpdatePhase).equal("SEND_SIMPLE_REGISTERED_LETTER");
+    expect(body.cost).equal("926");
+    expect(body.productType).equal("AR_REGISTERED_LETTER");
+
+    // Check message attributes
+    expect(res[0]).to.have.all.keys('Id', 'MessageBody', 'MessageAttributes');
+    expectCommonMessageAttributes(res[0].MessageAttributes, iun);
+  });
+
+  it("test NOTIFICATION_CANCELLED mapping", async () => {
+    let event = loadEventFixture();
+
+    // change category to NOTIFICATION_CANCELLED
+    event.dynamodb.NewImage.category.S = "NOTIFICATION_CANCELLED";
+    event.dynamodb.NewImage.timelineElementId.S =
+      "NOTIFICATION_CANCELLED.IUN_" + iun + ".RECINDEX_0";
+
+    const events = [event];
+
+    const res = await mapEvents(events);
+
+    // NOTIFICATION_CANCELLED is being sent without recIndex being set in the body
+    // because eventMapper doesn't set recIndex for this category
+    expect(res).length(1);
+
+    // Check MessageBody fields - NOTE: no recIndex for NOTIFICATION_CANCELLED
+    let body = JSON.parse(res[0].MessageBody);
+    expect(body).to.have.all.keys("iun", "eventType", "isCancelled", "costUpdatePhase");
+    expect(body.iun).equal(iun);
+    expect(body.eventType).equal(EVENT_TYPE);
+    expect(body.isCancelled).equal(true);
+    expect(body.costUpdatePhase).equal("NOTIFICATION_CANCELLED");
+
+    // Check message attributes
+    expect(res[0]).to.have.all.keys('Id', 'MessageBody', 'MessageAttributes');
+    expectCommonMessageAttributes(res[0].MessageAttributes, iun);
+  });
+
+  it("test REQUEST_REFUSED mapping", async () => {
+    let event = loadEventFixture();
+
+    // change category to REQUEST_REFUSED
+    event.dynamodb.NewImage.category.S = "REQUEST_REFUSED";
+    event.dynamodb.NewImage.timelineElementId.S =
+      "REQUEST_REFUSED.IUN_" + iun + ".RECINDEX_0";
+
+    const events = [event];
+
+    const res = await mapEvents(events);
+
+    // REQUEST_REFUSED is being sent without recIndex being set in the body
+    // because eventMapper doesn't set recIndex for this category
+    expect(res).length(1);
+
+    // Check MessageBody fields - NOTE: no recIndex for REQUEST_REFUSED
+    let body = JSON.parse(res[0].MessageBody);
+    expect(body).to.have.all.keys("iun", "eventType", "isRefused", "costUpdatePhase");
+    expect(body.iun).equal(iun);
+    expect(body.eventType).equal(EVENT_TYPE);
+    expect(body.isRefused).equal(true);
+    expect(body.costUpdatePhase).equal("REQUEST_REFUSED");
+
+    // Check message attributes
+    expect(res[0]).to.have.all.keys('Id', 'MessageBody', 'MessageAttributes');
+    expectCommonMessageAttributes(res[0].MessageAttributes, iun);
+  });
+
+  it("test unmapped event", async () => {
+    let event = loadEventFixture();
+
+    // specify an unsupported category
+    event.dynamodb.NewImage.category.S = "UNSUPPORTED_CATEGORY";
+
+    const events = [event];
+
+    const res = await mapEvents(events);
+
+    // Unsupported category should be filtered out
+    expect(res).length(0);
+  });
+
+  it("test missing fields event - missing recIndex", async () => {
+    let event = loadEventFixture();
+
+    // remove recIndex
+    delete event.dynamodb.NewImage.details.M.recIndex;
+
+    let events = [event];
+
+    let res = await mapEvents(events);
+
+    // Missing recIndex should filter out the event
+    expect(res).length(0);
+  });
+
+  it("test missing fields event - missing analogCost", async () => {
+    let event = loadEventFixture();
+
+    // remove analogCost - firstAnalogCost will still have productType
+    delete event.dynamodb.NewImage.details.M.analogCost;
+
+    let events = [event];
+
+    let res = await mapEvents(events);
+
+    // The event is filtered out because cost is mandatory for non-cancel/refused categories
+    expect(res).length(0);
+  });
+
+  it("test wrong type or missing timelineElementId", async () => {
+    let event = loadEventFixture();
+
+    // change timelineElementId to a wrong type after saving the original value
+    let saved = event.dynamodb.NewImage.timelineElementId.S;
+    event.dynamodb.NewImage.timelineElementId.S = 1234;
+
+    let events = [event];
+
+    let res = await mapEvents(events);
+
+    // Should be filtered because timelineElementId is not a string
+    expect(res).length(0);
+
+    // restore and retry
+    event.dynamodb.NewImage.timelineElementId.S = saved;
+
+    events = [event];
+
+    res = await mapEvents(events);
+
+    // Should be valid now
+    expect(res).length(1);
+    let body = JSON.parse(res[0].MessageBody);
+    expect(body).to.have.all.keys("iun", "eventType", "recIndex", "cost", "productType", "costUpdatePhase");
+    expect(body.iun).equal(iun);
+    expect(body.eventType).equal(EVENT_TYPE);
+    expect(body.costUpdatePhase).equal("SEND_ANALOG_DOMICILE_ATTEMPT_0");
+
+    // remove timelineElementId
+    delete event.dynamodb.NewImage.timelineElementId;
+
+    events = [event];
+
+    res = await mapEvents(events);
+
+    // Should be filtered because timelineElementId is missing
+    expect(res).length(0);
+  });
+
+  it("test SEND_ANALOG_DOMICILE missing ATTEMPT", async () => {
+    let event = loadEventFixture();
+
+    // remove ATTEMPT_0 from timelineElementId
+    event.dynamodb.NewImage.timelineElementId.S =
+      event.dynamodb.NewImage.timelineElementId.S.replace("ATTEMPT_0", "");
+
+    const events = [event];
+
+    const res = await mapEvents(events);
+
+    // Should be filtered because costUpdatePhase cannot be determined (no ATTEMPT found)
+    expect(res).length(0);
+  });
+
+  it("test event filtered when notificationSentAt equals FEATURE_DATE", async () => {
+    if (!process.env.FEATURE_DATE) {
+      throw new Error("FEATURE_DATE must be set for eventMapper tests");
+    }
+
+    let event = loadEventFixture();
+    event.dynamodb.NewImage.notificationSentAt.S = "2023-08-08T00:00:00.000000000Z";
+
+    const res = await mapEvents([event]);
+
+    expect(res).length(0);
+  });
+
+  it("test event filtered when notificationSentAt is before FEATURE_DATE", async () => {
+    if (!process.env.FEATURE_DATE) {
+      throw new Error("FEATURE_DATE must be set for eventMapper tests");
+    }
+
+    let event = loadEventFixture();
+    event.dynamodb.NewImage.notificationSentAt.S = "2023-08-01T17:23:32.640258864Z";
+
+    const res = await mapEvents([event]);
+
+    expect(res).length(0);
+  });
+});
+
+

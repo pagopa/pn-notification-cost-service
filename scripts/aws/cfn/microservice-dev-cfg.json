@@ -7,6 +7,9 @@
     "MemoryAmount": "4GB",
     "MinTasksNumber": "2",
     "MaxTasksNumber": "4",
-    "AutoscalingThreshold": "2500"
+    "CostEventUpdateLambdaEventCategories": "SEND_ANALOG_DOMICILE,SEND_SIMPLE_REGISTERED_LETTER,NOTIFICATION_CANCELLED,REQUEST_REFUSED",
+    "CdcKinesisSourceStreamKeyId": "3bc181f8-9590-49c1-a783-fe6ead65adab",
+    "AutoscalingThreshold": "2500",
+    "UpdateCostFeatureDate" : "01/01/9999"
   }
 }
