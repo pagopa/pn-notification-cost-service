@@ -8,6 +8,8 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
 
+import java.time.Instant;
+
 import static org.junit.jupiter.api.Assertions.*;
 
 class NotificationDeliveryCostTest {
@@ -23,6 +25,9 @@ class NotificationDeliveryCostTest {
                 .notificationFeePolicy(NotificationFeePolicy.DELIVERY_MODE)
                 .pagoPaIntMode(PagoPaIntMode.ASYNC)
                 .vat(22)
+                .senderTaxId("taxId")
+                .senderPaId("senderPaId")
+                .lastUpdate(Instant.now())
                 .build();
 
         assertNotNull(dto);
@@ -159,6 +164,9 @@ class NotificationDeliveryCostTest {
                 .notificationFeePolicy(NotificationFeePolicy.DELIVERY_MODE)
                 .pagoPaIntMode(PagoPaIntMode.ASYNC)
                 .vat(22)
+                .lastUpdate(Instant.now())
+                .senderPaId("paId")
+                .senderTaxId("taxId")
                 .build();
 
         assertNotNull(dto);
@@ -179,6 +187,9 @@ class NotificationDeliveryCostTest {
                 .notificationFeePolicy(NotificationFeePolicy.DELIVERY_MODE)
                 .pagoPaIntMode(PagoPaIntMode.ASYNC)
                 .vat(22)
+                .lastUpdate(Instant.now())
+                .senderPaId("paId")
+                .senderTaxId("taxId")
                 .build();
 
         assertNotNull(dto);
@@ -197,6 +208,9 @@ class NotificationDeliveryCostTest {
                 .notificationFeePolicy(NotificationFeePolicy.FLAT_RATE)
                 .pagoPaIntMode(PagoPaIntMode.NONE)
                 .vat(22)
+                .lastUpdate(Instant.now())
+                .senderPaId("paId")
+                .senderTaxId("taxId")
                 .build();
 
         assertNotNull(dto);
@@ -220,6 +234,9 @@ class NotificationDeliveryCostTest {
                 .notificationFeePolicy(NotificationFeePolicy.DELIVERY_MODE)
                 .pagoPaIntMode(PagoPaIntMode.ASYNC)
                 .vat(22)
+                .lastUpdate(Instant.now())
+                .senderPaId("paId")
+                .senderTaxId("taxId")
                 .build();
 
         assertNotNull(dto);
@@ -239,6 +256,9 @@ class NotificationDeliveryCostTest {
                 .notificationFeePolicy(NotificationFeePolicy.DELIVERY_MODE)
                 .pagoPaIntMode(PagoPaIntMode.ASYNC)
                 .vat(vat)
+                .lastUpdate(Instant.now())
+                .senderPaId("paId")
+                .senderTaxId("taxId")
                 .build();
         assertNotNull(dto);
         assertEquals(vat, dto.getVat());

@@ -5,6 +5,8 @@ import it.pagopa.pn.notificationcostservice.middleware.queue.consumer.event.util
 import it.pagopa.pn.notificationcostservice.model.notificationdeliverycost.NotificationDeliveryCost;
 import it.pagopa.pn.notificationcostservice.model.paymentinfo.PaymentInfo;
 import org.junit.jupiter.api.Test;
+
+import java.time.Instant;
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -16,6 +18,9 @@ class NotificationCostInitializationEventTest {
                 NotificationDeliveryCostTestBuilder.builder()
                         .withIun("IUN-COPY")
                         .withRecIndex(2)
+                        .withSenderPaId("TEST-SENDER-PA-ID")
+                        .withSenderTaxId("TEST-SENDER-TAX-ID")
+                        .withLastUpdate(Instant.now())
                         .build()
         );
 

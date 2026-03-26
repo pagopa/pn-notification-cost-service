@@ -51,6 +51,25 @@ public class NotificationDeliveryCostTestBuilder {
         return this;
     }
 
+    public NotificationDeliveryCostTestBuilder withRecipientInternalId(String recipientInternalId) {
+        this.recipientInternalId = recipientInternalId;
+        return this;
+    }
+     public NotificationDeliveryCostTestBuilder withSenderPaId(String senderPaId) {
+        this.senderPaId = senderPaId;
+        return this;
+    }
+
+    public NotificationDeliveryCostTestBuilder withSenderTaxId(String senderTaxId) {
+        this.senderTaxId = senderTaxId;
+        return this;
+    }
+
+    public NotificationDeliveryCostTestBuilder withLastUpdate(Instant lastUpdate) {
+        this.lastUpdate = lastUpdate;
+        return this;
+    }
+
     public NotificationDeliveryCostTestBuilder withNotificationFeePolicy(NotificationFeePolicy notificationFeePolicy) {
         this.notificationFeePolicy = notificationFeePolicy;
         return this;

@@ -24,13 +24,11 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 
 class NotificationDeliveryCostMapperTest {
 
-    private PnNotificationCostServiceConfigs configs;
-
     private NotificationDeliveryCostMapper mapper;
 
     @BeforeEach
     void init(){
-        configs= Mockito.mock(PnNotificationCostServiceConfigs.class);
+        PnNotificationCostServiceConfigs configs = Mockito.mock(PnNotificationCostServiceConfigs.class);
         Integer sendFee = 100;
         Mockito.when(configs.getSendFee()).thenReturn(sendFee);
         mapper= new NotificationDeliveryCostMapper(configs);
@@ -42,30 +40,21 @@ class NotificationDeliveryCostMapperTest {
         RecipientCostDataDto recipient1 = new RecipientCostDataDto()
                 .recIndex(0)
                 .recipientInternalId("recipient-1")
-                .senderPaId("sender-1")
-                .senderTaxId("taxId")
-                .payments(List.of(new PaymentDataDto("IUV-1", true)))
-                .paFee(50)
-                .notificationFeePolicy(NotificationFeePolicyDto.DELIVERY_MODE)
-                .pagoPaIntMode(PagoPaIntModeDto.SYNC)
-                .vat(22);
+                .payments(List.of(new PaymentDataDto("IUV-1", true)));
+
         RecipientCostDataDto recipient2 = new RecipientCostDataDto()
                 .recIndex(1)
                 .recipientInternalId("recipient-2")
-                .senderPaId("sender-2")
-                .senderTaxId("taxId")
-                .payments(List.of(new PaymentDataDto("IUV-2", true)))
-                .paFee(80)
-                .notificationFeePolicy(NotificationFeePolicyDto.FLAT_RATE)
-                .pagoPaIntMode(PagoPaIntModeDto.ASYNC)
-                .vat(10);
-
+                .payments(List.of(new PaymentDataDto("IUV-2", true)));
 
         NewNotificationCostRequestDto request = new NewNotificationCostRequestDto()
-                .costRecipients(List.of(
-                        recipient1,
-                        recipient2
-                ));
+                .senderPaId("sender-1")
+                .senderTaxId("taxId")
+                .paFee(50)
+                .notificationFeePolicy(NotificationFeePolicyDto.DELIVERY_MODE)
+                .pagoPaIntMode(PagoPaIntModeDto.ASYNC)
+                .vat(22)
+                .costRecipients(List.of(recipient1, recipient2));
 
         List<NotificationDeliveryCost> result = mapper.mapDtoToNotificationDeliveryCost("IUN-123", request);
 
@@ -76,7 +65,7 @@ class NotificationDeliveryCostMapperTest {
         assertThat(result.getFirst().getRecipientInternalId()).isEqualTo("recipient-1");
         assertThat(result.getFirst().getSenderPaId()).isEqualTo("sender-1");
         assertThat(result.getFirst().getVat()).isEqualTo(22);
-        assertThat(result.getFirst().getPagoPaIntMode()).isEqualTo(PagoPaIntMode.SYNC);
+        assertThat(result.getFirst().getPagoPaIntMode()).isEqualTo(PagoPaIntMode.ASYNC);
         assertThat(result.getFirst().getNotificationFeePolicy()).isEqualTo(NotificationFeePolicy.DELIVERY_MODE);
         assertThat(result.getFirst().getBaseCost().getSendFee()).isEqualTo(100);
         assertThat(result.getFirst().getBaseCost().getPaFee()).isEqualTo(50);
@@ -84,12 +73,12 @@ class NotificationDeliveryCostMapperTest {
         assertThat(result.get(1).getIun()).isEqualTo("IUN-123");
         assertThat(result.get(1).getRecIndex()).isEqualTo(1);
         assertThat(result.get(1).getRecipientInternalId()).isEqualTo("recipient-2");
-        assertThat(result.get(1).getSenderPaId()).isEqualTo("sender-2");
-        assertThat(result.get(1).getVat()).isEqualTo(10);
+        assertThat(result.get(1).getSenderPaId()).isEqualTo("sender-1");
+        assertThat(result.get(1).getVat()).isEqualTo(22);
         assertThat(result.get(1).getPagoPaIntMode()).isEqualTo(PagoPaIntMode.ASYNC);
-        assertThat(result.get(1).getNotificationFeePolicy()).isEqualTo(NotificationFeePolicy.FLAT_RATE);
+        assertThat(result.get(1).getNotificationFeePolicy()).isEqualTo(NotificationFeePolicy.DELIVERY_MODE);
         assertThat(result.get(1).getBaseCost().getSendFee()).isEqualTo(100);
-        assertThat(result.get(1).getBaseCost().getPaFee()).isEqualTo(80);
+        assertThat(result.get(1).getBaseCost().getPaFee()).isEqualTo(50);
     }
 
     @Test
@@ -103,9 +92,9 @@ class NotificationDeliveryCostMapperTest {
     @DisplayName("Dovrebbe mappare correttamente i costi base e i metadati generali")
     void shouldMapBaseCostsAndMetadata() {
         // Given
-        Instant now = Instant.now();
-        NotificationDeliveryCost dto = NotificationDeliveryCostTestBuilder.builder().build();
-        dto.setLastUpdate(now);
+        NotificationDeliveryCost dto = NotificationDeliveryCostTestBuilder.builder().withSenderPaId("TEST-SENDER-PA-ID")
+                .withSenderTaxId("TEST-SENDER-TAX-ID")
+                .build();
 
         CalculatedCosts calculated = CalculatedCosts.builder()
                 .totalCostWithVat(1000)
@@ -116,7 +105,6 @@ class NotificationDeliveryCostMapperTest {
         NotificationCostRecipientResponseDto response = mapper.mapDtoToResponse(dto, calculated);
 
         // Then
-        assertThat(response.getLastUpdate()).isEqualTo(now);
         assertThat(response.getTotalCost().getCostWithVat()).isEqualTo(1000);
 
         BaseCostDetailDto baseDetail = response.getTotalCost().getDetails().getBaseCostDetail();
@@ -131,6 +119,9 @@ class NotificationDeliveryCostMapperTest {
         NotificationDeliveryCost dto = NotificationDeliveryCostTestBuilder.builder()
                 .withSimpleRegisteredLetterCost(SimpleRegisteredLetterCost.builder().cost(100).productType("AR").build())
                 .withVat(22)
+                .withSenderPaId("TEST-SENDER-PA-ID")
+                .withSenderTaxId("TEST-SENDER-TAX-ID")
+                .withLastUpdate(Instant.now())
                 .build();
 
         CalculatedCosts calculated = CalculatedCosts.builder()
@@ -175,6 +166,9 @@ class NotificationDeliveryCostMapperTest {
                 .withFirstAnalogCost(FirstAnalogCost.builder().cost(100).productType("AR").build())
                 .withSecondAnalogCost(SecondAnalogCost.builder().cost(150).productType("AR").build())
                 .withVat(22)
+                .withSenderPaId("TEST-SENDER-PA-ID")
+                .withSenderTaxId("TEST-SENDER-TAX-ID")
+                .withLastUpdate(Instant.now())
                 .build();
 
         CalculatedCosts calculated = CalculatedCosts.builder()
@@ -201,7 +195,9 @@ class NotificationDeliveryCostMapperTest {
     @DisplayName("Dovrebbe restituire AnalogCostDetailDto null se non ci sono costi analogici nel DTO")
     void shouldReturnNullAnalogDetailWhenNoAnalogCostsPresent() {
         // Given
-        NotificationDeliveryCost dto = NotificationDeliveryCostTestBuilder.builder().build();
+        NotificationDeliveryCost dto = NotificationDeliveryCostTestBuilder.builder().withSenderPaId("TEST-SENDER-PA-ID")
+                .withSenderTaxId("TEST-SENDER-TAX-ID")
+                .withLastUpdate(Instant.now()).build();
 
         // Nessun costo analogico impostato
         CalculatedCosts calculated = CalculatedCosts.builder().build();

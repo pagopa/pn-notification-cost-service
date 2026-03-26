@@ -56,6 +56,7 @@ class EntityToDtoNotificationDeliveryCostDaoMapperTest {
                 .vat(22)
                 .lastUpdate(now)
                 .ttl(3600L)
+                .senderTaxId("taxId")
                 .build();
 
         NotificationDeliveryCost dto = mapper.entity2Dto(entity);
@@ -114,6 +115,7 @@ class EntityToDtoNotificationDeliveryCostDaoMapperTest {
                 .vat(22)
                 .lastUpdate(now)
                 .ttl(3600L)
+                .senderTaxId("taxId")
                 .build();
 
         NotificationDeliveryCost dto = mapper.entity2Dto(entity);

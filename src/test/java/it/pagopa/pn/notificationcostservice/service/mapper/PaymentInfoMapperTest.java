@@ -16,30 +16,25 @@ public class PaymentInfoMapperTest {
     @Test
     @DisplayName("mapDtoToPaymentInfo mappa più recipients")
     void shouldMapDtoToPaymentInfo() {
-        RecipientCostDataDto firstRecipient = new RecipientCostDataDto()
+        RecipientCostDataDto recipient1 = new RecipientCostDataDto()
                 .recIndex(0)
                 .recipientInternalId("recipient-1")
-                .senderPaId("sender-1")
-                .senderTaxId("taxId")
-                .payments(List.of(new PaymentDataDto("IUV-1", true)))
-                .paFee(50)
-                .notificationFeePolicy(NotificationFeePolicyDto.DELIVERY_MODE)
-                .pagoPaIntMode(PagoPaIntModeDto.SYNC)
-                .vat(22);
+                .payments(List.of(new PaymentDataDto("IUV-1", true)));
 
-        RecipientCostDataDto secondRecipient = new RecipientCostDataDto()
+        RecipientCostDataDto recipient2 = new RecipientCostDataDto()
                 .recIndex(1)
                 .recipientInternalId("recipient-2")
-                .senderPaId("sender-2")
+                .payments(List.of(new PaymentDataDto("IUV-2", false)));
+
+        NewNotificationCostRequestDto request = new NewNotificationCostRequestDto()
+                .senderPaId("sender-1")
                 .senderTaxId("taxId")
-                .payments(List.of(new PaymentDataDto("IUV-2", false)))
                 .paFee(50)
                 .notificationFeePolicy(NotificationFeePolicyDto.DELIVERY_MODE)
                 .pagoPaIntMode(PagoPaIntModeDto.SYNC)
-                .vat(22);
+                .vat(22)
+                .costRecipients(List.of(recipient1, recipient2));
 
-        NewNotificationCostRequestDto request = new NewNotificationCostRequestDto()
-                .costRecipients(List.of(firstRecipient, secondRecipient));
 
         List<PaymentInfo> result = mapper.mapDtoToPaymentInfo("IUN-123", request);
 
@@ -67,19 +62,20 @@ public class PaymentInfoMapperTest {
     @Test
     @DisplayName("mapDtoToPaymentInfo lancia NullPointerException se payments è null")
     void shouldThrowWhenPaymentsIsNull() {
-        RecipientCostDataDto recipient = new RecipientCostDataDto()
+        RecipientCostDataDto recipient1 = new RecipientCostDataDto()
                 .recIndex(0)
                 .recipientInternalId("recipient-1")
+                .payments(null);
+
+        NewNotificationCostRequestDto request = new NewNotificationCostRequestDto()
                 .senderPaId("sender-1")
                 .senderTaxId("taxId")
-                .payments(null)
                 .paFee(50)
                 .notificationFeePolicy(NotificationFeePolicyDto.DELIVERY_MODE)
                 .pagoPaIntMode(PagoPaIntModeDto.SYNC)
-                .vat(22);
+                .vat(22)
+                .costRecipients(List.of(recipient1));
 
-        NewNotificationCostRequestDto request = new NewNotificationCostRequestDto()
-                .costRecipients(List.of(recipient));
 
         assertThatThrownBy(() -> mapper.mapDtoToPaymentInfo("IUN-123", request))
                 .isInstanceOf(NullPointerException.class);

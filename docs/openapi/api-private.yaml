@@ -102,7 +102,30 @@ components:
       type: object
       required:
         - costRecipients
+        - paFee
+        - notificationFeePolicy
+        - pagoPaIntMode
+        - vat
+        - senderPaId
+        - senderTaxId
       properties:
+        paFee:
+          type: integer
+          format: int32
+          minimum: 0
+          description: Costo base dell'ente per notificazione (in eurocent)
+        notificationFeePolicy:
+          $ref: '#/components/schemas/NotificationFeePolicy'
+        pagoPaIntMode:
+          $ref: '#/components/schemas/PagoPaIntMode'
+        vat:
+          $ref: '#/components/schemas/Vat'
+        senderPaId:
+          type: string
+          description: Identificativo (non IPA) della PA mittente che ha eseguito l'onboarding su SelfCare.
+        senderTaxId:
+          type: string
+          description: Codice Fiscale identificativo dell’ente
         costRecipients:
           type: array
           minItems: 1
@@ -115,12 +138,6 @@ components:
       required:
         - recIndex
         - recipientInternalId
-        - senderPaId
-        - senderTaxId
-        - paFee
-        - notificationFeePolicy
-        - pagoPaIntMode
-        - vat
       properties:
         recIndex:
           type: integer
@@ -129,27 +146,10 @@ components:
         recipientInternalId:
           type: string
           description: ID anonimizzato del destinatario
-        senderPaId:
-          type: string
-          description: Identificativo (non IPA) della PA mittente che ha eseguito l'onboarding su SelfCare.
-        senderTaxId:
-          type: string
-          description: Codice Fiscale identificativo dell’ente
         payments:
           type: array
           items:
             $ref: '#/components/schemas/PaymentData'
-        paFee:
-          type: integer
-          format: int32
-          minimum: 0
-          description: Costo base dell'ente per notificazione (in eurocent)
-        notificationFeePolicy:
-          $ref: '#/components/schemas/NotificationFeePolicy'
-        pagoPaIntMode:
-          $ref: '#/components/schemas/PagoPaIntMode'
-        vat:
-          $ref: '#/components/schemas/Vat'
     
     PaymentData:
       type: object
