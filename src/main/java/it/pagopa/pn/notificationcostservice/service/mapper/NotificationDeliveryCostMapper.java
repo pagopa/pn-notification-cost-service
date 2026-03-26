@@ -22,24 +22,27 @@ public class NotificationDeliveryCostMapper {
 
     public List<NotificationDeliveryCost> mapDtoToNotificationDeliveryCost(String iun, NewNotificationCostRequestDto dto) {
         return dto.getCostRecipients().stream()
-                .map(recipient -> mapRecipientToNotificationDeliveryCost(iun, recipient))
+                .map(recipient -> mapRecipientToNotificationDeliveryCost(iun, dto, recipient))
                 .toList();
     }
 
-    private NotificationDeliveryCost mapRecipientToNotificationDeliveryCost(String iun, RecipientCostDataDto recipient) {
-
+    private NotificationDeliveryCost mapRecipientToNotificationDeliveryCost(
+            String iun,
+            NewNotificationCostRequestDto dto,
+            RecipientCostDataDto recipient
+    ) {
         return NotificationDeliveryCost.builder()
                 .iun(iun)
                 .recipientInternalId(recipient.getRecipientInternalId())
-                .senderPaId(recipient.getSenderPaId())
-                .senderTaxId(recipient.getSenderTaxId())
+                .senderPaId(dto.getSenderPaId())
+                .senderTaxId(dto.getSenderTaxId())
                 .recIndex(recipient.getRecIndex())
-                .vat(recipient.getVat())
-                .pagoPaIntMode(PagoPaIntMode.valueOf(recipient.getPagoPaIntMode().name()))
-                .notificationFeePolicy(NotificationFeePolicy.valueOf(recipient.getNotificationFeePolicy().name()))
+                .vat(dto.getVat())
+                .pagoPaIntMode(PagoPaIntMode.valueOf(dto.getPagoPaIntMode().name()))
+                .notificationFeePolicy(NotificationFeePolicy.valueOf(dto.getNotificationFeePolicy().name()))
                 .baseCost(BaseCost.builder()
                         .sendFee(configs.getSendFee())
-                        .paFee(recipient.getPaFee())
+                        .paFee(dto.getPaFee())
                         .build())
                 .build();
     }

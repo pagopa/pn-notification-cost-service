@@ -21,6 +21,7 @@ import reactor.core.publisher.Mono;
 import reactor.test.StepVerifier;
 
 import java.time.Duration;
+import java.time.Instant;
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -55,6 +56,9 @@ class NotificationCostServiceImplTest {
                .withIun(IUN)
                .withRecIndex(REC_INDEX)
                .withIsDeleted(false)
+               .withSenderPaId("TEST-SENDER-PA-ID")
+               .withSenderTaxId("TEST-SENDER-TAX-ID")
+               .withLastUpdate(Instant.now())
                .build();
 
 
@@ -80,6 +84,9 @@ class NotificationCostServiceImplTest {
                 .withIun(IUN)
                 .withRecIndex(REC_INDEX)
                 .withIsDeleted(true)
+                .withSenderPaId("TEST-SENDER-PA-ID")
+                .withSenderTaxId("TEST-SENDER-TAX-ID")
+                .withLastUpdate(Instant.now())
                 .build();
 
        when(notificationDeliveryCostDao.getNotificationDeliveryCostItem(IUN, REC_INDEX)).thenReturn(Mono.just(dto));
@@ -176,6 +183,9 @@ class NotificationCostServiceImplTest {
                 .withIun(IUN)
                 .withRecIndex(REC_INDEX)
                 .withIsDeleted(false)
+                .withSenderPaId("TEST-SENDER-PA-ID")
+                .withSenderTaxId("TEST-SENDER-TAX-ID")
+                .withLastUpdate(Instant.now())
                 .build();
 
         return List.of(notificationDeliveryCost);

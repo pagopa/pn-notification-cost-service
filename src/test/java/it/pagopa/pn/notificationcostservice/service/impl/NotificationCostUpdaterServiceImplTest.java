@@ -19,6 +19,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import reactor.core.publisher.Mono;
 import reactor.test.StepVerifier;
 
+import java.time.Instant;
 import java.util.List;
 
 import static org.mockito.Mockito.*;
@@ -259,6 +260,9 @@ class NotificationCostUpdaterServiceImplTest {
                 .withNotificationFeePolicy(NotificationFeePolicy.DELIVERY_MODE)
                 .withPagoPaIntMode(PagoPaIntMode.SYNC)
                 .withVat(vat)
+                .withSenderPaId("TEST-SENDER-PA-ID")
+                .withSenderTaxId("TEST-SENDER-TAX-ID")
+                .withLastUpdate(Instant.now())
                 .build();
     }
 

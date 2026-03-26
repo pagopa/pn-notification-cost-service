@@ -12,6 +12,8 @@ import it.pagopa.pn.notificationcostservice.model.notificationdeliverycost.analo
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
+import java.time.Instant;
+
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
@@ -41,6 +43,9 @@ class NotificationCostUpdaterMapperTest {
                         .productType("890")
                         .build())
                 .withIsDeleted(true)
+                .withSenderPaId("TEST-SENDER-PA-ID")
+                .withSenderTaxId("TEST-SENDER-TAX-ID")
+                .withLastUpdate(Instant.now())
                 .build();
 
         NotificationDeliveryCostEntity result =
@@ -58,7 +63,6 @@ class NotificationCostUpdaterMapperTest {
 
         // campi volutamente non aggiornati dal mapper
         assertThat(result.getRecipientInternalId()).isNull();
-        assertThat(result.getSenderPaId()).isNull();
         assertThat(result.getFirstAnalogCost()).isNull();
         assertThat(result.getSecondAnalogCost()).isNull();
         assertThat(result.getSimpleRegisteredLetterCost()).isNull();
@@ -71,6 +75,9 @@ class NotificationCostUpdaterMapperTest {
         NotificationDeliveryCost dto = NotificationDeliveryCostTestBuilder.builder()
                 .withIun("IUN-123")
                 .withRecIndex(0)
+                .withSenderPaId("TEST-SENDER-PA-ID")
+                .withSenderTaxId("TEST-SENDER-TAX-ID")
+                .withLastUpdate(Instant.now())
                 .build();
 
         assertThatThrownBy(() -> mapper.mapNotificationCostUpdater(null, dto))

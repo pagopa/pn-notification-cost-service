@@ -102,6 +102,9 @@ class NotificationDeliveryCostDaoDynamoTest {
                 .recipientInternalId("recipientInternalId")
                 .lastUpdate(entity.getLastUpdate())
                 .ttl(10000L)
+                .lastUpdate(Instant.now())
+                .senderPaId("paId")
+                .senderTaxId("taxId")
                 .build();
 
         when(mockTable.getItem(any(GetItemEnhancedRequest.class)))
@@ -251,6 +254,9 @@ class NotificationDeliveryCostDaoDynamoTest {
                         .build())
                 .simpleRegisteredLetterCost(null)
                 .recipientInternalId("recipientInternalId")
+                .lastUpdate(Instant.now())
+                .senderPaId("paId")
+                .senderTaxId("taxId")
                 .build();
     }
 

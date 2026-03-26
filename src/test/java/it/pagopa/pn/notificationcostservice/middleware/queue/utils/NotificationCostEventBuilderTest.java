@@ -6,6 +6,8 @@ import it.pagopa.pn.notificationcostservice.middleware.queue.consumer.event.util
 import it.pagopa.pn.notificationcostservice.model.notificationdeliverycost.NotificationDeliveryCost;
 import it.pagopa.pn.notificationcostservice.model.paymentinfo.PaymentInfo;
 import org.junit.jupiter.api.Test;
+
+import java.time.Instant;
 import java.util.List;
 
 import static it.pagopa.pn.notificationcostservice.middleware.queue.consumer.event.InternalEventType.NOTIFICATION_COST_INITIALIZATION;
@@ -20,6 +22,9 @@ class NotificationCostEventBuilderTest {
                 NotificationDeliveryCostTestBuilder.builder()
                         .withIun(iun)
                         .withRecIndex(1)
+                        .withSenderPaId("TEST-SENDER-PA-ID")
+                        .withSenderTaxId("TEST-SENDER-TAX-ID")
+                        .withLastUpdate(Instant.now())
                         .build()
         );
 
@@ -52,7 +57,9 @@ class NotificationCostEventBuilderTest {
     @Test
     void buildNotificationCostEventAllowsNullIunWithCurrentImplementation() {
         List<NotificationDeliveryCost> notificationCosts = List.of(
-                NotificationDeliveryCostTestBuilder.builder().build()
+                NotificationDeliveryCostTestBuilder.builder().withSenderPaId("TEST-SENDER-PA-ID")
+                        .withSenderTaxId("TEST-SENDER-TAX-ID")
+                        .withLastUpdate(Instant.now()).build()
         );
         List<PaymentInfo> payments = List.of();
 

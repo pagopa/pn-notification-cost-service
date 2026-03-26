@@ -43,6 +43,8 @@ public class NotificationDeliveryCost {
         validateNonNullableField(baseCost, "baseCost", violations);
         validateNonNullableField(notificationFeePolicy, "notificationFeePolicy", violations);
         validateNonNullableField(pagoPaIntMode, "pagoPaIntMode", violations);
+        validateNonNullableField(senderPaId, "senderPaId", violations);
+        validateNonNullableField(senderTaxId, "senderTaxId", violations);
         validateAnalogCosts(firstAnalogCost, simpleRegisteredLetterCost, violations);
         validateIntervalIntField(vat, "vat", violations, VAT_RANGE);
 

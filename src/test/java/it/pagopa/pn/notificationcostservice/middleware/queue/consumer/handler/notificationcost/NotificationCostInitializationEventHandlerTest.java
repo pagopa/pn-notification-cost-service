@@ -19,6 +19,7 @@ import reactor.core.publisher.Mono;
 import reactor.test.StepVerifier;
 import reactor.test.publisher.PublisherProbe;
 
+import java.time.Instant;
 import java.util.List;
 
 import static org.mockito.Mockito.*;
@@ -171,6 +172,9 @@ class NotificationCostInitializationEventHandlerTest {
                         .withIun(IUN)
                         .withRecIndex(0)
                         .withIsDeleted(false)
+                        .withSenderPaId("TEST-SENDER-PA-ID")
+                        .withSenderTaxId("TEST-SENDER-TAX-ID")
+                        .withLastUpdate(Instant.now())
                         .build()
         );
     }
