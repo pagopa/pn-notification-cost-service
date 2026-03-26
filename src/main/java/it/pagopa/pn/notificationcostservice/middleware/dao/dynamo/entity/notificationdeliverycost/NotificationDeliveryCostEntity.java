@@ -24,7 +24,8 @@ public class NotificationDeliveryCostEntity {
     public static final String COL_PK = "pk";
     public static final String COL_SK = "sk";
     public static final String COL_RECIPIENT_INTERNAL_ID = "recipientInternalId";
-    public static final String COL_SENDER_INTERNAL_ID = "senderInternalId";
+    public static final String COL_SENDER_PA_ID = "senderPaId";
+    public static final String COL_SENDER_TAX_ID = "senderTaxId";
     public static final String COL_BASE_COST = "baseCost";
     public static final String COL_FIRST_ANALOG_COST = "firstAnalogCost";
     public static final String COL_SECOND_ANALOG_COST = "secondAnalogCost";
@@ -48,8 +49,11 @@ public class NotificationDeliveryCostEntity {
     @Getter(onMethod=@__({@DynamoDbAttribute(COL_RECIPIENT_INTERNAL_ID)}))
     private String recipientInternalId;
 
-    @Getter(onMethod=@__({@DynamoDbAttribute(COL_SENDER_INTERNAL_ID)}))
-    private String senderInternalId;
+    @Getter(onMethod=@__({@DynamoDbAttribute(COL_SENDER_PA_ID)}))
+    private String senderPaId;
+
+    @Getter(onMethod=@__({@DynamoDbAttribute(COL_SENDER_TAX_ID)}))
+    private String senderTaxId;
 
     @Getter(onMethod=@__({@DynamoDbAttribute(COL_BASE_COST)}))
     private BaseCostEntity baseCost;

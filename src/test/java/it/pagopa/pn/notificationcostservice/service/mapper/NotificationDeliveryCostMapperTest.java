@@ -42,7 +42,8 @@ class NotificationDeliveryCostMapperTest {
         RecipientCostDataDto recipient1 = new RecipientCostDataDto()
                 .recIndex(0)
                 .recipientInternalId("recipient-1")
-                .senderInternalId("sender-1")
+                .senderPaId("sender-1")
+                .senderTaxId("taxId")
                 .payments(List.of(new PaymentDataDto("IUV-1", true)))
                 .paFee(50)
                 .notificationFeePolicy(NotificationFeePolicyDto.DELIVERY_MODE)
@@ -51,7 +52,8 @@ class NotificationDeliveryCostMapperTest {
         RecipientCostDataDto recipient2 = new RecipientCostDataDto()
                 .recIndex(1)
                 .recipientInternalId("recipient-2")
-                .senderInternalId("sender-2")
+                .senderPaId("sender-2")
+                .senderTaxId("taxId")
                 .payments(List.of(new PaymentDataDto("IUV-2", true)))
                 .paFee(80)
                 .notificationFeePolicy(NotificationFeePolicyDto.FLAT_RATE)
@@ -72,7 +74,7 @@ class NotificationDeliveryCostMapperTest {
         assertThat(result.getFirst().getIun()).isEqualTo("IUN-123");
         assertThat(result.getFirst().getRecIndex()).isEqualTo(0);
         assertThat(result.getFirst().getRecipientInternalId()).isEqualTo("recipient-1");
-        assertThat(result.getFirst().getSenderInternalId()).isEqualTo("sender-1");
+        assertThat(result.getFirst().getSenderPaId()).isEqualTo("sender-1");
         assertThat(result.getFirst().getVat()).isEqualTo(22);
         assertThat(result.getFirst().getPagoPaIntMode()).isEqualTo(PagoPaIntMode.SYNC);
         assertThat(result.getFirst().getNotificationFeePolicy()).isEqualTo(NotificationFeePolicy.DELIVERY_MODE);
@@ -82,7 +84,7 @@ class NotificationDeliveryCostMapperTest {
         assertThat(result.get(1).getIun()).isEqualTo("IUN-123");
         assertThat(result.get(1).getRecIndex()).isEqualTo(1);
         assertThat(result.get(1).getRecipientInternalId()).isEqualTo("recipient-2");
-        assertThat(result.get(1).getSenderInternalId()).isEqualTo("sender-2");
+        assertThat(result.get(1).getSenderPaId()).isEqualTo("sender-2");
         assertThat(result.get(1).getVat()).isEqualTo(10);
         assertThat(result.get(1).getPagoPaIntMode()).isEqualTo(PagoPaIntMode.ASYNC);
         assertThat(result.get(1).getNotificationFeePolicy()).isEqualTo(NotificationFeePolicy.FLAT_RATE);

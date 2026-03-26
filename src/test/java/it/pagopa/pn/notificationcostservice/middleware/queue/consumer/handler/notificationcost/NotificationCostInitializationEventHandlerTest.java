@@ -71,37 +71,6 @@ class NotificationCostInitializationEventHandlerTest {
     }
 
     @Test
-    void handleNotificationCostInitializationEvent_shouldErrorWhenPaymentsAreNull() {
-        NotificationCostInitializationEvent.Payload payload = NotificationCostInitializationEvent.Payload.builder()
-                .iun(IUN)
-                .notificationCosts(buildNotificationCosts())
-                .payments(null)
-                .build();
-
-        StepVerifier.create(handler.handleNotificationCostInitializationEvent(payload))
-                .expectError(PnInternalException.class)
-                .verify();
-
-        verifyNoInteractions(notificationCostUpdaterService, paymentInfoDao, producer);
-    }
-
-    @Test
-    void handleNotificationCostInitializationEvent_shouldErrorWhenPaymentsAreEmpty() {
-        NotificationCostInitializationEvent.Payload payload = NotificationCostInitializationEvent.Payload.builder()
-                .iun(IUN)
-                .notificationCosts(buildNotificationCosts())
-                .payments(List.of())
-                .build();
-
-        StepVerifier.create(handler.handleNotificationCostInitializationEvent(payload))
-                .expectError(PnInternalException.class)
-                .verify();
-
-        verifyNoInteractions(notificationCostUpdaterService, paymentInfoDao, producer);
-    }
-
-
-    @Test
     void handleNotificationCostInitializationEvent_shouldPropagateErrorWhenSavingNotificationCostsFails() {
         List<NotificationDeliveryCost> notificationCosts = buildNotificationCosts();
         List<PaymentInfo> payments = buildPayments();

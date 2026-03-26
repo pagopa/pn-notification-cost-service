@@ -58,7 +58,7 @@ class NotificationCostUpdaterMapperTest {
 
         // campi volutamente non aggiornati dal mapper
         assertThat(result.getRecipientInternalId()).isNull();
-        assertThat(result.getSenderInternalId()).isNull();
+        assertThat(result.getSenderPaId()).isNull();
         assertThat(result.getFirstAnalogCost()).isNull();
         assertThat(result.getSecondAnalogCost()).isNull();
         assertThat(result.getSimpleRegisteredLetterCost()).isNull();

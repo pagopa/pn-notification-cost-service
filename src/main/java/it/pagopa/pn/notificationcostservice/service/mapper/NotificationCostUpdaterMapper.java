@@ -34,7 +34,8 @@ public class NotificationCostUpdaterMapper {
         entity.setVat(notificationDeliveryCost.getVat());
         entity.setNotificationFeePolicy(notificationDeliveryCost.getNotificationFeePolicy());
         entity.setPagoPaIntMode(notificationDeliveryCost.getPagoPaIntMode());
-        entity.setSenderInternalId(notificationDeliveryCost.getSenderInternalId());
+        entity.setSenderPaId(notificationDeliveryCost.getSenderPaId());
+        entity.setSenderTaxId(notificationDeliveryCost.getSenderTaxId());
         entity.setRecipientInternalId(notificationDeliveryCost.getRecipientInternalId());
 
         // non voglio aggiornarli

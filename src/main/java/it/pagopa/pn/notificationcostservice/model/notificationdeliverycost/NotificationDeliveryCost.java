@@ -23,7 +23,8 @@ public class NotificationDeliveryCost {
     private String iun;
     private int recIndex;
     private String recipientInternalId;
-    private String senderInternalId;
+    private String senderPaId;
+    private String senderTaxId;
     private BaseCost baseCost;
     private FirstAnalogCost firstAnalogCost;
     private SecondAnalogCost secondAnalogCost;
@@ -36,7 +37,7 @@ public class NotificationDeliveryCost {
     private Long ttl;
 
     @Builder
-    private NotificationDeliveryCost(String iun, int recIndex, String recipientInternalId, String senderInternalId, BaseCost baseCost, FirstAnalogCost firstAnalogCost, SecondAnalogCost secondAnalogCost, SimpleRegisteredLetterCost simpleRegisteredLetterCost, Boolean isDeleted, NotificationFeePolicy notificationFeePolicy, PagoPaIntMode pagoPaIntMode, int vat, Instant lastUpdate, Long ttl) {
+    private NotificationDeliveryCost(String iun, int recIndex, String recipientInternalId, String senderPaId,String senderTaxId ,BaseCost baseCost, FirstAnalogCost firstAnalogCost, SecondAnalogCost secondAnalogCost, SimpleRegisteredLetterCost simpleRegisteredLetterCost, Boolean isDeleted, NotificationFeePolicy notificationFeePolicy, PagoPaIntMode pagoPaIntMode, int vat, Instant lastUpdate, Long ttl) {
         List<String> violations = new ArrayList<>();
         validateNonNullableField(iun, "iun", violations);
         validateNonNullableField(baseCost, "baseCost", violations);
@@ -52,7 +53,8 @@ public class NotificationDeliveryCost {
         this.iun = iun;
         this.recIndex = recIndex;
         this.recipientInternalId = recipientInternalId;
-        this.senderInternalId = senderInternalId;
+        this.senderPaId = senderPaId;
+        this.senderTaxId = senderTaxId;
         this.baseCost = baseCost;
         this.firstAnalogCost = firstAnalogCost;
         this.secondAnalogCost = secondAnalogCost;

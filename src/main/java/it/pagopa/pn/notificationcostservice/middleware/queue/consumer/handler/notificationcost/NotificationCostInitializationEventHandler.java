@@ -34,13 +34,10 @@ public class NotificationCostInitializationEventHandler {
         List<NotificationDeliveryCost> notificationCosts = payload.getNotificationCosts();
         List<PaymentInfo> payments = payload.getPayments();
 
-        if (notificationCosts == null || notificationCosts.isEmpty() || payments == null || payments.isEmpty()) {
+        if (notificationCosts == null || notificationCosts.isEmpty()) {
             log.error(
-                    "Skipping NotificationCostInitializationEvent for iun={} because notificationCosts or payments are null/empty. notificationCostsSize={}, paymentsSize={}",
-                    payload.getIun(),
-                    notificationCosts != null ? notificationCosts.size() : null,
-                    payments != null ? payments.size() : null
-            );
+                    "Skipping NotificationCostInitializationEvent for iun={} because notificationCosts are null/empty.",
+                    payload.getIun());
             return Mono.error(new PnInternalException("Missing required data for iun:"+  payload.getIun(),
                     ERROR_CODE_NOTIFICATIONCOSTSERVICE_INTERNAL_SERVER_ERROR));
         }

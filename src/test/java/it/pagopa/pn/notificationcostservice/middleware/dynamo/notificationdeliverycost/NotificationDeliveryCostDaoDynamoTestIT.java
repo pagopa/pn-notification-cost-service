@@ -112,7 +112,7 @@ public class NotificationDeliveryCostDaoDynamoTestIT {
                         .build())
                 .simpleRegisteredLetterCost(null)
                 .recipientInternalId("recipientInternalId")
-                .senderInternalId("senderInternalId")
+                .senderPaId("senderInternalId")
                 .build();
     }
 
@@ -147,7 +147,7 @@ public class NotificationDeliveryCostDaoDynamoTestIT {
             Assertions.assertEquals(notification.getIun(), elementFromDb.getIun());
             Assertions.assertEquals(notification.getRecIndex(), elementFromDb.getRecIndex());
             Assertions.assertEquals(notification.getRecipientInternalId(), elementFromDb.getRecipientInternalId());
-            Assertions.assertEquals(notification.getSenderInternalId(), elementFromDb.getSenderInternalId());
+            Assertions.assertEquals(notification.getSenderPaId(), elementFromDb.getSenderPaId());
             Assertions.assertEquals(notification.getBaseCost().getPaFee(), elementFromDb.getBaseCost().getPaFee());
             Assertions.assertEquals(notification.getBaseCost().getSendFee(), elementFromDb.getBaseCost().getSendFee());
             Assertions.assertEquals(notification.getVat(), elementFromDb.getVat());
@@ -173,7 +173,7 @@ public class NotificationDeliveryCostDaoDynamoTestIT {
                 .iun(iun)
                 .recIndex(recIndex)
                 .recipientInternalId("recipient-original")
-                .senderInternalId("sender-original")
+                .senderPaId("sender-original")
                 .baseCost(BaseCostEntity.builder()
                         .paFee(2)
                         .sendFee(10)
@@ -190,7 +190,7 @@ public class NotificationDeliveryCostDaoDynamoTestIT {
                 .iun(iun)
                 .recIndex(recIndex)
                 .recipientInternalId("recipient-updated")
-                .senderInternalId(null)
+                .senderPaId(null)
                 .baseCost(BaseCostEntity.builder()
                         .paFee(5)
                         .sendFee(15)
@@ -214,7 +214,7 @@ public class NotificationDeliveryCostDaoDynamoTestIT {
 
             Assertions.assertNotNull(elementFromDb);
             Assertions.assertEquals("recipient-updated", elementFromDb.getRecipientInternalId());
-            Assertions.assertEquals("sender-original", elementFromDb.getSenderInternalId());
+            Assertions.assertEquals("sender-original", elementFromDb.getSenderPaId());
             Assertions.assertEquals(5, elementFromDb.getBaseCost().getPaFee());
             Assertions.assertEquals(15, elementFromDb.getBaseCost().getSendFee());
             Assertions.assertEquals(20000L, elementFromDb.getTtl());

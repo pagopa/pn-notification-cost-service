@@ -54,7 +54,8 @@ public class DtoToEntityNotificationDeliveryCostDaoMapperTest {
                 .notificationFeePolicy(NotificationFeePolicy.DELIVERY_MODE)
                 .pagoPaIntMode(PagoPaIntMode.SYNC)
                 .vat(22)
-                .senderInternalId("sender")
+                .senderPaId("sender")
+                .senderTaxId("taxId")
                 .lastUpdate(now)
                 .ttl(3600L)
                 .build();
@@ -64,7 +65,7 @@ public class DtoToEntityNotificationDeliveryCostDaoMapperTest {
         assertEquals(dto.getIun(), entity.getIun());
         assertEquals(dto.getRecIndex(), entity.getRecIndex());
         assertEquals(dto.getRecipientInternalId(), entity.getRecipientInternalId());
-        assertEquals(dto.getSenderInternalId(), entity.getSenderInternalId());
+        assertEquals(dto.getSenderPaId(), entity.getSenderPaId());
 
         // Verifica BaseCost
         assertEquals(dto.getBaseCost().getSendFee(), entity.getBaseCost().getSendFee());
@@ -110,7 +111,8 @@ public class DtoToEntityNotificationDeliveryCostDaoMapperTest {
                 .notificationFeePolicy(NotificationFeePolicy.DELIVERY_MODE)
                 .pagoPaIntMode(PagoPaIntMode.SYNC)
                 .vat(22)
-                .senderInternalId("sender")
+                .senderPaId("sender")
+                .senderTaxId("taxId")
                 .lastUpdate(now)
                 .ttl(3600L)
                 .build();
