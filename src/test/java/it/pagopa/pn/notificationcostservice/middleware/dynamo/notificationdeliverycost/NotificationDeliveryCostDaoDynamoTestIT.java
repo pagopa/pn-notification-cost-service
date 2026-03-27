@@ -101,7 +101,6 @@ public class NotificationDeliveryCostDaoDynamoTestIT {
                 .notificationFeePolicy(NotificationFeePolicy.DELIVERY_MODE)
                 .isDeleted(false)
                 .lastUpdate(Instant.now())
-                .ttl(10000L)
                 .firstAnalogCost(FirstAnalogCostEntity.builder()
                         .cost(50)
                         .productType("AR")
@@ -183,7 +182,6 @@ public class NotificationDeliveryCostDaoDynamoTestIT {
                 .pagoPaIntMode(PagoPaIntMode.ASYNC)
                 .isDeleted(false)
                 .lastUpdate(Instant.now())
-                .ttl(10000L)
                 .build();
 
         NotificationDeliveryCostEntity updated = NotificationDeliveryCostEntity.builder()
@@ -200,7 +198,6 @@ public class NotificationDeliveryCostDaoDynamoTestIT {
                 .pagoPaIntMode(PagoPaIntMode.ASYNC)
                 .isDeleted(false)
                 .lastUpdate(Instant.now())
-                .ttl(20000L)
                 .build();
 
         try {
@@ -217,7 +214,6 @@ public class NotificationDeliveryCostDaoDynamoTestIT {
             Assertions.assertEquals("sender-original", elementFromDb.getSenderPaId());
             Assertions.assertEquals(5, elementFromDb.getBaseCost().getPaFee());
             Assertions.assertEquals(15, elementFromDb.getBaseCost().getSendFee());
-            Assertions.assertEquals(20000L, elementFromDb.getTtl());
             Assertions.assertEquals(NotificationFeePolicy.DELIVERY_MODE, elementFromDb.getNotificationFeePolicy());
             Assertions.assertEquals(PagoPaIntMode.ASYNC, elementFromDb.getPagoPaIntMode());
         } catch (Exception e) {

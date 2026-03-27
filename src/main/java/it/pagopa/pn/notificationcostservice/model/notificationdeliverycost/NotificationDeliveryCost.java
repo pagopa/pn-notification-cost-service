@@ -34,10 +34,9 @@ public class NotificationDeliveryCost {
     private PagoPaIntMode pagoPaIntMode;
     private int vat;
     private Instant lastUpdate;
-    private Long ttl;
 
     @Builder
-    private NotificationDeliveryCost(String iun, int recIndex, String recipientInternalId, String senderPaId,String senderTaxId ,BaseCost baseCost, FirstAnalogCost firstAnalogCost, SecondAnalogCost secondAnalogCost, SimpleRegisteredLetterCost simpleRegisteredLetterCost, Boolean isDeleted, NotificationFeePolicy notificationFeePolicy, PagoPaIntMode pagoPaIntMode, int vat, Instant lastUpdate, Long ttl) {
+    private NotificationDeliveryCost(String iun, int recIndex, String recipientInternalId, String senderPaId,String senderTaxId ,BaseCost baseCost, FirstAnalogCost firstAnalogCost, SecondAnalogCost secondAnalogCost, SimpleRegisteredLetterCost simpleRegisteredLetterCost, Boolean isDeleted, NotificationFeePolicy notificationFeePolicy, PagoPaIntMode pagoPaIntMode, int vat, Instant lastUpdate) {
         List<String> violations = new ArrayList<>();
         validateNonNullableField(iun, "iun", violations);
         validateNonNullableField(baseCost, "baseCost", violations);
@@ -66,7 +65,6 @@ public class NotificationDeliveryCost {
         this.pagoPaIntMode = pagoPaIntMode;
         this.vat = vat;
         this.lastUpdate = lastUpdate;
-        this.ttl = ttl;
     }
 
     private void validateAnalogCosts(FirstAnalogCost firstAnalogCost, SimpleRegisteredLetterCost simpleRegisteredLetterCost, List<String> violations) {
