@@ -2,10 +2,12 @@ package it.pagopa.pn.notificationcostservice.model.notificationdeliverycost.anal
 
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 @EqualsAndHashCode(callSuper = true)
 @Getter
+@NoArgsConstructor
 @Setter
 public class SecondAnalogCost extends AnalogCost {
     public SecondAnalogCost(Integer cost, String productType) {

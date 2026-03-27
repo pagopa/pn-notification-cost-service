@@ -5,25 +5,26 @@ import it.pagopa.pn.notificationcostservice.model.notificationdeliverycost.analo
 import it.pagopa.pn.notificationcostservice.model.notificationdeliverycost.analogcost.SecondAnalogCost;
 import it.pagopa.pn.notificationcostservice.model.notificationdeliverycost.analogcost.SimpleRegisteredLetterCost;
 import it.pagopa.pn.notificationcostservice.model.utils.IntegerInterval;
-import lombok.Builder;
-import lombok.Data;
-import lombok.EqualsAndHashCode;
-import lombok.ToString;
+import lombok.*;
+
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
-import static it.pagopa.pn.notificationcostservice.utils.DomainValidationUtils.validateNonNullableField;
+
 import static it.pagopa.pn.notificationcostservice.utils.DomainValidationUtils.validateIntervalIntField;
+import static it.pagopa.pn.notificationcostservice.utils.DomainValidationUtils.validateNonNullableField;
 
 @Data
 @EqualsAndHashCode
 @ToString
+@NoArgsConstructor
 public class NotificationDeliveryCost {
     private String iun;
     private int recIndex;
     private String recipientInternalId;
-    private String senderInternalId;
+    private String senderPaId;
+    private String senderTaxId;
     private BaseCost baseCost;
     private FirstAnalogCost firstAnalogCost;
     private SecondAnalogCost secondAnalogCost;
@@ -36,12 +37,14 @@ public class NotificationDeliveryCost {
     private Long ttl;
 
     @Builder
-    private NotificationDeliveryCost(String iun, int recIndex, String recipientInternalId, String senderInternalId, BaseCost baseCost, FirstAnalogCost firstAnalogCost, SecondAnalogCost secondAnalogCost, SimpleRegisteredLetterCost simpleRegisteredLetterCost, Boolean isDeleted, NotificationFeePolicy notificationFeePolicy, PagoPaIntMode pagoPaIntMode, int vat, Instant lastUpdate, Long ttl) {
+    private NotificationDeliveryCost(String iun, int recIndex, String recipientInternalId, String senderPaId,String senderTaxId ,BaseCost baseCost, FirstAnalogCost firstAnalogCost, SecondAnalogCost secondAnalogCost, SimpleRegisteredLetterCost simpleRegisteredLetterCost, Boolean isDeleted, NotificationFeePolicy notificationFeePolicy, PagoPaIntMode pagoPaIntMode, int vat, Instant lastUpdate, Long ttl) {
         List<String> violations = new ArrayList<>();
         validateNonNullableField(iun, "iun", violations);
         validateNonNullableField(baseCost, "baseCost", violations);
         validateNonNullableField(notificationFeePolicy, "notificationFeePolicy", violations);
         validateNonNullableField(pagoPaIntMode, "pagoPaIntMode", violations);
+        validateNonNullableField(senderPaId, "senderPaId", violations);
+        validateNonNullableField(senderTaxId, "senderTaxId", violations);
         validateAnalogCosts(firstAnalogCost, simpleRegisteredLetterCost, violations);
         validateIntervalIntField(vat, "vat", violations, VAT_RANGE);
 
@@ -52,7 +55,8 @@ public class NotificationDeliveryCost {
         this.iun = iun;
         this.recIndex = recIndex;
         this.recipientInternalId = recipientInternalId;
-        this.senderInternalId = senderInternalId;
+        this.senderPaId = senderPaId;
+        this.senderTaxId = senderTaxId;
         this.baseCost = baseCost;
         this.firstAnalogCost = firstAnalogCost;
         this.secondAnalogCost = secondAnalogCost;

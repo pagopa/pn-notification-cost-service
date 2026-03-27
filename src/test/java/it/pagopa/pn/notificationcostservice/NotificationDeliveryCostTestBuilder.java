@@ -19,7 +19,8 @@ public class NotificationDeliveryCostTestBuilder {
     private String iun;
     private int recIndex;
     private String recipientInternalId;
-    private String senderInternalId;
+    private String senderPaId;
+    private String senderTaxId;
     private BaseCost baseCost;
     private FirstAnalogCost firstAnalogCost;
     private SecondAnalogCost secondAnalogCost;
@@ -47,6 +48,25 @@ public class NotificationDeliveryCostTestBuilder {
 
     public NotificationDeliveryCostTestBuilder withBaseCost(BaseCost baseCost) {
         this.baseCost = baseCost;
+        return this;
+    }
+
+    public NotificationDeliveryCostTestBuilder withRecipientInternalId(String recipientInternalId) {
+        this.recipientInternalId = recipientInternalId;
+        return this;
+    }
+     public NotificationDeliveryCostTestBuilder withSenderPaId(String senderPaId) {
+        this.senderPaId = senderPaId;
+        return this;
+    }
+
+    public NotificationDeliveryCostTestBuilder withSenderTaxId(String senderTaxId) {
+        this.senderTaxId = senderTaxId;
+        return this;
+    }
+
+    public NotificationDeliveryCostTestBuilder withLastUpdate(Instant lastUpdate) {
+        this.lastUpdate = lastUpdate;
         return this;
     }
 
@@ -106,7 +126,8 @@ public class NotificationDeliveryCostTestBuilder {
                 .iun(iun)
                 .recIndex(recIndex)
                 .recipientInternalId(recipientInternalId)
-                .senderInternalId(senderInternalId)
+                .senderPaId(senderPaId)
+                .senderTaxId(senderTaxId)
                 .baseCost(baseCost)
                 .firstAnalogCost(firstAnalogCost)
                 .secondAnalogCost(secondAnalogCost)
