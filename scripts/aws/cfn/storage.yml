@@ -61,6 +61,22 @@ Resources:
         Enabled: true
       PointInTimeRecoverySpecification:
         PointInTimeRecoveryEnabled: true
+
+  PaymentInfoTable:
+    Type: AWS::DynamoDB::Table
+    UpdateReplacePolicy: Retain
+    DeletionPolicy: Retain
+    Properties:
+      TableName: !Sub '${ProjectName}-PaymentInfo'
+      AttributeDefinitions:
+        - AttributeName: "pk"
+          AttributeType: "S"
+      KeySchema:
+        - AttributeName: "pk"
+          KeyType: "HASH"
+      BillingMode: "PAY_PER_REQUEST"
+      PointInTimeRecoverySpecification:
+        PointInTimeRecoveryEnabled: true
   #Sqs queues
   PnNotificationCostToUpdateQueue:
     Type: AWS::CloudFormation::Stack
@@ -98,9 +114,6 @@ Resources:
         LogGroupPrefix: '/aws/lambda'
 
 Outputs:
-  PaperEventsCostUpdateLambdaName:
-    Value: !Sub "${ProjectName}-paperEventsCostUpdate-workflow"
-
   CostEventUpdateLambdaName:
     Value: !Sub "${ProjectName}-cost-event-update"
 
@@ -112,6 +125,14 @@ Outputs:
   NotificationDeliveryCostTableArn:
     Description: ARN of dynamodb table containing cost of notification delivery
     Value: !Sub '${NotificationDeliveryCostTable.Arn}'
+
+  PaymentInfoTableName:
+    Description: Name of dynamodb table containing info about payments
+    Value: !Ref PaymentInfoTable
+
+  PaymentInfoTableArn:
+    Description: ARN of dynamodb table containing info about payments
+    Value: !Sub '${PaymentInfoTable.Arn}'
   # Log group exports
   EcsNotificationCostServiceLogGroup:
     Value: !GetAtt PnNotificationCostServiceLogGroup.Outputs.LogGroupName
