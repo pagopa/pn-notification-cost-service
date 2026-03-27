@@ -57,7 +57,6 @@ public class DtoToEntityNotificationDeliveryCostDaoMapperTest {
                 .senderPaId("sender")
                 .senderTaxId("taxId")
                 .lastUpdate(now)
-                .ttl(3600L)
                 .build();
 
         NotificationDeliveryCostEntity entity = mapper.dto2Entity(dto);
@@ -87,7 +86,6 @@ public class DtoToEntityNotificationDeliveryCostDaoMapperTest {
         assertEquals(dto.getPagoPaIntMode(), entity.getPagoPaIntMode());
         assertEquals(dto.getVat(), entity.getVat());
         assertEquals(dto.getLastUpdate(), entity.getLastUpdate());
-        assertEquals(dto.getTtl(), entity.getTtl());
     }
 
     @Test
@@ -114,7 +112,6 @@ public class DtoToEntityNotificationDeliveryCostDaoMapperTest {
                 .senderPaId("sender")
                 .senderTaxId("taxId")
                 .lastUpdate(now)
-                .ttl(3600L)
                 .build();
 
         NotificationDeliveryCostEntity entity = mapper.dto2Entity(dto);

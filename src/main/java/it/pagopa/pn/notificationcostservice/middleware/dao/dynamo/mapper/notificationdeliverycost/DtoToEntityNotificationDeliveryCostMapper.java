@@ -23,7 +23,6 @@ public class DtoToEntityNotificationDeliveryCostMapper {
                 .notificationFeePolicy(notificationDeliveryCost.getNotificationFeePolicy())
                 .isDeleted(notificationDeliveryCost.getIsDeleted())
                 .lastUpdate(notificationDeliveryCost.getLastUpdate())
-                .ttl(notificationDeliveryCost.getTtl())
                 .senderPaId(notificationDeliveryCost.getSenderPaId())
                 .senderTaxId(notificationDeliveryCost.getSenderTaxId())
                 .pagoPaIntMode(notificationDeliveryCost.getPagoPaIntMode())

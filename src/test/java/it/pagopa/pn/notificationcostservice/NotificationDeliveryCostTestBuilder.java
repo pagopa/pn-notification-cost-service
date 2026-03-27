@@ -30,7 +30,6 @@ public class NotificationDeliveryCostTestBuilder {
     private PagoPaIntMode pagoPaIntMode;
     private int vat;
     private Instant lastUpdate;
-    private Long ttl;
 
     public static NotificationDeliveryCostTestBuilder builder() {
         return new NotificationDeliveryCostTestBuilder();
@@ -137,7 +136,6 @@ public class NotificationDeliveryCostTestBuilder {
                 .pagoPaIntMode(pagoPaIntMode)
                 .vat(vat)
                 .lastUpdate(lastUpdate)
-                .ttl(ttl)
                 .build();
     }
 }
