@@ -5,13 +5,13 @@ import it.pagopa.pn.commons.exceptions.PnInternalException;
 import it.pagopa.pn.notificationcostservice.middleware.dao.PaymentInfoDao;
 import it.pagopa.pn.notificationcostservice.middleware.eventbus.EventBridgeProducer;
 import it.pagopa.pn.notificationcostservice.middleware.queue.consumer.event.notificationcost.NotificationCostInitializationEvent;
-import it.pagopa.pn.notificationcostservice.model.cost.CostUpdatePhaseInt;
 import it.pagopa.pn.notificationcostservice.model.notificationdeliverycost.NotificationDeliveryCost;
 import it.pagopa.pn.notificationcostservice.model.paymentinfo.PaymentInfo;
 import it.pagopa.pn.notificationcostservice.service.NotificationCostUpdaterService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
+import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
 import java.util.List;
@@ -24,7 +24,7 @@ import static it.pagopa.pn.notificationcostservice.middleware.eventbus.utils.Not
 @RequiredArgsConstructor
 public class NotificationCostInitializationEventHandler {
 
-    private final NotificationCostUpdaterService  notificationCostUpdaterService;
+    private final NotificationCostUpdaterService notificationCostUpdaterService;
     private final PaymentInfoDao paymentInfoDao;
     private final EventBridgeProducer<PnNotificationCostValidationEvent> producer;
 
@@ -47,23 +47,19 @@ public class NotificationCostInitializationEventHandler {
                 payload.getIun()
         );
 
-        return saveNotificationCosts(notificationCosts)
-                .then(updatePaymentsInfo(payments))
-                .then(sendOutcomeEvent(payload.getIun()))
+        return updateNotificationBaseCosts(notificationCosts)
+                .then(Mono.defer(() -> updatePaymentsInfo(payments)))
+                .then(Mono.defer(() -> sendOutcomeEvent(payload.getIun())))
                 .doOnError(ex ->
                         log.error("Error processing NotificationCostInitializationEvent for iun={}", payload.getIun(), ex)
                 );
     }
 
-
-    private Mono<Void> sendOutcomeEvent(String iun) {
-        return producer.sendEvent(buildOkValidationEvent(iun))
-                .doOnError(ex -> log.error("Error sending outcome event to EventBridge for iun={}", iun, ex));
-    }
-
-    private Mono<Void> saveNotificationCosts(List<NotificationDeliveryCost> notificationCosts) {
-        return notificationCostUpdaterService.updateCostByPhase(CostUpdatePhaseInt.VALIDATION,notificationCosts)
-                .doOnSuccess(ignored -> log.info("Successfully saved notification costs for iun={} and recIndex={}", notificationCosts.getFirst().getIun(),notificationCosts.getFirst().getRecIndex()))
+    private Mono<Void> updateNotificationBaseCosts(List<NotificationDeliveryCost> notificationCosts) {
+        return Flux.fromIterable(notificationCosts)
+                .flatMap(notificationCostUpdaterService::updateBaseCost)
+                .then()
+                .doOnSuccess(ignored -> log.info("Successfully saved notification costs for iun={}", notificationCosts.getFirst().getIun()))
                 .doOnError(ex -> log.error("Error saving notification costs", ex));
     }
 
@@ -73,4 +69,8 @@ public class NotificationCostInitializationEventHandler {
                 .doOnError(ex -> log.error("Error updating payments info", ex));
     }
 
+    private Mono<Void> sendOutcomeEvent(String iun) {
+        return producer.sendEvent(buildOkValidationEvent(iun))
+                .doOnError(ex -> log.error("Error sending outcome event to EventBridge for iun={}", iun, ex));
+    }
 }

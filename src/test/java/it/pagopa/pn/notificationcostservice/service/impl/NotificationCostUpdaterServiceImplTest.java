@@ -5,12 +5,12 @@ import it.pagopa.pn.notificationcostservice.NotificationDeliveryCostTestBuilder;
 import it.pagopa.pn.notificationcostservice.middleware.dao.NotificationDeliveryCostDao;
 import it.pagopa.pn.notificationcostservice.middleware.dao.dynamo.entity.notificationdeliverycost.BaseCostEntity;
 import it.pagopa.pn.notificationcostservice.middleware.dao.dynamo.entity.notificationdeliverycost.NotificationDeliveryCostEntity;
-import it.pagopa.pn.notificationcostservice.model.cost.CostUpdatePhaseInt;
 import it.pagopa.pn.notificationcostservice.model.notificationdeliverycost.BaseCost;
 import it.pagopa.pn.notificationcostservice.model.notificationdeliverycost.NotificationDeliveryCost;
 import it.pagopa.pn.notificationcostservice.model.notificationdeliverycost.NotificationFeePolicy;
 import it.pagopa.pn.notificationcostservice.model.notificationdeliverycost.PagoPaIntMode;
 import it.pagopa.pn.notificationcostservice.service.mapper.NotificationCostUpdaterMapper;
+import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -20,7 +20,6 @@ import reactor.core.publisher.Mono;
 import reactor.test.StepVerifier;
 
 import java.time.Instant;
-import java.util.List;
 
 import static org.mockito.Mockito.*;
 
@@ -28,7 +27,6 @@ import static org.mockito.Mockito.*;
 class NotificationCostUpdaterServiceImplTest {
 
     private static final String IUN_1 = "TEST-IUN-1";
-    private static final String IUN_2 = "TEST-IUN-2";
 
     @Mock
     private NotificationDeliveryCostDao notificationDeliveryCostDao;
@@ -40,8 +38,8 @@ class NotificationCostUpdaterServiceImplTest {
     private NotificationCostUpdaterServiceImpl service;
 
     @Test
-    void updateCostByPhase_shouldErrorWhenNotificationDeliveryCostsIsNull() {
-        StepVerifier.create(service.updateCostByPhase(CostUpdatePhaseInt.VALIDATION, null))
+    void updateBaseCost_shouldErrorWhenNotificationDeliveryCostsIsNull() {
+        StepVerifier.create(service.updateBaseCost(null))
                 .expectError(PnInternalException.class)
                 .verify();
 
@@ -49,238 +47,91 @@ class NotificationCostUpdaterServiceImplTest {
     }
 
     @Test
-    void updateCostByPhase_shouldErrorWhenNotificationDeliveryCostsIsEmpty() {
-        StepVerifier.create(service.updateCostByPhase(CostUpdatePhaseInt.VALIDATION, List.of()))
-                .expectError(PnInternalException.class)
-                .verify();
+    void updateBaseCost_shouldCompleteWhenGivenNotificationCostIsMappedAndUpdated() {
+        NotificationDeliveryCost notificationDeliveryCost = buildNotificationDeliveryCost();
+        NotificationDeliveryCostEntity entity = buildEntity();
 
-        verifyNoInteractions(notificationCostUpdaterMapper, notificationDeliveryCostDao);
-    }
-
-
-    @Test
-    void updateCostByPhase_shouldCompleteWhenSingleNotificationIsMappedAndUpdated() {
-        NotificationDeliveryCost notification = buildNotification(IUN_1, 0, 100, 50, 22);
-        NotificationDeliveryCostEntity entity = buildEntity(IUN_1, 0, 100, 50, 22);
-
-        when(notificationCostUpdaterMapper.mapNotificationCostUpdater(CostUpdatePhaseInt.VALIDATION, notification))
+        when(notificationCostUpdaterMapper.toEntityForBaseCostUpdate(notificationDeliveryCost))
                 .thenReturn(entity);
         when(notificationDeliveryCostDao.updateNotificationDeliveryCostNotNull(entity))
                 .thenReturn(Mono.just(entity));
 
-        StepVerifier.create(service.updateCostByPhase(
-                        CostUpdatePhaseInt.VALIDATION,
-                        List.of(notification)
-                ))
+        StepVerifier.create(service.updateBaseCost(notificationDeliveryCost))
                 .verifyComplete();
 
         verify(notificationCostUpdaterMapper, times(1))
-                .mapNotificationCostUpdater(CostUpdatePhaseInt.VALIDATION, notification);
+                .toEntityForBaseCostUpdate(notificationDeliveryCost);
         verify(notificationDeliveryCostDao, times(1))
                 .updateNotificationDeliveryCostNotNull(entity);
         verifyNoMoreInteractions(notificationCostUpdaterMapper, notificationDeliveryCostDao);
     }
 
     @Test
-    void updateCostByPhase_shouldCompleteWhenMultipleNotificationsAreMappedAndUpdated() {
-        NotificationDeliveryCost notification1 = buildNotification(IUN_1, 0, 100, 50, 22);
-        NotificationDeliveryCost notification2 = buildNotification(IUN_2, 1, 200, 70, 10);
+    void updateBaseCost_shouldPropagateMapperError() {
+        NotificationDeliveryCost notificationDeliveryCost = buildNotificationDeliveryCost();
 
-        NotificationDeliveryCostEntity entity1 = buildEntity(IUN_1, 0, 100, 50, 22);
-        NotificationDeliveryCostEntity entity2 = buildEntity(IUN_2, 1, 200, 70, 10);
+        when(notificationCostUpdaterMapper.toEntityForBaseCostUpdate(notificationDeliveryCost))
+                .thenThrow(new RuntimeException("mapper error"));
 
-        when(notificationCostUpdaterMapper.mapNotificationCostUpdater(CostUpdatePhaseInt.VALIDATION, notification1))
-                .thenReturn(entity1);
-        when(notificationCostUpdaterMapper.mapNotificationCostUpdater(CostUpdatePhaseInt.VALIDATION, notification2))
-                .thenReturn(entity2);
-
-        when(notificationDeliveryCostDao.updateNotificationDeliveryCostNotNull(entity1))
-                .thenReturn(Mono.just(entity1));
-        when(notificationDeliveryCostDao.updateNotificationDeliveryCostNotNull(entity2))
-                .thenReturn(Mono.just(entity2));
-
-        StepVerifier.create(service.updateCostByPhase(
-                        CostUpdatePhaseInt.VALIDATION,
-                        List.of(notification1, notification2)
-                ))
-                .verifyComplete();
+        RuntimeException ex = Assertions.assertThrows(RuntimeException.class,
+                () -> service.updateBaseCost(notificationDeliveryCost).block());
+        Assertions.assertEquals("mapper error", ex.getMessage());
 
         verify(notificationCostUpdaterMapper, times(1))
-                .mapNotificationCostUpdater(CostUpdatePhaseInt.VALIDATION, notification1);
-        verify(notificationCostUpdaterMapper, times(1))
-                .mapNotificationCostUpdater(CostUpdatePhaseInt.VALIDATION, notification2);
-
-        verify(notificationDeliveryCostDao, times(1))
-                .updateNotificationDeliveryCostNotNull(entity1);
-        verify(notificationDeliveryCostDao, times(1))
-                .updateNotificationDeliveryCostNotNull(entity2);
-
-        verifyNoMoreInteractions(notificationCostUpdaterMapper, notificationDeliveryCostDao);
-    }
-
-    @Test
-    void updateCostByPhase_shouldPropagateMapperErrorOnFirstItem() {
-        NotificationDeliveryCost notification = buildNotification(IUN_1, 0, 100, 50, 22);
-        RuntimeException expectedException = new RuntimeException("mapper error");
-
-        when(notificationCostUpdaterMapper.mapNotificationCostUpdater(CostUpdatePhaseInt.VALIDATION, notification))
-                .thenThrow(expectedException);
-
-        StepVerifier.create(service.updateCostByPhase(
-                        CostUpdatePhaseInt.VALIDATION,
-                        List.of(notification)
-                ))
-                .expectErrorMatches(ex ->
-                        ex instanceof RuntimeException &&
-                                "mapper error".equals(ex.getMessage()))
-                .verify();
-
-        verify(notificationCostUpdaterMapper, times(1))
-                .mapNotificationCostUpdater(CostUpdatePhaseInt.VALIDATION, notification);
+                .toEntityForBaseCostUpdate(notificationDeliveryCost);
         verifyNoInteractions(notificationDeliveryCostDao);
     }
 
     @Test
-    void updateCostByPhase_shouldPropagateDaoErrorOnFirstItem() {
-        NotificationDeliveryCost notification = buildNotification(IUN_1, 0, 100, 50, 22);
-        NotificationDeliveryCostEntity entity = buildEntity(IUN_1, 0, 100, 50, 22);
+    void updateBaseCost_shouldPropagateDaoError() {
+        NotificationDeliveryCost notificationDeliveryCost = buildNotificationDeliveryCost();
+        NotificationDeliveryCostEntity entity = buildEntity();
         RuntimeException expectedException = new RuntimeException("dao error");
 
-        when(notificationCostUpdaterMapper.mapNotificationCostUpdater(CostUpdatePhaseInt.VALIDATION, notification))
+        when(notificationCostUpdaterMapper.toEntityForBaseCostUpdate(notificationDeliveryCost))
                 .thenReturn(entity);
         when(notificationDeliveryCostDao.updateNotificationDeliveryCostNotNull(entity))
                 .thenReturn(Mono.error(expectedException));
 
-        StepVerifier.create(service.updateCostByPhase(
-                        CostUpdatePhaseInt.VALIDATION,
-                        List.of(notification)
-                ))
+        StepVerifier.create(service.updateBaseCost(notificationDeliveryCost))
                 .expectErrorMatches(ex ->
                         ex instanceof RuntimeException &&
                                 "dao error".equals(ex.getMessage()))
                 .verify();
 
         verify(notificationCostUpdaterMapper, times(1))
-                .mapNotificationCostUpdater(CostUpdatePhaseInt.VALIDATION, notification);
+                .toEntityForBaseCostUpdate(notificationDeliveryCost);
         verify(notificationDeliveryCostDao, times(1))
                 .updateNotificationDeliveryCostNotNull(entity);
         verifyNoMoreInteractions(notificationCostUpdaterMapper, notificationDeliveryCostDao);
     }
 
-    @Test
-    void updateCostByPhase_shouldPropagateMapperErrorOnSecondItemAfterFirstSuccess() {
-        NotificationDeliveryCost notification1 = buildNotification(IUN_1, 0, 100, 50, 22);
-        NotificationDeliveryCost notification2 = buildNotification(IUN_2, 1, 200, 70, 10);
-
-        NotificationDeliveryCostEntity entity1 = buildEntity(IUN_1, 0, 100, 50, 22);
-        RuntimeException expectedException = new RuntimeException("second mapper error");
-
-        when(notificationCostUpdaterMapper.mapNotificationCostUpdater(CostUpdatePhaseInt.VALIDATION, notification1))
-                .thenReturn(entity1);
-        when(notificationCostUpdaterMapper.mapNotificationCostUpdater(CostUpdatePhaseInt.VALIDATION, notification2))
-                .thenThrow(expectedException);
-
-        when(notificationDeliveryCostDao.updateNotificationDeliveryCostNotNull(entity1))
-                .thenReturn(Mono.just(entity1));
-
-        StepVerifier.create(service.updateCostByPhase(
-                        CostUpdatePhaseInt.VALIDATION,
-                        List.of(notification1, notification2)
-                ))
-                .expectErrorMatches(ex ->
-                        ex instanceof RuntimeException &&
-                                "second mapper error".equals(ex.getMessage()))
-                .verify();
-
-        verify(notificationCostUpdaterMapper, times(1))
-                .mapNotificationCostUpdater(CostUpdatePhaseInt.VALIDATION, notification1);
-        verify(notificationCostUpdaterMapper, times(1))
-                .mapNotificationCostUpdater(CostUpdatePhaseInt.VALIDATION, notification2);
-
-        verify(notificationDeliveryCostDao, times(1))
-                .updateNotificationDeliveryCostNotNull(entity1);
-        verifyNoMoreInteractions(notificationCostUpdaterMapper, notificationDeliveryCostDao);
-    }
-
-    @Test
-    void updateCostByPhase_shouldPropagateDaoErrorOnSecondItemAfterFirstSuccess() {
-        NotificationDeliveryCost notification1 = buildNotification(IUN_1, 0, 100, 50, 22);
-        NotificationDeliveryCost notification2 = buildNotification(IUN_2, 1, 200, 70, 10);
-
-        NotificationDeliveryCostEntity entity1 = buildEntity(IUN_1, 0, 100, 50, 22);
-        NotificationDeliveryCostEntity entity2 = buildEntity(IUN_2, 1, 200, 70, 10);
-        RuntimeException expectedException = new RuntimeException("second dao error");
-
-        when(notificationCostUpdaterMapper.mapNotificationCostUpdater(CostUpdatePhaseInt.VALIDATION, notification1))
-                .thenReturn(entity1);
-        when(notificationCostUpdaterMapper.mapNotificationCostUpdater(CostUpdatePhaseInt.VALIDATION, notification2))
-                .thenReturn(entity2);
-
-        when(notificationDeliveryCostDao.updateNotificationDeliveryCostNotNull(entity1))
-                .thenReturn(Mono.just(entity1));
-        when(notificationDeliveryCostDao.updateNotificationDeliveryCostNotNull(entity2))
-                .thenReturn(Mono.error(expectedException));
-
-        StepVerifier.create(service.updateCostByPhase(
-                        CostUpdatePhaseInt.VALIDATION,
-                        List.of(notification1, notification2)
-                ))
-                .expectErrorMatches(ex ->
-                        ex instanceof RuntimeException &&
-                                "second dao error".equals(ex.getMessage()))
-                .verify();
-
-        verify(notificationCostUpdaterMapper, times(1))
-                .mapNotificationCostUpdater(CostUpdatePhaseInt.VALIDATION, notification1);
-        verify(notificationCostUpdaterMapper, times(1))
-                .mapNotificationCostUpdater(CostUpdatePhaseInt.VALIDATION, notification2);
-
-        verify(notificationDeliveryCostDao, times(1))
-                .updateNotificationDeliveryCostNotNull(entity1);
-        verify(notificationDeliveryCostDao, times(1))
-                .updateNotificationDeliveryCostNotNull(entity2);
-
-        verifyNoMoreInteractions(notificationCostUpdaterMapper, notificationDeliveryCostDao);
-    }
-
-    private NotificationDeliveryCost buildNotification(
-            String iun,
-            int recIndex,
-            int sendFee,
-            int paFee,
-            int vat
-    ) {
+    private NotificationDeliveryCost buildNotificationDeliveryCost() {
         return NotificationDeliveryCostTestBuilder.builder()
-                .withIun(iun)
-                .withRecIndex(recIndex)
+                .withIun(IUN_1)
+                .withRecIndex(0)
                 .withBaseCost(BaseCost.builder()
-                        .sendFee(sendFee)
-                        .paFee(paFee)
+                        .sendFee(100)
+                        .paFee(50)
                         .build())
                 .withNotificationFeePolicy(NotificationFeePolicy.DELIVERY_MODE)
                 .withPagoPaIntMode(PagoPaIntMode.SYNC)
-                .withVat(vat)
+                .withVat(22)
                 .withSenderPaId("TEST-SENDER-PA-ID")
                 .withSenderTaxId("TEST-SENDER-TAX-ID")
                 .withLastUpdate(Instant.now())
                 .build();
     }
 
-    private NotificationDeliveryCostEntity buildEntity(
-            String iun,
-            int recIndex,
-            int sendFee,
-            int paFee,
-            int vat
-    ) {
+    private NotificationDeliveryCostEntity buildEntity() {
         return NotificationDeliveryCostEntity.builder()
-                .iun(iun)
-                .recIndex(recIndex)
+                .iun(IUN_1)
+                .recIndex(0)
                 .baseCost(BaseCostEntity.builder()
-                        .sendFee(sendFee)
-                        .paFee(paFee)
+                        .sendFee(100)
+                        .paFee(50)
                         .build())
-                .vat(vat)
+                .vat(22)
                 .notificationFeePolicy(NotificationFeePolicy.DELIVERY_MODE)
                 .pagoPaIntMode(PagoPaIntMode.SYNC)
                 .build();

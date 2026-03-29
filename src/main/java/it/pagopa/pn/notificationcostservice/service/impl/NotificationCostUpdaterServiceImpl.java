@@ -9,10 +9,7 @@ import it.pagopa.pn.notificationcostservice.service.mapper.NotificationCostUpdat
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
-import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
-
-import java.util.List;
 
 import static it.pagopa.pn.notificationcostservice.exception.PnNotificationCostServiceExceptionCodes.ERROR_CODE_NOTIFICATIONCOSTSERVICE_INTERNAL_SERVER_ERROR;
 
@@ -25,21 +22,17 @@ public class NotificationCostUpdaterServiceImpl implements NotificationCostUpdat
     private final NotificationCostUpdaterMapper notificationCostUpdaterMapper;
 
     @Override
-    public Mono<Void> updateCostByPhase(CostUpdatePhaseInt updateCostPhase,
-                                        List<NotificationDeliveryCost> notificationDeliveryCosts) {
-        if (notificationDeliveryCosts == null || notificationDeliveryCosts.isEmpty()) {
-            log.error("Skipping notification delivery cost update: phase={}, no items to process", updateCostPhase);
-            return Mono.error(new PnInternalException("Missing required data " + notificationDeliveryCosts + " for phase: " + updateCostPhase,
+    public Mono<Void> updateBaseCost(NotificationDeliveryCost notificationDeliveryCost) {
+        if (notificationDeliveryCost == null) {
+            return Mono.error(new PnInternalException("NotificationDeliveryCost cannot be null",
                     ERROR_CODE_NOTIFICATIONCOSTSERVICE_INTERNAL_SERVER_ERROR));
         }
-        return Flux.fromIterable(notificationDeliveryCosts)
-                .map(notificationDeliveryCost ->
-                        notificationCostUpdaterMapper.mapNotificationCostUpdater(updateCostPhase, notificationDeliveryCost)
-                )
-                .flatMap(notificationDeliveryCostDao::updateNotificationDeliveryCostNotNull)
+
+        var entityToUpdate = notificationCostUpdaterMapper.toEntityForBaseCostUpdate(notificationDeliveryCost);
+        return notificationDeliveryCostDao.updateNotificationDeliveryCostNotNull(entityToUpdate)
                 .doOnNext(entity -> log.info(
                         "Notification delivery cost updated successfully: phase={}, iun={}, recIndex={}",
-                        updateCostPhase,
+                        CostUpdatePhaseInt.VALIDATION, // placeholder for future audit log
                         entity.getIun(),
                         entity.getRecIndex()
                 ))
