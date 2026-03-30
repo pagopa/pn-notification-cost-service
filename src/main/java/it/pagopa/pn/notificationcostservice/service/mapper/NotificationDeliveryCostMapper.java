@@ -42,6 +42,7 @@ public class NotificationDeliveryCostMapper {
         return new AnalogCostDetailDto()
                 .costWithVat(calculatedCosts.getAnalogCostWithVat())
                 .vat(dto.getVat())
+                .cost(calculatedCosts.getAnalogCost())
                 .analogCostComponents(components);
     }
 

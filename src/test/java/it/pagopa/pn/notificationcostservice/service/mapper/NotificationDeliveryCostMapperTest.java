@@ -40,6 +40,10 @@ class NotificationDeliveryCostMapperTest {
 
         // Then
         assertThat(response.getLastUpdate()).isEqualTo(now);
+        AnalogCostDetailDto analogDetail = response.getTotalCost().getDetails().getAnalogCostDetail();
+        if (analogDetail != null) {
+            assertThat(analogDetail.getCost()).isEqualTo(calculated.getAnalogCost());
+        }
         assertThat(response.getTotalCost().getCostWithVat()).isEqualTo(1000);
 
         BaseCostDetailDto baseDetail = response.getTotalCost().getDetails().getBaseCostDetail();

@@ -174,7 +174,7 @@ components:
 
     AnalogCostDetail:
       type: object
-      required: [ costWithVat, vat, analogCostComponents ]
+      required: [ costWithVat, vat, cost, analogCostComponents ]
       properties:
         costWithVat:
           description: Costo totale in eurocent (somma algebrica delle componenti) comprensivo di IVA
@@ -187,6 +187,10 @@ components:
           format: int32
           minimum: 0
           maximum: 100
+        cost:
+          description: Costo totale in eurocent (somma algebrica delle componenti) escluso IVA
+          type: integer
+          format: int32
         analogCostComponents:
           description: Elenco delle componenti di costo analogiche che concorrono a formare il costo totale
           type: array
