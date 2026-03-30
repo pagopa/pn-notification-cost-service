@@ -2,28 +2,24 @@ package it.pagopa.pn.notificationcostservice.service.mapper;
 
 import it.pagopa.pn.notificationcostservice.NotificationDeliveryCostTestBuilder;
 import it.pagopa.pn.notificationcostservice.middleware.dao.dynamo.entity.notificationdeliverycost.NotificationDeliveryCostEntity;
-import it.pagopa.pn.notificationcostservice.model.cost.CostUpdatePhaseInt;
 import it.pagopa.pn.notificationcostservice.model.notificationdeliverycost.BaseCost;
 import it.pagopa.pn.notificationcostservice.model.notificationdeliverycost.NotificationDeliveryCost;
 import it.pagopa.pn.notificationcostservice.model.notificationdeliverycost.NotificationFeePolicy;
 import it.pagopa.pn.notificationcostservice.model.notificationdeliverycost.PagoPaIntMode;
 import it.pagopa.pn.notificationcostservice.model.notificationdeliverycost.analogcost.FirstAnalogCost;
 import it.pagopa.pn.notificationcostservice.model.notificationdeliverycost.analogcost.SecondAnalogCost;
-import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.time.Instant;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class NotificationCostUpdaterMapperTest {
 
     private final NotificationCostUpdaterMapper mapper = new NotificationCostUpdaterMapper();
 
     @Test
-    @DisplayName("mapNotificationCostUpdater deve mappare i campi previsti in fase VALIDATION")
-    void shouldMapNotificationDeliveryCostToEntityForValidationPhase() {
+    void toEntityForBaseCostUpdate_shouldMapBaseCostAndRelatedFieldsCorrectly() {
         NotificationDeliveryCost dto = NotificationDeliveryCostTestBuilder.builder()
                 .withIun("IUN-123")
                 .withRecIndex(2)
@@ -49,7 +45,7 @@ class NotificationCostUpdaterMapperTest {
                 .build();
 
         NotificationDeliveryCostEntity result =
-                mapper.mapNotificationCostUpdater(CostUpdatePhaseInt.VALIDATION, dto);
+                mapper.toEntityForBaseCostUpdate(dto);
 
         assertThat(result).isNotNull();
         assertThat(result.getIun()).isEqualTo("IUN-123");
@@ -67,28 +63,5 @@ class NotificationCostUpdaterMapperTest {
         assertThat(result.getSecondAnalogCost()).isNull();
         assertThat(result.getSimpleRegisteredLetterCost()).isNull();
         assertThat(result.getIsDeleted()).isNull();
-    }
-
-    @Test
-    @DisplayName("mapNotificationCostUpdater deve lanciare NullPointerException se updateCostPhase è null")
-    void shouldThrowWhenUpdateCostPhaseIsNull() {
-        NotificationDeliveryCost dto = NotificationDeliveryCostTestBuilder.builder()
-                .withIun("IUN-123")
-                .withRecIndex(0)
-                .withSenderPaId("TEST-SENDER-PA-ID")
-                .withSenderTaxId("TEST-SENDER-TAX-ID")
-                .withLastUpdate(Instant.now())
-                .build();
-
-        assertThatThrownBy(() -> mapper.mapNotificationCostUpdater(null, dto))
-                .isInstanceOf(NullPointerException.class);
-    }
-
-    @Test
-    @DisplayName("mapNotificationCostUpdater deve lanciare NullPointerException se notificationDeliveryCost è null")
-    void shouldThrowWhenNotificationDeliveryCostIsNull() {
-        assertThatThrownBy(() ->
-                mapper.mapNotificationCostUpdater(CostUpdatePhaseInt.VALIDATION, null)
-        ).isInstanceOf(NullPointerException.class);
     }
 }
