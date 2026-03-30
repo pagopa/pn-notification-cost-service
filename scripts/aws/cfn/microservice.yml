@@ -123,6 +123,11 @@ Parameters:
     Default: 1
     Type: Number
     Description: activate when N datapoint on M (task)
+
+  ApplicationLoadBalancerMetricsDimensionName:
+    Type: String
+    Default: ''
+    Description: Application load balancer dimension name
   
   Version:
     Type: String
@@ -232,7 +237,7 @@ Resources:
         HealthCheckInterval: !Ref HealthCheckInterval
         HealthyThresholdCount: !Ref HealthyThresholdCount
         UnhealthyThresholdCount: !Ref UnhealthyThresholdCount
-        AutoscalingStrategy: REST-API
+        AutoscalingStrategy: CUSTOM
         AutoscalingThreshold: !Ref AutoscalingThreshold
         AutoscalingCheckPeriod: !Ref AutoscalingCheckPeriod
         MinTasksNumber: !Ref MinTasksNumber
@@ -311,3 +316,65 @@ Resources:
               - events:PutEvents
             Resource:
               - !Sub arn:aws:events:${AWS::Region}:${AWS::AccountId}:event-bus/${ProjectName}-CoreEventBus
+
+  #### Alarm for custom metric Autoscaling
+  AlarmCustomAutoscaling:
+    Type: "AWS::CloudWatch::Alarm"
+    Properties:
+      AlarmName: !Sub "${ProjectName}-notification-cost-service-autoscaling-custom"
+      AlarmDescription: "Trigger scaling based on custom metric"
+      DatapointsToAlarm: !Ref AutoscalingDataPointN
+      ComparisonOperator: "GreaterThanOrEqualToThreshold"
+      Metrics:
+        - Id: m1
+          MetricStat:
+            Metric:
+              Dimensions:
+                - Name: QueueName
+                  Value: !Ref "PnNotificationCostToUpdateQueueName"
+              Namespace: "AWS/SQS"
+              MetricName: "ApproximateNumberOfMessagesVisible"
+            Period: !Ref AutoscalingCheckPeriod
+            Stat: Average
+          ReturnData: False
+        - Id: m2
+          MetricStat:
+            Metric:
+              Dimensions:
+                - Name: TargetGroup
+                  Value: !GetAtt NotificationCostServiceMicroservice.Outputs.TargetGroupName
+              Namespace: "AWS/ApplicationELB"
+              MetricName: "RequestCountPerTarget"
+            Period: !Ref AutoscalingCheckPeriod
+            Stat: Sum
+          ReturnData: False
+        - Id: m3
+          MetricStat:
+            Metric:
+              Dimensions:
+                - Name: TargetGroup
+                  Value: !GetAtt NotificationCostServiceMicroservice.Outputs.TargetGroupName
+                - Name: LoadBalancer
+                  Value: !Ref ApplicationLoadBalancerMetricsDimensionName
+              Namespace: "AWS/ApplicationELB"
+              MetricName: "HealthyHostCount"
+            Period: !Ref AutoscalingCheckPeriod
+            Stat: Average
+          ReturnData: False
+        - Id: code
+          Expression: !Sub "IF(m3==0, 101, (100*(m1)) / (${ConsumedQueueMessagePerMinute} * m3) )"
+          Label: !Sub "${ProjectName}-notification-cost-service-queue-custom-metric"
+          ReturnData: False
+        - Id: http
+          Expression: !Sub "(100 * m2) / ${AutoscalingThreshold}"
+          Label: !Sub "${ProjectName}-notification-cost-service-http-custom-metric"
+          ReturnData: False
+        - Id: e1
+          Expression: "IF( code<http, http, code )"
+          Label: !Sub "${ProjectName}-notification-cost-service-autoscale-custom-metric"
+      EvaluationPeriods: !Ref AutoscalingDataPointM
+      Threshold: 60
+      AlarmActions:
+        - !GetAtt NotificationCostServiceMicroservice.Outputs.ScaleUpPolicy
+      OKActions:
+        - !GetAtt NotificationCostServiceMicroservice.Outputs.ScaleDownPolicy
