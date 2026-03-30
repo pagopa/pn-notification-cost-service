@@ -23,13 +23,11 @@ public class NotificationCostUpdaterServiceImpl implements NotificationCostUpdat
 
     @Override
     public Mono<Void> updateBaseCost(NotificationDeliveryCost notificationDeliveryCost) {
-        if (notificationDeliveryCost == null) {
-            return Mono.error(new PnInternalException("NotificationDeliveryCost cannot be null",
-                    ERROR_CODE_NOTIFICATIONCOSTSERVICE_INTERNAL_SERVER_ERROR));
-        }
-
-        var entityToUpdate = notificationCostUpdaterMapper.toEntityForBaseCostUpdate(notificationDeliveryCost);
-        return notificationDeliveryCostDao.updateNotificationDeliveryCostNotNull(entityToUpdate)
+        return Mono.justOrEmpty(notificationDeliveryCost)
+                .switchIfEmpty(Mono.error(new PnInternalException("NotificationDeliveryCost cannot be null",
+                        ERROR_CODE_NOTIFICATIONCOSTSERVICE_INTERNAL_SERVER_ERROR)))
+                .map(notificationCostUpdaterMapper::toEntityForBaseCostUpdate)
+                .flatMap(notificationDeliveryCostDao::updateNotificationDeliveryCostNotNull)
                 .doOnNext(entity -> log.info(
                         "Notification delivery cost updated successfully: phase={}, iun={}, recIndex={}",
                         CostUpdatePhaseInt.VALIDATION, // placeholder for future audit log

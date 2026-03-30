@@ -10,7 +10,7 @@ import it.pagopa.pn.notificationcostservice.model.notificationdeliverycost.Notif
 import it.pagopa.pn.notificationcostservice.model.notificationdeliverycost.NotificationFeePolicy;
 import it.pagopa.pn.notificationcostservice.model.notificationdeliverycost.PagoPaIntMode;
 import it.pagopa.pn.notificationcostservice.service.mapper.NotificationCostUpdaterMapper;
-import org.junit.jupiter.api.Assertions;
+
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -73,9 +73,9 @@ class NotificationCostUpdaterServiceImplTest {
         when(notificationCostUpdaterMapper.toEntityForBaseCostUpdate(notificationDeliveryCost))
                 .thenThrow(new RuntimeException("mapper error"));
 
-        RuntimeException ex = Assertions.assertThrows(RuntimeException.class,
-                () -> service.updateBaseCost(notificationDeliveryCost).block());
-        Assertions.assertEquals("mapper error", ex.getMessage());
+        StepVerifier.create(service.updateBaseCost(notificationDeliveryCost))
+                .expectError(RuntimeException.class)
+                .verify();
 
         verify(notificationCostUpdaterMapper, times(1))
                 .toEntityForBaseCostUpdate(notificationDeliveryCost);
