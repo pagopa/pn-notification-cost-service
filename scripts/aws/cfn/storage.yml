@@ -20,6 +20,10 @@ Parameters:
     Type: String
     Description: 'keep track of used projects commitIds'
   
+  AlarmSNSTopicName:
+    Type: String
+    Description: ''
+  
   #Log
   LogRetention:
     Type: Number
@@ -52,11 +56,36 @@ Resources:
         - AttributeName: "sk"
           KeyType: "RANGE"
       BillingMode: "PAY_PER_REQUEST"
-      TimeToLiveSpecification:
-        AttributeName: "ttl"
-        Enabled: true
       PointInTimeRecoverySpecification:
         PointInTimeRecoveryEnabled: true
+  
+  PaymentInfoTable:
+    Type: AWS::DynamoDB::Table
+    UpdateReplacePolicy: Retain
+    DeletionPolicy: Retain
+    Properties:
+      TableName: !Sub '${ProjectName}-PaymentInfo'
+      AttributeDefinitions:
+        - AttributeName: "pk"
+          AttributeType: "S"
+      KeySchema:
+        - AttributeName: "pk"
+          KeyType: "HASH"
+      BillingMode: "PAY_PER_REQUEST"
+      PointInTimeRecoverySpecification:
+        PointInTimeRecoveryEnabled: true
+  #Sqs queues
+  PnNotificationCostToUpdateQueue:
+    Type: AWS::CloudFormation::Stack
+    UpdateReplacePolicy: Retain
+    DeletionPolicy: Retain
+    Properties:
+      TemplateURL: !Sub "${TemplateBucketBaseUrl}/fragments/sqs-queue.yaml"
+      Parameters:
+        QueueName: !Sub '${ProjectName}-notification-cost-to-update'
+        HasDLQ: "true"
+        AlarmSNSTopicName: !Ref AlarmSNSTopicName
+        VisibilityTimeout: 60
   #Log Group
   PnNotificationCostServiceLogGroup:
     Type: AWS::CloudFormation::Stack
@@ -78,6 +107,30 @@ Outputs:
   NotificationDeliveryCostTableArn:
     Description: ARN of dynamodb table containing cost of notification delivery
     Value: !Sub '${NotificationDeliveryCostTable.Arn}'
+  
+  PaymentInfoTableName:
+    Description: Name of dynamodb table containing info about payments
+    Value: !Ref PaymentInfoTable
+    
+  PaymentInfoTableArn:
+    Description: ARN of dynamodb table containing info about payments
+    Value: !Sub '${PaymentInfoTable.Arn}'
   # Log group exports
   EcsNotificationCostServiceLogGroup:
     Value: !GetAtt PnNotificationCostServiceLogGroup.Outputs.LogGroupName
+  # Sqs
+  PnNotificationCostToUpdateQueueName:
+    Value: !GetAtt PnNotificationCostToUpdateQueue.Outputs.QueueName
+    Description: pn-Notification-Cost-To-Update queue name
+  PnNotificationCostToUpdateQueueURL:
+    Value: !GetAtt PnNotificationCostToUpdateQueue.Outputs.QueueURL
+    Description: pn-Notification-Cost-To-Update queue URL
+  PnNotificationCostToUpdateQueueARN:
+    Value: !GetAtt PnNotificationCostToUpdateQueue.Outputs.QueueARN
+    Description: pn-Notification-Cost-To-Update queue ARN
+  PnNotificationCostToUpdateQueueAlarmARN:
+    Value: !GetAtt PnNotificationCostToUpdateQueue.Outputs.SqsDLQAlarmArn
+    Description: pn-Notification-Cost-To-Update alarm ARN
+  PnNotificationCostToUpdateQueueAgeAlarmARN:
+    Value: !GetAtt PnNotificationCostToUpdateQueue.Outputs.SqsAgeAlarmArn
+    Description: pn-Notification-Cost-To-Update age alarm ARN

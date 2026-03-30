@@ -1,9 +1,14 @@
 package it.pagopa.pn.notificationcostservice.service.mapper;
 
 import it.pagopa.pn.notification_cost_service.generated.openapi.server.v1.dto.*;
+import it.pagopa.pn.notificationcostservice.config.PnNotificationCostServiceConfigs;
 import it.pagopa.pn.notificationcostservice.model.cost.CalculatedCosts;
+import it.pagopa.pn.notificationcostservice.model.notificationdeliverycost.BaseCost;
 import it.pagopa.pn.notificationcostservice.model.notificationdeliverycost.NotificationDeliveryCost;
+import it.pagopa.pn.notificationcostservice.model.notificationdeliverycost.NotificationFeePolicy;
+import it.pagopa.pn.notificationcostservice.model.notificationdeliverycost.PagoPaIntMode;
 import it.pagopa.pn.notificationcostservice.model.notificationdeliverycost.analogcost.AnalogCost;
+import lombok.AllArgsConstructor;
 import org.springframework.stereotype.Component;
 
 import java.util.ArrayList;
@@ -11,8 +16,36 @@ import java.util.List;
 import java.util.Optional;
 
 @Component
+@AllArgsConstructor
 public class NotificationDeliveryCostMapper {
+    private final PnNotificationCostServiceConfigs configs;
 
+    public List<NotificationDeliveryCost> mapDtoToNotificationDeliveryCost(String iun, NewNotificationCostRequestDto dto) {
+        return dto.getCostRecipients().stream()
+                .map(recipient -> mapRecipientToNotificationDeliveryCost(iun, dto, recipient))
+                .toList();
+    }
+
+    private NotificationDeliveryCost mapRecipientToNotificationDeliveryCost(
+            String iun,
+            NewNotificationCostRequestDto dto,
+            RecipientCostDataDto recipient
+    ) {
+        return NotificationDeliveryCost.builder()
+                .iun(iun)
+                .recipientInternalId(recipient.getRecipientInternalId())
+                .senderPaId(dto.getSenderPaId())
+                .senderTaxId(dto.getSenderTaxId())
+                .recIndex(recipient.getRecIndex())
+                .vat(dto.getVat())
+                .pagoPaIntMode(PagoPaIntMode.valueOf(dto.getPagoPaIntMode().name()))
+                .notificationFeePolicy(NotificationFeePolicy.valueOf(dto.getNotificationFeePolicy().name()))
+                .baseCost(BaseCost.builder()
+                        .sendFee(configs.getSendFee())
+                        .paFee(dto.getPaFee())
+                        .build())
+                .build();
+    }
     public NotificationCostRecipientResponseDto mapDtoToResponse(NotificationDeliveryCost dto, CalculatedCosts calculatedCosts) {
         return new NotificationCostRecipientResponseDto()
                 .lastUpdate(dto.getLastUpdate())

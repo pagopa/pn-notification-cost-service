@@ -1,10 +1,14 @@
 package it.pagopa.pn.notificationcostservice.model.notificationdeliverycost.analogcost;
 
-import lombok.*;
+import lombok.EqualsAndHashCode;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
 
 @EqualsAndHashCode(callSuper = true)
 @Getter
 @Setter
+@NoArgsConstructor
 public class SimpleRegisteredLetterCost extends AnalogCost {
     public SimpleRegisteredLetterCost(Integer cost, String productType) {
         super(cost, productType);
