@@ -292,17 +292,11 @@ components:
           type: integer
           format: int32
         vat:
-          type: integer
-          description: >-
-            Aliquota IVA applicata (espressa come intero, es. 22). Calcolata solo sui costi aventi includedInVatBase = true.
-          format: int32
-          minimum: 0
-          maximum: 100
+          $ref: '#/components/schemas/Vat'
         cost:
           description: Costo totale in eurocent (somma algebrica delle componenti) escluso IVA
           type: integer
           format: int32
-          $ref: '#/components/schemas/Vat'
         analogCostComponents:
           description: Elenco delle componenti di costo analogiche che concorrono a formare il costo totale
           type: array
