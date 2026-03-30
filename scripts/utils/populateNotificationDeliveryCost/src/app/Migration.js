@@ -29,8 +29,6 @@ exports.runMigration = async function (iunsToProcess = []) {
       return { "message": "No notifications to process" };
     }
 
-    const ttlValue = Math.floor(Date.now() / 1000) + (365 * 24 * 60 * 60);
-
     for (const notif of notifications) {
       let isDeletedStatus= false;
       const timelineItems = await getTimelineByIun(notif.iun);
@@ -46,7 +44,7 @@ exports.runMigration = async function (iunsToProcess = []) {
       const itemsToWrite = indicesToProcess.map(idx => {
         const recipientEvents = timelineItems.filter(item => extractRecIndex(item.timelineElementId) === idx);
         const isDeletedField = isDeletedStatus;
-        return mapToDeliveryCost(notif, idx, recipientEvents, isDeletedField ,ttlValue);
+        return mapToDeliveryCost(notif, idx, recipientEvents, isDeletedField);
       });
 
 

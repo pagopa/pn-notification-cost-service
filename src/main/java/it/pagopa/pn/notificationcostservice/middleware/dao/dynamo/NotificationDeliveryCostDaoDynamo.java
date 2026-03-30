@@ -8,12 +8,13 @@ import it.pagopa.pn.notificationcostservice.middleware.dao.dynamo.mapper.notific
 import it.pagopa.pn.notificationcostservice.model.notificationdeliverycost.NotificationDeliveryCost;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
+import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import software.amazon.awssdk.enhanced.dynamodb.DynamoDbAsyncTable;
 import software.amazon.awssdk.enhanced.dynamodb.DynamoDbEnhancedAsyncClient;
+import software.amazon.awssdk.enhanced.dynamodb.Key;
 import software.amazon.awssdk.enhanced.dynamodb.TableSchema;
-import software.amazon.awssdk.enhanced.dynamodb.model.GetItemEnhancedRequest;
-import software.amazon.awssdk.enhanced.dynamodb.model.UpdateItemEnhancedRequest;
+import software.amazon.awssdk.enhanced.dynamodb.model.*;
 
 import java.util.concurrent.CompletableFuture;
 
@@ -32,6 +33,21 @@ public class NotificationDeliveryCostDaoDynamo extends BaseDao implements Notifi
         this.notificationDeliveryCostTable = dynamoDbEnhancedAsyncClient.table(awsConfigs.getNotificationDeliveryCostTable().getTableName(), TableSchema.fromBean(NotificationDeliveryCostEntity.class));
         this.dynamoDbEnhancedAsyncClient = dynamoDbEnhancedAsyncClient;
         this.entityToDto = entityToDto;
+    }
+
+    @Override
+    public Mono<Page<NotificationDeliveryCostEntity>> getAllByIun(String iun) {
+        QueryConditional queryConditional = QueryConditional.keyEqualTo(Key.builder()
+                .partitionValue(iun)
+                .build());
+
+        QueryEnhancedRequest queryEnhancedRequest = QueryEnhancedRequest.builder()
+                .queryConditional(queryConditional)
+                .build();
+
+        return Flux.from(notificationDeliveryCostTable.query(queryEnhancedRequest).flatMapIterable(Page::items))
+                .collectList()
+                .map(Page::create);
     }
 
     /**
