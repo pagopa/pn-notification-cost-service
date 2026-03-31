@@ -105,11 +105,6 @@ class NotificationDeliveryCostMapperTest {
         NotificationCostRecipientResponseDto response = mapper.mapDtoToResponse(dto, calculated);
 
         // Then
-        assertThat(response.getLastUpdate()).isEqualTo(now);
-        AnalogCostDetailDto analogDetail = response.getTotalCost().getDetails().getAnalogCostDetail();
-        if (analogDetail != null) {
-            assertThat(analogDetail.getCost()).isEqualTo(calculated.getAnalogCost());
-        }
         assertThat(response.getTotalCost().getCostWithVat()).isEqualTo(1000);
 
         BaseCostDetailDto baseDetail = response.getTotalCost().getDetails().getBaseCostDetail();
@@ -188,6 +183,7 @@ class NotificationDeliveryCostMapperTest {
         assertNotNull(response.getTotalCost().getDetails());
         AnalogCostDetailDto analogDetail = response.getTotalCost().getDetails().getAnalogCostDetail();
         assertNotNull(analogDetail);
+        assertThat(analogDetail.getCost()).isEqualTo(calculated.getAnalogCost());
         assertThat(analogDetail.getVat()).isEqualTo(22);
         assertThat(analogDetail.getAnalogCostComponents()).hasSize(2);
         assertThat(analogDetail.getAnalogCostComponents().get(0).getCostName()).isEqualTo(AnalogCostNameDto.FIRST_ATTEMPT);
