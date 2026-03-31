@@ -13,9 +13,9 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import reactor.test.StepVerifier;
-import software.amazon.awssdk.enhanced.dynamodb.model.Page;
 
 import java.util.List;
 import java.util.Comparator;
@@ -37,9 +37,6 @@ class UpdateNotificationCostEventHandlerTest {
 
     @Mock
     private NotificationDeliveryCostDaoDynamo notificationCostUpdateDao;
-
-    @Mock
-    private Page<NotificationDeliveryCostEntity> notificationDeliveryCostEntityPage;
 
     @InjectMocks
     private UpdateNotificationCostEventHandler handler;
@@ -134,8 +131,7 @@ class UpdateNotificationCostEventHandlerTest {
                 NotificationDeliveryCostEntity.builder().iun(IUN).recIndex(1).build()
         );
 
-        when(notificationCostUpdateDao.getAllByIun(IUN)).thenReturn(Mono.just(notificationDeliveryCostEntityPage));
-        when(notificationDeliveryCostEntityPage.items()).thenReturn(entities);
+        when(notificationCostUpdateDao.getAllByIun(IUN)).thenReturn(Flux.fromIterable(entities));
         when(notificationCostUpdaterService.updateCostByPhase(any(NotificationCostUpdate.class)))
                 .thenReturn(Mono.empty());
 
@@ -165,8 +161,7 @@ class UpdateNotificationCostEventHandlerTest {
                 NotificationDeliveryCostEntity.builder().iun(IUN).recIndex(3).build()
         );
 
-        when(notificationCostUpdateDao.getAllByIun(IUN)).thenReturn(Mono.just(notificationDeliveryCostEntityPage));
-        when(notificationDeliveryCostEntityPage.items()).thenReturn(entities);
+        when(notificationCostUpdateDao.getAllByIun(IUN)).thenReturn(Flux.fromIterable(entities));
         when(notificationCostUpdaterService.updateCostByPhase(any(NotificationCostUpdate.class)))
                 .thenReturn(Mono.empty());
 
@@ -192,9 +187,100 @@ class UpdateNotificationCostEventHandlerTest {
                 .build();
 
         StepVerifier.create(handler.handleUpdateNotificationCostEvent(payload))
-                .verifyComplete();
+                .expectError(PnInternalException.class)
+                .verify();
 
         verifyNoInteractions(notificationCostUpdaterService, notificationCostUpdateDao);
+    }
+
+    @Test
+    void handleUpdateNotificationCostEvent_shouldErrorWhenSimpleRegisteredLetterCostIsNull() {
+        UpdateNotificationCostEvent.Payload payload = basePayloadBuilder()
+                .costUpdatePhase(CostUpdatePhaseInt.SEND_SIMPLE_REGISTERED_LETTER)
+                .cost(null)
+                .build();
+
+        assertMissingFieldValidationError(payload, "cost = null");
+    }
+
+    @Test
+    void handleUpdateNotificationCostEvent_shouldErrorWhenSimpleRegisteredLetterProductTypeIsNull() {
+        UpdateNotificationCostEvent.Payload payload = basePayloadBuilder()
+                .costUpdatePhase(CostUpdatePhaseInt.SEND_SIMPLE_REGISTERED_LETTER)
+                .productType(null)
+                .build();
+
+        assertMissingFieldValidationError(payload, "productType = null");
+    }
+
+    @Test
+    void handleUpdateNotificationCostEvent_shouldErrorWhenSimpleRegisteredLetterRecIndexIsNull() {
+        UpdateNotificationCostEvent.Payload payload = basePayloadBuilder()
+                .costUpdatePhase(CostUpdatePhaseInt.SEND_SIMPLE_REGISTERED_LETTER)
+                .recIndex(null)
+                .build();
+
+        assertMissingFieldValidationError(payload, "recIndex = null");
+    }
+
+    @Test
+    void handleUpdateNotificationCostEvent_shouldErrorWhenSendAnalogDomicileAttemptZeroCostIsNull() {
+        UpdateNotificationCostEvent.Payload payload = basePayloadBuilder()
+                .costUpdatePhase(CostUpdatePhaseInt.SEND_ANALOG_DOMICILE_ATTEMPT_0)
+                .cost(null)
+                .build();
+
+        assertMissingFieldValidationError(payload, "cost = null");
+    }
+
+    @Test
+    void handleUpdateNotificationCostEvent_shouldErrorWhenSendAnalogDomicileAttemptZeroProductTypeIsNull() {
+        UpdateNotificationCostEvent.Payload payload = basePayloadBuilder()
+                .costUpdatePhase(CostUpdatePhaseInt.SEND_ANALOG_DOMICILE_ATTEMPT_0)
+                .productType(null)
+                .build();
+
+        assertMissingFieldValidationError(payload, "productType = null");
+    }
+
+    @Test
+    void handleUpdateNotificationCostEvent_shouldErrorWhenSendAnalogDomicileAttemptZeroRecIndexIsNull() {
+        UpdateNotificationCostEvent.Payload payload = basePayloadBuilder()
+                .costUpdatePhase(CostUpdatePhaseInt.SEND_ANALOG_DOMICILE_ATTEMPT_0)
+                .recIndex(null)
+                .build();
+
+        assertMissingFieldValidationError(payload, "recIndex = null");
+    }
+
+    @Test
+    void handleUpdateNotificationCostEvent_shouldErrorWhenSendAnalogDomicileAttemptOneCostIsNull() {
+        UpdateNotificationCostEvent.Payload payload = basePayloadBuilder()
+                .costUpdatePhase(CostUpdatePhaseInt.SEND_ANALOG_DOMICILE_ATTEMPT_1)
+                .cost(null)
+                .build();
+
+        assertMissingFieldValidationError(payload, "cost = null");
+    }
+
+    @Test
+    void handleUpdateNotificationCostEvent_shouldErrorWhenSendAnalogDomicileAttemptOneProductTypeIsNull() {
+        UpdateNotificationCostEvent.Payload payload = basePayloadBuilder()
+                .costUpdatePhase(CostUpdatePhaseInt.SEND_ANALOG_DOMICILE_ATTEMPT_1)
+                .productType(null)
+                .build();
+
+        assertMissingFieldValidationError(payload, "productType = null");
+    }
+
+    @Test
+    void handleUpdateNotificationCostEvent_shouldErrorWhenSendAnalogDomicileAttemptOneRecIndexIsNull() {
+        UpdateNotificationCostEvent.Payload payload = basePayloadBuilder()
+                .costUpdatePhase(CostUpdatePhaseInt.SEND_ANALOG_DOMICILE_ATTEMPT_1)
+                .recIndex(null)
+                .build();
+
+        assertMissingFieldValidationError(payload, "recIndex = null");
     }
 
     private UpdateNotificationCostEvent.Payload.PayloadBuilder basePayloadBuilder() {
@@ -209,6 +295,18 @@ class UpdateNotificationCostEventHandlerTest {
             ArgumentCaptor<NotificationCostUpdate> notificationCostsCaptor
     ) {
         return notificationCostsCaptor.getValue();
+    }
+
+    private void assertMissingFieldValidationError(UpdateNotificationCostEvent.Payload payload, String expectedMessageFragment) {
+        StepVerifier.create(handler.handleUpdateNotificationCostEvent(payload))
+                .expectErrorSatisfies(ex -> {
+                    assertInstanceOf(PnInternalException.class, ex);
+                    assertTrue(((PnInternalException) ex).getProblem().getDetail().contains("Missing required field"));
+                    assertTrue(((PnInternalException) ex).getProblem().getDetail().contains(expectedMessageFragment));
+                })
+                .verify();
+
+        verifyNoInteractions(notificationCostUpdaterService, notificationCostUpdateDao);
     }
 
     private void assertStandardNotificationCost(
@@ -234,7 +332,7 @@ class UpdateNotificationCostEventHandlerTest {
     ) {
         assertEquals(iun, notificationCostUpdate.getIun());
         assertEquals(recIndex, notificationCostUpdate.getRecIndex());
-        assertEquals(0, notificationCostUpdate.getCost());
+        assertNull(notificationCostUpdate.getCost());
         assertNull(notificationCostUpdate.getProductType());
         assertEquals(costUpdatePhase, notificationCostUpdate.getCostUpdatePhase());
     }

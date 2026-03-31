@@ -254,16 +254,9 @@ class NotificationDeliveryCostDaoDynamoTest {
                 .thenReturn(pagePublisher);
 
         StepVerifier.create(dao.getAllByIun(iun))
-                .assertNext(page -> {
-                    List<NotificationDeliveryCostEntity> items = page.items();
-                    org.junit.jupiter.api.Assertions.assertEquals(3, items.size());
-                    org.junit.jupiter.api.Assertions.assertEquals(iun, items.get(0).getIun());
-                    org.junit.jupiter.api.Assertions.assertEquals(iun, items.get(1).getIun());
-                    org.junit.jupiter.api.Assertions.assertEquals(iun, items.get(2).getIun());
-                    org.junit.jupiter.api.Assertions.assertEquals(0, items.get(0).getRecIndex());
-                    org.junit.jupiter.api.Assertions.assertEquals(1, items.get(1).getRecIndex());
-                    org.junit.jupiter.api.Assertions.assertEquals(2, items.get(2).getRecIndex());
-                })
+                .expectNextMatches(item -> iun.equals(item.getIun()) && item.getRecIndex() == 0)
+                .expectNextMatches(item -> iun.equals(item.getIun()) && item.getRecIndex() == 1)
+                .expectNextMatches(item -> iun.equals(item.getIun()) && item.getRecIndex() == 2)
                 .verifyComplete();
 
         ArgumentCaptor<QueryEnhancedRequest> requestCaptor = ArgumentCaptor.forClass(QueryEnhancedRequest.class);
@@ -282,7 +275,7 @@ class NotificationDeliveryCostDaoDynamoTest {
                 .thenReturn(pagePublisher);
 
         StepVerifier.create(dao.getAllByIun("iun-empty"))
-                .assertNext(page -> org.junit.jupiter.api.Assertions.assertTrue(page.items().isEmpty()))
+                .expectNextCount(0)
                 .verifyComplete();
 
         verify(mockTable).query(ArgumentMatchers.<QueryEnhancedRequest>any());

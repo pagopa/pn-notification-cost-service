@@ -10,7 +10,6 @@ import it.pagopa.pn.notificationcostservice.model.notificationdeliverycost.Notif
 import it.pagopa.pn.notificationcostservice.model.notificationdeliverycost.PagoPaIntMode;
 import it.pagopa.pn.notificationcostservice.model.notificationdeliverycost.analogcost.FirstAnalogCost;
 import it.pagopa.pn.notificationcostservice.model.notificationdeliverycost.analogcost.SecondAnalogCost;
-import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.time.Instant;
@@ -98,12 +97,13 @@ class NotificationCostUpdaterMapperTest {
 
         assertThat(result.getIun()).isEqualTo(IUN);
         assertThat(result.getRecIndex()).isEqualTo(REC_INDEX);
-        assertThat(result.getSecondAnalogCost()).isNotNull();
-        assertThat(result.getSecondAnalogCost().getCost()).isEqualTo(COST);
-        assertThat(result.getSecondAnalogCost().getProductType()).isEqualTo(PRODUCT_TYPE);
-        assertThat(result.getFirstAnalogCost()).isNull();
+        assertThat(result.getFirstAnalogCost()).isNotNull();
+        assertThat(result.getFirstAnalogCost().getCost()).isEqualTo(COST);
+        assertThat(result.getFirstAnalogCost().getProductType()).isEqualTo(PRODUCT_TYPE);
+        assertThat(result.getSecondAnalogCost()).isNull();
         assertThat(result.getSimpleRegisteredLetterCost()).isNull();
         assertThat(result.getIsDeleted()).isNull();
+
     }
 
     @Test
@@ -114,10 +114,10 @@ class NotificationCostUpdaterMapperTest {
 
         assertThat(result.getIun()).isEqualTo(IUN);
         assertThat(result.getRecIndex()).isEqualTo(REC_INDEX);
-        assertThat(result.getFirstAnalogCost()).isNotNull();
-        assertThat(result.getFirstAnalogCost().getCost()).isEqualTo(COST);
-        assertThat(result.getFirstAnalogCost().getProductType()).isEqualTo(PRODUCT_TYPE);
-        assertThat(result.getSecondAnalogCost()).isNull();
+        assertThat(result.getSecondAnalogCost()).isNotNull();
+        assertThat(result.getSecondAnalogCost().getCost()).isEqualTo(COST);
+        assertThat(result.getSecondAnalogCost().getProductType()).isEqualTo(PRODUCT_TYPE);
+        assertThat(result.getFirstAnalogCost()).isNull();
         assertThat(result.getSimpleRegisteredLetterCost()).isNull();
         assertThat(result.getIsDeleted()).isNull();
     }
@@ -137,7 +137,12 @@ class NotificationCostUpdaterMapperTest {
         assertThat(result.getSecondAnalogCost().getCost()).isZero();
         assertThat(result.getSecondAnalogCost().getProductType()).isNull();
         assertThat(result.getIsDeleted()).isTrue();
-        assertThat(result.getSimpleRegisteredLetterCost()).isNull();
+        assertThat(result.getSimpleRegisteredLetterCost()).isNotNull();
+        assertThat(result.getSimpleRegisteredLetterCost().getCost()).isZero();
+        assertThat(result.getSimpleRegisteredLetterCost().getProductType()).isNull();
+        assertThat(result.getBaseCost()).isNotNull();
+        assertThat(result.getBaseCost().getPaFee()).isZero();
+        assertThat(result.getBaseCost().getSendFee()).isZero();
     }
 
     @Test
@@ -155,7 +160,15 @@ class NotificationCostUpdaterMapperTest {
         assertThat(result.getSecondAnalogCost().getCost()).isZero();
         assertThat(result.getSecondAnalogCost().getProductType()).isNull();
         assertThat(result.getIsDeleted()).isTrue();
-        assertThat(result.getSimpleRegisteredLetterCost()).isNull();
+        assertThat(result.getSimpleRegisteredLetterCost()).isNotNull();
+        assertThat(result.getSimpleRegisteredLetterCost().getCost()).isZero();
+        assertThat(result.getSimpleRegisteredLetterCost().getProductType()).isNull();
+        assertThat(result.getSecondAnalogCost()).isNotNull();
+        assertThat(result.getSecondAnalogCost().getCost()).isZero();
+        assertThat(result.getSecondAnalogCost().getProductType()).isNull();
+        assertThat(result.getBaseCost()).isNotNull();
+        assertThat(result.getBaseCost().getPaFee()).isZero();
+        assertThat(result.getBaseCost().getSendFee()).isZero();
     }
 
     @Test

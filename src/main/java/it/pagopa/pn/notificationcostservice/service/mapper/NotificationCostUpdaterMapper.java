@@ -35,26 +35,30 @@ public class NotificationCostUpdaterMapper {
     public NotificationDeliveryCostEntity mapNotificationCostUpdater(
             NotificationCostUpdate notificationDeliveryCost
     ) {
+        NotificationDeliveryCostEntity entity = new NotificationDeliveryCostEntity();
+        entity.setIun(notificationDeliveryCost.getIun());
+        entity.setRecIndex(notificationDeliveryCost.getRecIndex());
+
         return switch (notificationDeliveryCost.getCostUpdatePhase()) {
             case SEND_SIMPLE_REGISTERED_LETTER -> {
                 log.info("Mapping notification delivery cost for phase: SEND_SIMPLE_REGISTERED_LETTER");
-                yield buildSimpleRegisteredLetter(notificationDeliveryCost);
+                yield buildSimpleRegisteredLetter(entity, notificationDeliveryCost);
             }
             case SEND_ANALOG_DOMICILE_ATTEMPT_0 -> {
                 log.info("Mapping notification delivery cost for phase: SEND_ANALOG_DOMICILE_ATTEMPT_0");
-                yield buildSendAnalogDomicileAttemptZero(notificationDeliveryCost);
+                yield buildSendAnalogDomicileAttemptZero(entity, notificationDeliveryCost);
             }
             case SEND_ANALOG_DOMICILE_ATTEMPT_1 -> {
                 log.info("Mapping notification delivery cost for phase: SEND_ANALOG_DOMICILE_ATTEMPT_1");
-                yield buildSendAnalogDomicileAttemptOne(notificationDeliveryCost);
+                yield buildSendAnalogDomicileAttemptOne(entity, notificationDeliveryCost);
             }
             case REQUEST_REFUSED -> {
                 log.info("Mapping notification delivery cost for phase: REQUEST_REFUSED");
-                yield buildRefusedAndCancelled(notificationDeliveryCost);
+                yield buildRefusedAndCancelled(entity, notificationDeliveryCost);
             }
             case NOTIFICATION_CANCELLED -> {
                 log.info("Mapping notification delivery cost for phase: NOTIFICATION_CANCELLED");
-                yield buildRefusedAndCancelled(notificationDeliveryCost);
+                yield buildRefusedAndCancelled(entity, notificationDeliveryCost);
             }
             default -> {
                 log.warn("Received unknown update cost phase: {}", notificationDeliveryCost.getCostUpdatePhase());
@@ -63,23 +67,15 @@ public class NotificationCostUpdaterMapper {
         };
     }
 
-    private NotificationDeliveryCostEntity buildSendAnalogDomicileAttemptOne(NotificationCostUpdate dto) {
-        NotificationDeliveryCostEntity entity = new NotificationDeliveryCostEntity();
-        entity.setIun(dto.getIun());
-        entity.setRecIndex(dto.getRecIndex());
-
+    private NotificationDeliveryCostEntity buildSendAnalogDomicileAttemptZero(NotificationDeliveryCostEntity entity, NotificationCostUpdate dto) {
         FirstAnalogCostEntity firstAnalogCostEntity = new FirstAnalogCostEntity();
         firstAnalogCostEntity.setCost(dto.getCost());
         firstAnalogCostEntity.setProductType(dto.getProductType());
         entity.setFirstAnalogCost(firstAnalogCostEntity);
-
         return entity;
     }
 
-    private NotificationDeliveryCostEntity buildSendAnalogDomicileAttemptZero(NotificationCostUpdate dto) {
-        NotificationDeliveryCostEntity entity = new NotificationDeliveryCostEntity();
-        entity.setIun(dto.getIun());
-        entity.setRecIndex(dto.getRecIndex());
+    private NotificationDeliveryCostEntity buildSendAnalogDomicileAttemptOne(NotificationDeliveryCostEntity entity, NotificationCostUpdate dto) {
         SecondAnalogCostEntity secondAnalogCostEntity = new SecondAnalogCostEntity();
         secondAnalogCostEntity.setCost(dto.getCost());
         secondAnalogCostEntity.setProductType(dto.getProductType());
@@ -87,10 +83,7 @@ public class NotificationCostUpdaterMapper {
         return entity;
     }
 
-    private NotificationDeliveryCostEntity buildSimpleRegisteredLetter(NotificationCostUpdate dto) {
-        NotificationDeliveryCostEntity entity = new NotificationDeliveryCostEntity();
-        entity.setIun(dto.getIun());
-        entity.setRecIndex(dto.getRecIndex());
+    private NotificationDeliveryCostEntity buildSimpleRegisteredLetter(NotificationDeliveryCostEntity entity, NotificationCostUpdate dto) {
         SimpleRegisteredLetterCostEntity simpleRegisteredLetterCostEntity = new SimpleRegisteredLetterCostEntity();
         simpleRegisteredLetterCostEntity.setCost(dto.getCost());
         simpleRegisteredLetterCostEntity.setProductType(dto.getProductType());
@@ -98,11 +91,7 @@ public class NotificationCostUpdaterMapper {
         return entity;
     }
 
-    private NotificationDeliveryCostEntity buildRefusedAndCancelled(NotificationCostUpdate dto) {
-        NotificationDeliveryCostEntity entity = new NotificationDeliveryCostEntity();
-        entity.setIun(dto.getIun());
-        entity.setRecIndex(dto.getRecIndex());
-
+    private NotificationDeliveryCostEntity buildRefusedAndCancelled(NotificationDeliveryCostEntity entity, NotificationCostUpdate dto) {
         FirstAnalogCostEntity firstAnalogCostEntity = new FirstAnalogCostEntity();
         firstAnalogCostEntity.setCost(0);
         firstAnalogCostEntity.setProductType(null);
@@ -113,6 +102,12 @@ public class NotificationCostUpdaterMapper {
         secondAnalogCostEntity.setProductType(null);
         entity.setSecondAnalogCost(secondAnalogCostEntity);
 
+        SimpleRegisteredLetterCostEntity simpleRegisteredLetterCostEntity = new SimpleRegisteredLetterCostEntity();
+        simpleRegisteredLetterCostEntity.setCost(0);
+        simpleRegisteredLetterCostEntity.setProductType(null);
+        entity.setSimpleRegisteredLetterCost(simpleRegisteredLetterCostEntity);
+
+        entity.setBaseCost(new BaseCostEntity(0,0));
         entity.setIsDeleted(true);
         return entity;
     }

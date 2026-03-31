@@ -16,6 +16,7 @@ import software.amazon.awssdk.enhanced.dynamodb.Key;
 import software.amazon.awssdk.enhanced.dynamodb.TableSchema;
 import software.amazon.awssdk.enhanced.dynamodb.model.*;
 
+import java.util.List;
 import java.util.concurrent.CompletableFuture;
 
 import static it.pagopa.pn.notificationcostservice.exception.PnNotificationCostServiceExceptionCodes.ERROR_CODE_NOTIFICATIONDELIVERYCOST_NOTFOUND;
@@ -36,7 +37,7 @@ public class NotificationDeliveryCostDaoDynamo extends BaseDao implements Notifi
     }
 
     @Override
-    public Mono<Page<NotificationDeliveryCostEntity>> getAllByIun(String iun) {
+    public Flux<NotificationDeliveryCostEntity> getAllByIun(String iun) {
         QueryConditional queryConditional = QueryConditional.keyEqualTo(Key.builder()
                 .partitionValue(iun)
                 .build());
@@ -45,9 +46,7 @@ public class NotificationDeliveryCostDaoDynamo extends BaseDao implements Notifi
                 .queryConditional(queryConditional)
                 .build();
 
-        return Flux.from(notificationDeliveryCostTable.query(queryEnhancedRequest).flatMapIterable(Page::items))
-                .collectList()
-                .map(Page::create);
+        return Flux.from(notificationDeliveryCostTable.query(queryEnhancedRequest).flatMapIterable(Page::items));
     }
 
     /**

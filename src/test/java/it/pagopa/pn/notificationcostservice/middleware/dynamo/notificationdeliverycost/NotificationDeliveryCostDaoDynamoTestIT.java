@@ -22,7 +22,6 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.context.annotation.Import;
 import reactor.test.StepVerifier;
 import software.amazon.awssdk.enhanced.dynamodb.DynamoDbEnhancedAsyncClient;
-import software.amazon.awssdk.enhanced.dynamodb.model.Page;
 
 import java.time.Instant;
 import java.util.List;
@@ -244,10 +243,9 @@ public class NotificationDeliveryCostDaoDynamoTestIT {
             testDao.putItem(item1);
             testDao.putItem(itemOther);
 
-            Page<NotificationDeliveryCostEntity> resultPage = dao.getAllByIun(iun).block();
+            List<NotificationDeliveryCostEntity> items = dao.getAllByIun(iun).collectList().block();
 
-            Assertions.assertNotNull(resultPage);
-            List<NotificationDeliveryCostEntity> items = resultPage.items();
+            Assertions.assertNotNull(items);
             Assertions.assertEquals(2, items.size());
             Assertions.assertTrue(items.stream().allMatch(item -> iun.equals(item.getIun())));
 
@@ -274,7 +272,7 @@ public class NotificationDeliveryCostDaoDynamoTestIT {
         String iun = "iun-missing-" + System.nanoTime();
 
         StepVerifier.create(dao.getAllByIun(iun))
-                .assertNext(page -> Assertions.assertTrue(page.items().isEmpty()))
+                .expectNextCount(0)
                 .verifyComplete();
     }
 }

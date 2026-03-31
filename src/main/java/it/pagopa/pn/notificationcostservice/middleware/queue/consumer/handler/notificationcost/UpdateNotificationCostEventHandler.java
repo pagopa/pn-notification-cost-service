@@ -12,43 +12,27 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
-import software.amazon.awssdk.enhanced.dynamodb.model.Page;
 
 import java.util.List;
 import java.util.Objects;
 
 import static it.pagopa.pn.notificationcostservice.exception.PnNotificationCostServiceExceptionCodes.ERROR_CODE_NOTIFICATIONCOSTSERVICE_INTERNAL_SERVER_ERROR;
+import static it.pagopa.pn.notificationcostservice.exception.PnNotificationCostServiceExceptionCodes.ERROR_CODE_NOTIFICATIONDELIVERYCOST_NOTFOUND;
 
 @Component
 @Slf4j
 @RequiredArgsConstructor
 public class UpdateNotificationCostEventHandler {
 
-    private final NotificationCostUpdaterService  notificationCostUpdaterService;
+    private final NotificationCostUpdaterService notificationCostUpdaterService;
     private final NotificationDeliveryCostDao notificationDeliveryCostDao;
 
     public Mono<Void> handleUpdateNotificationCostEvent(UpdateNotificationCostEvent.Payload payload) {
         log.info("Handling UpdateNotificationCostEvent for iun={}", payload.getIun());
-
-        if (Objects.isNull(payload.getCostUpdatePhase())) {
-            log.error(
-                    "Skipping UpdateNotificationCostEvent for iun={} because costUpdatePhase is null",
-                    payload.getIun());
-            return Mono.error(new PnInternalException("Missing required data for iun: " + payload.getIun(),
-                    ERROR_CODE_NOTIFICATIONCOSTSERVICE_INTERNAL_SERVER_ERROR));
-        }
-
         log.info("Start processing UpdateNotificationCostEvent for iun={}", payload.getIun());
 
-        CostUpdatePhaseInt phase = payload.getCostUpdatePhase();
-
-        if (phase == CostUpdatePhaseInt.VALIDATION) {
-            log.info("Skipping update for VALIDATION phase, iun={}", payload.getIun());
-            return Mono.empty();
-        }
-
-        return checkForRefusedOrCancelled(payload)
-                .flatMapMany(Flux::fromIterable)
+        return validateUpdateNotificationCostEvent(payload)
+                .flatMapMany(this::checkForRefusedOrCancelled)
                 .flatMap(notificationCostUpdaterService::updateCostByPhase)
                 .then()
                 .doOnError(ex ->
@@ -56,15 +40,52 @@ public class UpdateNotificationCostEventHandler {
                 );
     }
 
-    private Mono<List<NotificationCostUpdate>> checkForRefusedOrCancelled(UpdateNotificationCostEvent.Payload payload) {
+    private Mono<UpdateNotificationCostEvent.Payload> validateUpdateNotificationCostEvent(UpdateNotificationCostEvent.Payload payload) {
+        CostUpdatePhaseInt phase = payload.getCostUpdatePhase();
+
+        if (Objects.isNull(payload.getIun())) {
+            return Mono.error(new PnInternalException("Missing required field 'iun'",
+                    ERROR_CODE_NOTIFICATIONCOSTSERVICE_INTERNAL_SERVER_ERROR));
+        }
+
+        if (Objects.isNull(phase)) {
+            return Mono.error(new PnInternalException("Missing required field 'costUpdatePhase' for iun= " + payload.getIun(),
+                    ERROR_CODE_NOTIFICATIONCOSTSERVICE_INTERNAL_SERVER_ERROR));
+        }
+        
+        if (phase == CostUpdatePhaseInt.VALIDATION) {
+            return Mono.error(new PnInternalException("Error update operation for VALIDATION phase is not possible, iun=" + payload.getIun(),
+                    ERROR_CODE_NOTIFICATIONCOSTSERVICE_INTERNAL_SERVER_ERROR));
+        }
+
+        switch (phase) {
+            case SEND_SIMPLE_REGISTERED_LETTER, SEND_ANALOG_DOMICILE_ATTEMPT_0, SEND_ANALOG_DOMICILE_ATTEMPT_1 -> {
+                log.info("Mapping notification delivery cost for phase: SEND_SIMPLE_REGISTERED_LETTER");
+                if(Objects.isNull(payload.getCost()) || Objects.isNull(payload.getProductType()) || Objects.isNull(payload.getRecIndex())) {
+                    return Mono.error(new PnInternalException(String.format("Missing required field for iun = %s, cost = %s, productType = %s, recIndex = %s", payload.getIun(), payload.getCost(), payload.getProductType(), payload.getRecIndex()),
+                            ERROR_CODE_NOTIFICATIONCOSTSERVICE_INTERNAL_SERVER_ERROR));
+                }
+            }
+        };
+        
+        return Mono.just(payload);
+    }
+
+    private Flux<NotificationCostUpdate> checkForRefusedOrCancelled(UpdateNotificationCostEvent.Payload payload) {
         CostUpdatePhaseInt phase = payload.getCostUpdatePhase();
 
         if (phase == CostUpdatePhaseInt.NOTIFICATION_CANCELLED || phase == CostUpdatePhaseInt.REQUEST_REFUSED) {
             return notificationDeliveryCostDao.getAllByIun(payload.getIun())
-                    .flatMap(entity -> this.buildNotCompletedEntities(entity, phase));
+                    .switchIfEmpty(Mono.error(new PnInternalException("Entities not found for iun = " + payload.getIun(),
+                            ERROR_CODE_NOTIFICATIONDELIVERYCOST_NOTFOUND)))
+                    .map(entity -> this.mapToDeletedNotificationDeliveryCost(entity, phase));
         }
 
-        return Mono.just(List.of(NotificationCostUpdate.builder()
+        return createNotificationCostUpdateList(payload, phase);
+    }
+
+    private Flux<NotificationCostUpdate> createNotificationCostUpdateList(UpdateNotificationCostEvent.Payload payload, CostUpdatePhaseInt phase) {
+        return Flux.fromIterable(List.of(NotificationCostUpdate.builder()
                 .iun(payload.getIun())
                 .recIndex(payload.getRecIndex())
                 .cost(payload.getCost())
@@ -73,22 +94,11 @@ public class UpdateNotificationCostEventHandler {
                 .build()));
     }
 
-    private Mono<List<NotificationCostUpdate>> buildNotCompletedEntities(Page<NotificationDeliveryCostEntity> notificationDeliveryCostEntityPage, CostUpdatePhaseInt costUpdatePhase) {
-        return Mono.just(
-                notificationDeliveryCostEntityPage.items()
-                        .stream()
-                        .map(entity -> this.mapToDeletedNotificationDeliveryCost(entity, costUpdatePhase))
-                        .toList()
-        );
-    }
-
-    private NotificationCostUpdate mapToDeletedNotificationDeliveryCost(NotificationDeliveryCostEntity model, CostUpdatePhaseInt costUpdatePhase) {
+    private NotificationCostUpdate mapToDeletedNotificationDeliveryCost(NotificationDeliveryCostEntity entity, CostUpdatePhaseInt phase) {
         return NotificationCostUpdate.builder()
-                .iun(model.getIun())
-                .recIndex(model.getRecIndex())
-                .costUpdatePhase(costUpdatePhase)
-                .cost(0)
-                .productType(null)
+                .iun(entity.getIun())
+                .recIndex(entity.getRecIndex())
+                .costUpdatePhase(phase)
                 .build();
     }
 
