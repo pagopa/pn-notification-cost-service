@@ -233,7 +233,6 @@ Parameters:
 
   CdcKinesisSourceStreamKeyId:
     Type: String
-    Default: ''
     Description: 'KMS Key ID for the CDC Kinesis stream'
 
   ESMKinesisFailureNotificationsBucketName:
