@@ -33,7 +33,7 @@ rule_name="notification-cost-service"
 aws --profile $PROFILE --region $REGION --endpoint-url=$ENDPOINT \
   events create-event-bus --name $event_bus_name
 
-notification_cost_service_pattern='{"source": ["pn-notification-cost-service"], "detail-type": ["NotificationCostServiceOutcomeEvent"], "detail": {"clientId":["pn-notification-cost-service"]}}'
+notification_cost_service_pattern='{"source": ["pn-notification-cost-service"], "detail-type": ["NotificationCostServiceOutcomeEvent"]}'
 aws --profile $PROFILE --region $REGION --endpoint-url=$ENDPOINT \
   events put-rule --name $rule_name --event-pattern "$notification_cost_service_pattern" --event-bus-name $event_bus_name
 

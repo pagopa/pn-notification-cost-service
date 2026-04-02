@@ -116,6 +116,8 @@ Analizza le notifiche e le relative timeline per calcolare i costi di consegna.
 *Nota: Obbligatori solo per ambienti diversi da local.
 
 # Esecuzione dello script
+Prima di eseguire lo script, è necessario assicurarsi che le tabelle DynamoDB `pn-Timelines`, `NotificationDeliveryCost` e `PaymentInfo` siano correttamente configurate e accessibili.
+Installare le dipendenze del progetto con `npm install`.
 Per eseguire correttamente lo script, è necessario configurare l'ambiente come segue:
 
 # Ambienti non locali (es. dev):
@@ -135,5 +137,37 @@ In locale è sufficiente inizializzare la variabile `NODE_ENV` a `local`. È nec
 il file `init-for-migration.sh`, quindi lanciare il comando:
 
 Bash
-`NODE_TLS_REJECT_UNAUTHORIZED=0 node index.js IUN-STANDARD-MIX IUN-SIMPLE-LETTER`
+`node index.js IUN-STANDARD-MIX IUN-SIMPLE-LETTER`
 
+## Build ed esecuzione nativa
+
+### Prerequisiti 
+- JDK GraalVM 22 o superiore
+- Su Windows: Visual Studio Build Tools con workload C++
+
+### Posizionarsi nella cartella corretta
+Tutti i comandi vanno eseguiti dalla root del progetto:
+
+```powershell
+cd C:\Users\..\pn-notification-cost-service
+```
+### Compilare il binario nativo
+
+```powershell
+.\mvnw.cmd -Pnative -DskipTests clean package
+```
+
+Al termine della build il binario viene generato in:
+
+`target\pn-notification-cost-service.exe`
+
+### Avviare il binario nativo
+
+Posizionarsi nella cartella `target`
+```powershell
+cd C:\Users\..\pn-notification-cost-service\target
+```
+e avviare l'eseguibile:
+```powershell
+.\pn-notification-cost-service.exe
+```

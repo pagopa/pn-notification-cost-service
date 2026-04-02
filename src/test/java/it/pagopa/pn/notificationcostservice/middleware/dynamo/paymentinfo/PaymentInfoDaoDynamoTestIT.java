@@ -63,7 +63,7 @@ class PaymentInfoDaoDynamoTestIT {
             Assertions.assertEquals(payment.getIuv(), persisted.getIuv());
             Assertions.assertEquals(payment.getIun(), persisted.getIun());
             Assertions.assertEquals(payment.getRecIndex(), persisted.getRecIndex());
-            Assertions.assertEquals(payment.isApplyCost(), persisted.isApplyCost());
+            Assertions.assertEquals(payment.isApplyCost(), persisted.getApplyCost());
         } finally {
             deleteItem(iuv);
         }
@@ -88,7 +88,7 @@ class PaymentInfoDaoDynamoTestIT {
             Assertions.assertEquals(updated.getIuv(), persisted.getIuv());
             Assertions.assertEquals(updated.getIun(), persisted.getIun());
             Assertions.assertEquals(updated.getRecIndex(), persisted.getRecIndex());
-            Assertions.assertEquals(updated.isApplyCost(), persisted.isApplyCost());
+            Assertions.assertEquals(updated.isApplyCost(), persisted.getApplyCost());
         } finally {
             deleteItem(iuv);
         }
@@ -114,11 +114,11 @@ class PaymentInfoDaoDynamoTestIT {
 
             Assertions.assertEquals(payment1.getIun(), persisted1.getIun());
             Assertions.assertEquals(payment1.getRecIndex(), persisted1.getRecIndex());
-            Assertions.assertEquals(payment1.isApplyCost(), persisted1.isApplyCost());
+            Assertions.assertEquals(payment1.isApplyCost(), persisted1.getApplyCost());
 
             Assertions.assertEquals(payment2.getIun(), persisted2.getIun());
             Assertions.assertEquals(payment2.getRecIndex(), persisted2.getRecIndex());
-            Assertions.assertEquals(payment2.isApplyCost(), persisted2.isApplyCost());
+            Assertions.assertEquals(payment2.isApplyCost(), persisted2.getApplyCost());
         } finally {
             deleteItem(iuv1);
             deleteItem(iuv2);

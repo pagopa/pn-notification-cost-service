@@ -9,22 +9,37 @@ import software.amazon.awssdk.enhanced.dynamodb.mapper.annotations.DynamoDbParti
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-@Data
+@Getter
+@Setter
 public class PaymentInfoEntity {
     public static final String COL_PK = "pk";
     public static final String COL_REC_INDEX = "recIndex";
     public static final String COL_APPLY_COST = "applyCost";
     public static final String COL_IUN = "iun";
 
-    @Getter(onMethod=@__({@DynamoDbPartitionKey, @DynamoDbAttribute(COL_PK)}))
     private String iuv;
-
-    @Getter(onMethod=@__({@DynamoDbAttribute(COL_REC_INDEX)}))
     private Integer recIndex;
-
-    @Getter(onMethod=@__({@DynamoDbAttribute(COL_APPLY_COST)}))
     private boolean applyCost;
-
-    @Getter(onMethod=@__({@DynamoDbAttribute(COL_IUN)}))
     private String iun;
+
+    @DynamoDbPartitionKey
+    @DynamoDbAttribute(COL_PK)
+    public String getIuv() {
+        return iuv;
+    }
+
+    @DynamoDbAttribute(COL_IUN)
+    public String getIun() {
+        return iun;
+    }
+
+    @DynamoDbAttribute(COL_REC_INDEX)
+    public Integer getRecIndex() {
+        return recIndex;
+    }
+
+    @DynamoDbAttribute(COL_APPLY_COST)
+    public boolean getApplyCost() {
+        return applyCost;
+    }
 }
