@@ -10,10 +10,6 @@ Parameters:
   AlarmSNSTopicArn:
     Type: String
     Description: ARN of alarm topic
-
-  WebApiDnsName:
-    Type: String
-    Description: 'The DNS name used for WEB rest API.'
   
   CorsAllowedDomains:
     Type: String
@@ -50,18 +46,6 @@ Parameters:
   ApplicationLoadBalancerListenerArn:
     Type: String
     Description: 'Load balancer listener where HTTP endpoints is going to be registered'
-
-  ApplicationLoadBalancerDomain:
-    Type: String
-    Description: 'Base URL of the load balancer where the service is going to be reachable'
-
-  NetworkLoadBalancerLink:
-    Type: String
-    Description: 'network load balancer link for API-GW'
-  
-  LogsKinesisSourceStreamArn:
-    Type: String
-    Description: 'Kinesis stream that receive logs'
   
   # Instance parameters
   # 256 (.25 vCPU) - Available memory values: 0.5GB, 1GB, 2GB
@@ -93,7 +77,7 @@ Parameters:
   
   AutoscalingThreshold:
     Default: 70
-    Type: String
+    Type: Number
   
   AlbSecurityGroup:
     Type: String
@@ -105,7 +89,7 @@ Parameters:
     Description: 'Applicative environment variable file checksum'
   
   MinTasksNumber:
-    Default: 1
+    Default: 2
     Type: Number
     Description: minimum autoscaling number of tasks (task)
   
@@ -126,8 +110,12 @@ Parameters:
 
   ApplicationLoadBalancerMetricsDimensionName:
     Type: String
-    Default: ''
     Description: Application load balancer dimension name
+  
+    # --- SQS Queues ---
+  ConsumedQueueMessagePerMinute:
+    Type: Number
+    Description: Weight to assign to queue number of visible messages metric (Workflow task)
   
   Version:
     Type: String
@@ -154,7 +142,7 @@ Parameters:
   
   MountEfs:
     Type: String
-    Default: false
+    Default: "false"
     AllowedValues:
       - "true"
       - "false"
