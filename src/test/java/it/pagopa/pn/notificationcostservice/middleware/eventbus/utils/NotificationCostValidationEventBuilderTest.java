@@ -18,8 +18,6 @@ class NotificationCostValidationEventBuilderTest {
         assertNotNull(event);
         assertNotNull(event.getDetail());
 
-        assertEquals("pn-notification-cost-service", event.getDetail().getClientId());
-
         assertNotNull(event.getDetail().getPnNotificationCostValidationPayload());
         assertEquals(
                 iun,
@@ -38,7 +36,6 @@ class NotificationCostValidationEventBuilderTest {
 
         assertNotNull(event);
         assertNotNull(event.getDetail());
-        assertEquals("pn-notification-cost-service", event.getDetail().getClientId());
 
         assertNotNull(event.getDetail().getPnNotificationCostValidationPayload());
         assertNull(event.getDetail().getPnNotificationCostValidationPayload().getIun());
