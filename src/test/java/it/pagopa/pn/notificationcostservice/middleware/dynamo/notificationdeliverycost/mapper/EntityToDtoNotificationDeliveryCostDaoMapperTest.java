@@ -55,7 +55,6 @@ class EntityToDtoNotificationDeliveryCostDaoMapperTest {
                 .pagoPaIntMode(PagoPaIntMode.SYNC)
                 .vat(22)
                 .lastUpdate(now)
-                .ttl(3600L)
                 .senderTaxId("taxId")
                 .build();
 
@@ -88,7 +87,6 @@ class EntityToDtoNotificationDeliveryCostDaoMapperTest {
         assertEquals(entity.getPagoPaIntMode(), dto.getPagoPaIntMode());
         assertEquals(entity.getVat(), dto.getVat());
         assertEquals(entity.getLastUpdate(), dto.getLastUpdate());
-        assertEquals(entity.getTtl(), dto.getTtl());
     }
 
     @Test
@@ -114,7 +112,6 @@ class EntityToDtoNotificationDeliveryCostDaoMapperTest {
                 .pagoPaIntMode(PagoPaIntMode.SYNC)
                 .vat(22)
                 .lastUpdate(now)
-                .ttl(3600L)
                 .senderTaxId("taxId")
                 .build();
 

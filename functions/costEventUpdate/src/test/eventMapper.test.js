@@ -66,11 +66,7 @@ describe("event mapper tests", function () {
     let event = loadEventFixture();
 
     // change ATTEMPT to 1
-    event.dynamodb.NewImage.timelineElementId.S =
-      event.dynamodb.NewImage.timelineElementId.S.replace(
-        "ATTEMPT_0",
-        "ATTEMPT_1"
-      );
+    event.dynamodb.NewImage.details.M.sentAttemptMade.N = "1";
 
     // change recIndex to 1
     event.dynamodb.NewImage.details.M.recIndex.N = "1";
@@ -191,10 +187,12 @@ describe("event mapper tests", function () {
 
     const events = [event];
 
-    const res = await mapEvents(events);
-
-    // Unsupported category should be filtered out
-    expect(res).length(0);
+    try {
+      await mapEvents(events);
+    }
+    catch (error) {
+      expect(error.message).to.equal("Missing required field category: UNSUPPORTED_CATEGORY");
+    }
   });
 
   it("test missing fields event - missing recIndex", async () => {
@@ -205,10 +203,12 @@ describe("event mapper tests", function () {
 
     let events = [event];
 
-    let res = await mapEvents(events);
-
-    // Missing recIndex should filter out the event
-    expect(res).length(0);
+    try {
+      await mapEvents(events);
+    }
+    catch (error) {
+      expect(error.message).to.equal("Missing required fields for SEND_ANALOG_DOMICILE: details.recIndex");
+    }
   });
 
   it("test missing fields event - missing analogCost", async () => {
@@ -219,65 +219,43 @@ describe("event mapper tests", function () {
 
     let events = [event];
 
-    let res = await mapEvents(events);
-
-    // The event is filtered out because cost is mandatory for non-cancel/refused categories
-    expect(res).length(0);
+    try {
+      await mapEvents(events);
+    }
+    catch (error) {
+      expect(error.message).to.equal("Missing required fields for SEND_ANALOG_DOMICILE: details.analogCost");
+    }
   });
 
-  it("test wrong type or missing timelineElementId", async () => {
-    let event = loadEventFixture();
+  it("test partial batch error exposes only the invalid event in failedEvents", async () => {
+    let validEvent = loadEventFixture();
+    let invalidEvent = loadEventFixture();
+    invalidEvent.kinesisSeqNumber = "test-seq-invalid";
+    delete invalidEvent.dynamodb.NewImage.details.M.analogCost;
 
-    // change timelineElementId to a wrong type after saving the original value
-    let saved = event.dynamodb.NewImage.timelineElementId.S;
-    event.dynamodb.NewImage.timelineElementId.S = 1234;
-
-    let events = [event];
-
-    let res = await mapEvents(events);
-
-    // Should be filtered because timelineElementId is not a string
-    expect(res).length(0);
-
-    // restore and retry
-    event.dynamodb.NewImage.timelineElementId.S = saved;
-
-    events = [event];
-
-    res = await mapEvents(events);
-
-    // Should be valid now
-    expect(res).length(1);
-    let body = JSON.parse(res[0].MessageBody);
-    expect(body).to.have.all.keys("iun", "eventType", "recIndex", "cost", "productType", "costUpdatePhase");
-    expect(body.iun).equal(iun);
-    expect(body.eventType).equal(EVENT_TYPE);
-    expect(body.costUpdatePhase).equal("SEND_ANALOG_DOMICILE_ATTEMPT_0");
-
-    // remove timelineElementId
-    delete event.dynamodb.NewImage.timelineElementId;
-
-    events = [event];
-
-    res = await mapEvents(events);
-
-    // Should be filtered because timelineElementId is missing
-    expect(res).length(0);
+    try {
+      await mapEvents([validEvent, invalidEvent]);
+      expect.fail("Expected partial batch processing error");
+    } catch (error) {
+      expect(error.name).to.equal("PartialBatchProcessingError");
+      expect(error.processedItems).to.have.length(1);
+      expect(error.processedItems[0].Id).to.equal("test-seq-1");
+      expect(error.failedEvents).to.deep.equal([invalidEvent]);
+    }
   });
 
   it("test SEND_ANALOG_DOMICILE missing ATTEMPT", async () => {
     let event = loadEventFixture();
 
     // remove ATTEMPT_0 from timelineElementId
-    event.dynamodb.NewImage.timelineElementId.S =
-      event.dynamodb.NewImage.timelineElementId.S.replace("ATTEMPT_0", "");
-
+    delete event.dynamodb.NewImage.details.M.sentAttemptMade;
     const events = [event];
 
-    const res = await mapEvents(events);
-
-    // Should be filtered because costUpdatePhase cannot be determined (no ATTEMPT found)
-    expect(res).length(0);
+    try {
+      await mapEvents(events);
+    } catch (error) {
+      expect(error.message).to.equal("timelineObject does not have sentAttemptMade");
+    }
   });
 
   it("test event filtered when notificationSentAt equals FEATURE_DATE", async () => {
@@ -304,6 +282,38 @@ describe("event mapper tests", function () {
     const res = await mapEvents([event]);
 
     expect(res).length(0);
+  });
+
+  it("test invalid FEATURE_DATE format throws error", async () => {
+    const previousFeatureDate = process.env.FEATURE_DATE;
+    process.env.FEATURE_DATE = "2023-08-08T00:00:00.000Z";
+
+    try {
+      await mapEvents([loadEventFixture()]);
+      expect.fail("Expected mapEvents to throw an invalid FEATURE_DATE error");
+    } catch (error) {
+      expect(error.message).to.equal(
+        "Invalid FEATURE_DATE format. Expected YYYY-MM-DDTHH:mm:ssZ"
+      );
+    } finally {
+      process.env.FEATURE_DATE = previousFeatureDate;
+    }
+  });
+
+  it("test missing FEATURE_DATE throws error", async () => {
+    const previousFeatureDate = process.env.FEATURE_DATE;
+    delete process.env.FEATURE_DATE;
+
+    try {
+      await mapEvents([loadEventFixture()]);
+      expect.fail("Expected mapEvents to throw an invalid FEATURE_DATE error");
+    } catch (error) {
+      expect(error.message).to.equal(
+        "Invalid FEATURE_DATE format. Expected YYYY-MM-DDTHH:mm:ssZ"
+      );
+    } finally {
+      process.env.FEATURE_DATE = previousFeatureDate;
+    }
   });
 });
 

@@ -23,7 +23,7 @@ Parameters:
   AlarmSNSTopicName:
     Type: String
     Description: ''
-  
+
   #Log
   LogRetention:
     Type: Number
@@ -56,12 +56,9 @@ Resources:
         - AttributeName: "sk"
           KeyType: "RANGE"
       BillingMode: "PAY_PER_REQUEST"
-      TimeToLiveSpecification:
-        AttributeName: "ttl"
-        Enabled: true
       PointInTimeRecoverySpecification:
         PointInTimeRecoveryEnabled: true
-  
+
   PaymentInfoTable:
     Type: AWS::DynamoDB::Table
     UpdateReplacePolicy: Retain
@@ -101,7 +98,22 @@ Resources:
         LogsKinesisSourceStreamArn: !Ref LogsKinesisSourceStreamArn
         LogGroupRetention: !Ref LogRetention
 
+  CostEventUpdateLambdaLogGroup:
+    Type: AWS::CloudFormation::Stack
+    UpdateReplacePolicy: Retain
+    DeletionPolicy: Retain
+    Properties:
+      TemplateURL: !Sub "${TemplateBucketBaseUrl}/fragments/log-group.yaml"
+      Parameters:
+        LogGroupName: !Sub "${ProjectName}-cost-event-update"
+        LogsKinesisSourceStreamArn: !Ref LogsKinesisSourceStreamArn
+        LogGroupRetention: !Ref LogRetention
+        LogGroupPrefix: '/aws/lambda'
+
 Outputs:
+  CostEventUpdateLambdaName:
+    Value: !Sub "${ProjectName}-cost-event-update"
+
   # DynamoDB tables
   NotificationDeliveryCostTableName:
     Description: Name of dynamodb table containing cost of notification delivery
@@ -110,11 +122,11 @@ Outputs:
   NotificationDeliveryCostTableArn:
     Description: ARN of dynamodb table containing cost of notification delivery
     Value: !Sub '${NotificationDeliveryCostTable.Arn}'
-  
+
   PaymentInfoTableName:
     Description: Name of dynamodb table containing info about payments
     Value: !Ref PaymentInfoTable
-    
+
   PaymentInfoTableArn:
     Description: ARN of dynamodb table containing info about payments
     Value: !Sub '${PaymentInfoTable.Arn}'

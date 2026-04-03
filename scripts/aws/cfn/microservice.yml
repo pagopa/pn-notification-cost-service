@@ -217,27 +217,6 @@ Parameters:
     Type: String
     Description: 'Identify the resource that the policy applies to.'
 
-  PaymentInfoTableName:
-    Type: String
-    Description: 'Name of dynamodb table containing info about payments'
-
-  PaymentInfoTableArn:
-    Type: String
-    Description: 'ARN of dynamodb table containing info about payments'
-
-  # --- Sqs ---
-  PnNotificationCostToUpdateQueueName:
-    Type: String
-    Description: 'The name of the SQS queue used to communicate with pn-notification-cost-service module.'
-
-  PnNotificationCostToUpdateQueueARN:
-    Type: String
-    Description: 'Identify the resource that the policy applies to.'
-
-  PnNotificationCostToUpdateQueueAlarmARN:
-    Type: String
-    Description: 'Identify the resource that the policy applies to.'
-
   PnNotificationCostToUpdateQueueURL:
     Type: String
     Description: 'Notification cost to update queue URL'
@@ -251,11 +230,6 @@ Parameters:
     Type: Number
     Default: 60
     Description: 'BatchSize event source mapping'
-
-  CdcKinesisSourceStreamKeyId:
-    Type: String
-    Default: ''
-    Description: 'KMS Key ID for the CDC Kinesis stream'
 
   ESMKinesisFailureNotificationsBucketName:
     Type: String
@@ -282,13 +256,15 @@ Parameters:
     Description: "Comma-separated list of timeline categories accepted by CostEventUpdateLambdaKinesisSource filter"
     Default: SEND_ANALOG_DOMICILE,SEND_SIMPLE_REGISTERED_LETTER,NOTIFICATION_CANCELLED,REQUEST_REFUSED
 
-  NewWorkflowLambdasEnabledStart:
+  CdcKinesisSourceStreamArn:
     Type: String
-    Description: 'Start date in EPOCH millis format (important!) for lambdas enabled'
+    Default: ''
+    Description: 'ARN for pn-cdc-stream kinesis stream'
 
-  NewWorkflowLambdasEnabledEnd:
+  CdcKinesisSourceStreamKeyArn:
     Type: String
-    Description: 'End date in EPOCH millis format (important!) for lambdas enabled'
+    Default: ''
+    Description: 'KMS Key ARN for the CDC Kinesis stream'
 
   CdcKinesisSourceStreamName:
     Type: String
@@ -301,6 +277,14 @@ Parameters:
   CostEventUpdateLambdaName:
     Type: String
     Description: 'Name of the cost event update lambda'
+
+  NewWorkflowLambdasEnabledStart:
+    Type: String
+    Description: 'Start date in EPOCH millis format (important!) for lambdas enabled'
+
+  NewWorkflowLambdasEnabledEnd:
+    Type: String
+    Description: 'End date in EPOCH millis format (important!) for lambdas enabled'
 
 Resources:
   # PN-Notification-Cost-Service microservice
@@ -367,6 +351,7 @@ Resources:
           - ','
           - - !GetAtt NotificationCostServiceMicroservice.Outputs.FatalLogsMetricAlarmArn
             - !Ref PnNotificationCostToUpdateQueueAlarmARN
+            - !Sub '/aws/lambda/${CostEventUpdateLambdaName}'
         QueueArns: !Ref PnNotificationCostToUpdateQueueARN
         LogGroupsNames: !Sub '/aws/ecs/${ProjectName}-notification-cost-service'
 
@@ -396,7 +381,6 @@ Resources:
               - events:PutEvents
             Resource:
               - !Sub arn:aws:events:${AWS::Region}:${AWS::AccountId}:event-bus/${ProjectName}-CoreEventBus
-              - !Sub "${PaymentInfoTableArn}"
           - Effect: Allow
             Action:
               - sqs:DeleteMessage
@@ -471,10 +455,10 @@ Resources:
               - kinesis:ListShards
               - kinesis:ListStreams
               - kinesis:SubscribeToShard
-            Resource: !Sub arn:aws:kinesis:${AWS::Region}:${AWS::AccountId}:stream/${CdcKinesisSourceStreamName}
+            Resource: !Ref CdcKinesisSourceStreamArn
           - Action: kms:Decrypt
             Effect: Allow
-            Resource: !Sub arn:aws:kms:${AWS::Region}:${AWS::AccountId}:key/${CdcKinesisSourceStreamKeyId}
+            Resource: !Ref CdcKinesisSourceStreamKeyArn
           - Effect: Allow
             Action:
               - sqs:ChangeMessageVisibility
@@ -500,7 +484,7 @@ Resources:
     Properties:
       BatchSize: !Ref CostEventUpdateLambdaBatchSize
       BisectBatchOnFunctionError: true
-      EventSourceArn: !Sub arn:aws:kinesis:${AWS::Region}:${AWS::AccountId}:stream/${CdcKinesisSourceStreamName}
+      EventSourceArn: !Ref CdcKinesisSourceStreamArn
       FunctionName: !Ref CostEventUpdateLambda
       FunctionResponseTypes:
         - ReportBatchItemFailures

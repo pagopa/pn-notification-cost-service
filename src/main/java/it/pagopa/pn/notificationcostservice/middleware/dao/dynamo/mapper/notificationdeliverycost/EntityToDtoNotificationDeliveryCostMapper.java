@@ -25,7 +25,6 @@ public class EntityToDtoNotificationDeliveryCostMapper {
                 .recipientInternalId(entity.getRecipientInternalId())
                 .secondAnalogCost(mapSecondAnalogCost(entity.getSecondAnalogCost()))
                 .isDeleted(entity.getIsDeleted())
-                .ttl(entity.getTtl())
                 .vat(entity.getVat())
                 .senderPaId(entity.getSenderPaId())
                 .senderTaxId(entity.getSenderTaxId())

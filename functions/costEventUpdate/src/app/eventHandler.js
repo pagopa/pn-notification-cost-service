@@ -5,6 +5,18 @@ const { SQSClient, SendMessageBatchCommand } = require("@aws-sdk/client-sqs");
 const sqs = new SQSClient({ region: process.env.REGION });
 const QUEUE_URL = process.env.QUEUE_URL;
 
+function appendBatchItemFailures(batchItemFailures, itemIdentifiers) {
+  const allIdentifiers = [
+    ...batchItemFailures.map((item) => item.itemIdentifier),
+    ...itemIdentifiers,
+  ];
+
+  return [...new Set(allIdentifiers)].map((itemIdentifier) => ({
+    itemIdentifier,
+  }));
+}
+
+
 exports.handleEvent = async (event) => {
   // 1. Kinesis data extraction
   const cdcEvents = extractKinesisData(event);
@@ -34,10 +46,9 @@ exports.handleEvent = async (event) => {
               "Error in persisting current cdcEvents: ",
               JSON.stringify(currentCdcEvents)
             );
-            batchItemFailures = batchItemFailures.concat(
-              responseError.map((i) => {
-                return { itemIdentifier: i.kinesisSeqNumber };
-              })
+            batchItemFailures = appendBatchItemFailures(
+              batchItemFailures,
+              responseError.map((i) => i.kinesisSeqNumber)
             );
           }
         } else {
@@ -47,15 +58,50 @@ exports.handleEvent = async (event) => {
           );
         }
       } catch (exc) {
+        const processedItems = Array.isArray(exc.processedItems)
+          ? exc.processedItems
+          : [];
+        const failedEvents = Array.isArray(exc.failedEvents)
+          ? exc.failedEvents
+          : currentCdcEvents;
+        const shouldStopProcessing = exc.shouldStopProcessing === true;
+
         console.log(
           "Error in persisting current cdcEvents: ",
           currentCdcEvents
         );
-        batchItemFailures = batchItemFailures.concat(
-          currentCdcEvents.map((i) => {
-            return { itemIdentifier: i.kinesisSeqNumber };
-          })
+
+        if (processedItems.length > 0) {
+          try {
+            const responseError = await sendMessages(processedItems);
+
+            batchItemFailures = appendBatchItemFailures(
+              batchItemFailures,
+              responseError.map((item) => item.kinesisSeqNumber)
+            );
+          } catch (sendError) {
+            console.log(
+              "Error while sending already processed items after partial mapping failure: ",
+              sendError
+            );
+            batchItemFailures = appendBatchItemFailures(
+              batchItemFailures,
+              processedItems.map((item) => item.Id)
+            );
+          }
+        }
+
+        batchItemFailures = appendBatchItemFailures(
+          batchItemFailures,
+          failedEvents.map((item) => item.kinesisSeqNumber)
         );
+
+        if (shouldStopProcessing) {
+          console.log(
+            "Stopping batch processing after validation error in current cdcEvents"
+          );
+          break;
+        }
       }
     }
     if (batchItemFailures.length > 0) {

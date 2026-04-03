@@ -32,6 +32,9 @@
                     },
                     "productType": {
                         "S": "AR_REGISTERED_LETTER"
+                    },
+                    "sentAttemptMade": {
+                        "N": "0"
                     }
                 }
             }
