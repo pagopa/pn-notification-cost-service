@@ -29,7 +29,7 @@ describe("event handler tests", function () {
       },
       "./lib/eventMapper.js": {
         mapEvents: () => {
-          return [{ test: 1 }];
+          return { processedItems: [{ test: 1 }], failedEvents: [] };
         },
       },
     });
@@ -75,7 +75,7 @@ describe("event handler tests", function () {
       },
       "./lib/eventMapper.js": {
         mapEvents: () => {
-          return [{ test: 1 }];
+          return { processedItems: [{ test: 1 }], failedEvents: [] };
         },
       },
     });
@@ -115,7 +115,7 @@ describe("event handler tests", function () {
       },
       "./lib/eventMapper.js": {
         mapEvents: () => {
-          return [{ test: 1 }];
+          return { processedItems: [{ test: 1 }], failedEvents: [] };
         },
       },
     });
@@ -137,7 +137,7 @@ describe("event handler tests", function () {
       },
       "./lib/eventMapper.js": {
         mapEvents: () => {
-          return [{ test: 1 }];
+          return { processedItems: [{ test: 1 }], failedEvents: [] };
         },
       },
     });
@@ -159,7 +159,7 @@ describe("event handler tests", function () {
       },
       "./lib/eventMapper.js": {
         mapEvents: () => {
-          return [];
+          return { processedItems: [], failedEvents: [] };
         },
       },
     });
@@ -181,10 +181,6 @@ describe("event handler tests", function () {
         MessageAttributes: {},
       },
     ];
-
-    const partialError = new Error("partial mapping error");
-    partialError.processedItems = processedItems;
-    partialError.failedEvents = [{ payload: "2", kinesisSeqNumber: "test-invalid" }];
 
     const mockSQSClient = {
       send: async (command) => {
@@ -216,7 +212,9 @@ describe("event handler tests", function () {
       },
       "./lib/eventMapper.js": {
         mapEvents: async () => {
-          throw partialError;
+          return { 
+            processedItems, 
+            failedEvents: [{ payload: "2", kinesisSeqNumber: "test-invalid" }] };
         },
       },
     });
@@ -237,16 +235,13 @@ describe("event handler tests", function () {
       kinesisSeqNumber: `seq-${index + 1}`,
     }));
 
-    const partialError = new Error("partial mapping error");
-    partialError.processedItems = [
+    const processedItems = [
       {
         Id: "seq-1",
         MessageBody: "{}",
         MessageAttributes: {},
       },
     ];
-    partialError.failedEvents = [{ kinesisSeqNumber: "seq-2" }];
-    partialError.shouldStopProcessing = true;
 
     const mockSQSClient = {
       send: async () => ({}),
@@ -271,7 +266,10 @@ describe("event handler tests", function () {
       "./lib/eventMapper.js": {
         mapEvents: async () => {
           mapEventsCalls += 1;
-          throw partialError;
+          return { 
+            processedItems, 
+            failedEvents: [{ kinesisSeqNumber: "seq-2" }] 
+          };
         },
       },
     });

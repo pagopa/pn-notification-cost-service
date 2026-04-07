@@ -271,14 +271,6 @@ Parameters:
     Type: String
     Description: 'Name of the cost event update lambda'
 
-  NewWorkflowLambdasEnabledStart:
-    Type: String
-    Description: 'Start date in EPOCH millis format (important!) for lambdas enabled'
-
-  NewWorkflowLambdasEnabledEnd:
-    Type: String
-    Description: 'End date in EPOCH millis format (important!) for lambdas enabled'
-
 Resources:
   # PN-Notification-Cost-Service microservice
   NotificationCostServiceMicroservice:

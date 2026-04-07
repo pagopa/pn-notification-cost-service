@@ -4,6 +4,8 @@ const fs = require("fs");
 const { mapEvents } = require("../app/lib/eventMapper");
 
 const EVENT_TYPE = "COST_UPDATE";
+const PASSING_FEATURE_DATE = "2023-08-08T00:00:00Z";
+const FAILING_FEATURE_DATE = "2023-08-09T00:00:00Z";
 
 function loadEventFixture() {
   const eventJSON = fs.readFileSync(
@@ -35,17 +37,26 @@ function expectCommonMessageAttributes(messageAttributes, iun) {
 describe("event mapper tests", function () {
   const iun = "VWKQ-WQNT-VJZG-202308-K-1";
 
+  beforeEach(() => {
+    // Set FEATURE_DATE to a value that allows the event to be processed by default
+    process.env.FEATURE_DATE = PASSING_FEATURE_DATE;
+  });
+
+  afterEach(() => {
+    delete process.env.FEATURE_DATE;
+  });
+
   it("test SEND_ANALOG_DOMICILE ATTEMPT_0 mapping", async () => {
     let event = loadEventFixture();
 
     const events = [event];
 
-    const res = await mapEvents(events);
+    const { processedItems, failedEvents } = await mapEvents(events);
 
-    expect(res).length(1);
+    expect(processedItems).to.have.length(1);
 
     // Check MessageBody fields
-    let body = JSON.parse(res[0].MessageBody);
+    let body = JSON.parse(processedItems[0].MessageBody);
     expect(body).to.have.all.keys("iun", "eventType", "recIndex", "cost", "productType", "costUpdatePhase");
     expect(body.iun).equal(iun);
     expect(body.eventType).equal(EVENT_TYPE);
@@ -55,11 +66,11 @@ describe("event mapper tests", function () {
     expect(body.productType).equal("AR_REGISTERED_LETTER");
 
     // Check message attributes
-    expect(res[0]).to.have.all.keys('Id', 'MessageBody', 'MessageAttributes');
-    expect(res[0].Id).equal("test-seq-1");
+    expect(processedItems[0]).to.have.all.keys('Id', 'MessageBody', 'MessageAttributes');
+    expect(processedItems[0].Id).equal("test-seq-1");
 
     // Check all MessageAttributes
-    expectCommonMessageAttributes(res[0].MessageAttributes, iun);
+    expectCommonMessageAttributes(processedItems[0].MessageAttributes, iun);
   });
 
   it("test SEND_ANALOG_DOMICILE ATTEMPT_1 and different recIndex mapping", async () => {
@@ -73,11 +84,11 @@ describe("event mapper tests", function () {
 
     const events = [event];
 
-    const res = await mapEvents(events);
+    const { processedItems, failedEvents } = await mapEvents(events);
 
-    expect(res).length(1);
+    expect(processedItems).to.have.length(1);
 
-    let body = JSON.parse(res[0].MessageBody);
+    let body = JSON.parse(processedItems[0].MessageBody);
     expect(body).to.have.all.keys("iun", "eventType", "recIndex", "cost", "productType", "costUpdatePhase");
     expect(body.iun).equal(iun);
     expect(body.eventType).equal(EVENT_TYPE);
@@ -87,8 +98,8 @@ describe("event mapper tests", function () {
     expect(body.productType).equal("AR_REGISTERED_LETTER");
 
     // Check message attributes
-    expect(res[0]).to.have.all.keys('Id', 'MessageBody', 'MessageAttributes');
-    expectCommonMessageAttributes(res[0].MessageAttributes, iun);
+    expect(processedItems[0]).to.have.all.keys('Id', 'MessageBody', 'MessageAttributes');
+    expectCommonMessageAttributes(processedItems[0].MessageAttributes, iun);
   });
 
   it("test SEND_SIMPLE_REGISTERED_LETTER mapping", async () => {
@@ -103,11 +114,11 @@ describe("event mapper tests", function () {
 
     const events = [event];
 
-    const res = await mapEvents(events);
+    const { processedItems, failedEvents } = await mapEvents(events);
 
-    expect(res).length(1);
+    expect(processedItems).to.have.length(1);
 
-    let body = JSON.parse(res[0].MessageBody);
+    let body = JSON.parse(processedItems[0].MessageBody);
     expect(body).to.have.all.keys("iun", "eventType", "recIndex", "cost", "productType", "costUpdatePhase");
     expect(body.iun).equal(iun);
     expect(body.eventType).equal(EVENT_TYPE);
@@ -117,8 +128,8 @@ describe("event mapper tests", function () {
     expect(body.productType).equal("AR_REGISTERED_LETTER");
 
     // Check message attributes
-    expect(res[0]).to.have.all.keys('Id', 'MessageBody', 'MessageAttributes');
-    expectCommonMessageAttributes(res[0].MessageAttributes, iun);
+    expect(processedItems[0]).to.have.all.keys('Id', 'MessageBody', 'MessageAttributes');
+    expectCommonMessageAttributes(processedItems[0].MessageAttributes, iun);
   });
 
   it("test NOTIFICATION_CANCELLED mapping", async () => {
@@ -131,14 +142,13 @@ describe("event mapper tests", function () {
 
     const events = [event];
 
-    const res = await mapEvents(events);
+    const { processedItems, failedEvents } = await mapEvents(events);
 
     // NOTIFICATION_CANCELLED is being sent without recIndex being set in the body
     // because eventMapper doesn't set recIndex for this category
-    expect(res).length(1);
-
+    expect(processedItems).to.have.length(1);
     // Check MessageBody fields - NOTE: no recIndex for NOTIFICATION_CANCELLED
-    let body = JSON.parse(res[0].MessageBody);
+    let body = JSON.parse(processedItems[0].MessageBody);
     expect(body).to.have.all.keys("iun", "eventType", "isCancelled", "costUpdatePhase");
     expect(body.iun).equal(iun);
     expect(body.eventType).equal(EVENT_TYPE);
@@ -146,8 +156,8 @@ describe("event mapper tests", function () {
     expect(body.costUpdatePhase).equal("NOTIFICATION_CANCELLED");
 
     // Check message attributes
-    expect(res[0]).to.have.all.keys('Id', 'MessageBody', 'MessageAttributes');
-    expectCommonMessageAttributes(res[0].MessageAttributes, iun);
+    expect(processedItems[0]).to.have.all.keys('Id', 'MessageBody', 'MessageAttributes');
+    expectCommonMessageAttributes(processedItems[0].MessageAttributes, iun);
   });
 
   it("test REQUEST_REFUSED mapping", async () => {
@@ -160,14 +170,13 @@ describe("event mapper tests", function () {
 
     const events = [event];
 
-    const res = await mapEvents(events);
+    const { processedItems, failedEvents } = await mapEvents(events);
 
     // REQUEST_REFUSED is being sent without recIndex being set in the body
     // because eventMapper doesn't set recIndex for this category
-    expect(res).length(1);
-
+    expect(processedItems).to.have.length(1);
     // Check MessageBody fields - NOTE: no recIndex for REQUEST_REFUSED
-    let body = JSON.parse(res[0].MessageBody);
+    let body = JSON.parse(processedItems[0].MessageBody);
     expect(body).to.have.all.keys("iun", "eventType", "isRefused", "costUpdatePhase");
     expect(body.iun).equal(iun);
     expect(body.eventType).equal(EVENT_TYPE);
@@ -175,8 +184,8 @@ describe("event mapper tests", function () {
     expect(body.costUpdatePhase).equal("REQUEST_REFUSED");
 
     // Check message attributes
-    expect(res[0]).to.have.all.keys('Id', 'MessageBody', 'MessageAttributes');
-    expectCommonMessageAttributes(res[0].MessageAttributes, iun);
+    expect(processedItems[0]).to.have.all.keys('Id', 'MessageBody', 'MessageAttributes');
+    expectCommonMessageAttributes(processedItems[0].MessageAttributes, iun);
   });
 
   it("test unmapped event", async () => {
@@ -187,12 +196,9 @@ describe("event mapper tests", function () {
 
     const events = [event];
 
-    try {
-      await mapEvents(events);
-    }
-    catch (error) {
-      expect(error.message).to.equal("Missing required field category: UNSUPPORTED_CATEGORY");
-    }
+    const { processedItems, failedEvents } = await mapEvents(events);
+    expect(processedItems).to.have.length(0);
+    expect(failedEvents).to.deep.equal([event]);
   });
 
   it("test missing fields event - missing recIndex", async () => {
@@ -203,12 +209,9 @@ describe("event mapper tests", function () {
 
     let events = [event];
 
-    try {
-      await mapEvents(events);
-    }
-    catch (error) {
-      expect(error.message).to.equal("Missing required fields for SEND_ANALOG_DOMICILE: details.recIndex");
-    }
+    const { processedItems, failedEvents } = await mapEvents(events);
+    expect(processedItems).to.have.length(0);
+    expect(failedEvents).to.deep.equal([event]);
   });
 
   it("test missing fields event - missing analogCost", async () => {
@@ -219,29 +222,26 @@ describe("event mapper tests", function () {
 
     let events = [event];
 
-    try {
-      await mapEvents(events);
-    }
-    catch (error) {
-      expect(error.message).to.equal("Missing required fields for SEND_ANALOG_DOMICILE: details.analogCost");
-    }
+    const { processedItems, failedEvents } = await mapEvents(events);
+    expect(processedItems).to.have.length(0);
+    expect(failedEvents).to.deep.equal([event]);
   });
 
   it("test partial batch error exposes only the invalid event in failedEvents", async () => {
     let validEvent = loadEventFixture();
     let invalidEvent = loadEventFixture();
+    let invalidEvent2 = loadEventFixture();
     invalidEvent.kinesisSeqNumber = "test-seq-invalid";
     delete invalidEvent.dynamodb.NewImage.details.M.analogCost;
+    invalidEvent2.kinesisSeqNumber = "test-seq-invalid-2";
+    delete invalidEvent2.dynamodb.NewImage.details.M.recIndex;
 
-    try {
-      await mapEvents([validEvent, invalidEvent]);
-      expect.fail("Expected partial batch processing error");
-    } catch (error) {
-      expect(error.name).to.equal("PartialBatchProcessingError");
-      expect(error.processedItems).to.have.length(1);
-      expect(error.processedItems[0].Id).to.equal("test-seq-1");
-      expect(error.failedEvents).to.deep.equal([invalidEvent]);
-    }
+    const events = [validEvent, invalidEvent, invalidEvent2];
+
+    const {processedItems, failedEvents} = await mapEvents(events);
+    expect(processedItems).to.have.length(1);
+    expect(processedItems[0].Id).to.equal("test-seq-1");
+    expect(failedEvents).to.deep.equal([invalidEvent, invalidEvent2]);
   });
 
   it("test SEND_ANALOG_DOMICILE missing ATTEMPT", async () => {
@@ -250,25 +250,37 @@ describe("event mapper tests", function () {
     // remove ATTEMPT_0 from timelineElementId
     delete event.dynamodb.NewImage.details.M.sentAttemptMade;
     const events = [event];
-
-    try {
-      await mapEvents(events);
-    } catch (error) {
-      expect(error.message).to.equal("timelineObject does not have sentAttemptMade");
-    }
+    const {processedItems, failedEvents} = await mapEvents(events);
+    expect(processedItems).to.have.length(0);
+    expect(failedEvents).to.deep.equal([event]);
   });
 
-  it("test event filtered when notificationSentAt equals FEATURE_DATE", async () => {
+  it("test event processed when notificationSentAt equals FEATURE_DATE", async () => {
     if (!process.env.FEATURE_DATE) {
       throw new Error("FEATURE_DATE must be set for eventMapper tests");
     }
 
     let event = loadEventFixture();
-    event.dynamodb.NewImage.notificationSentAt.S = "2023-08-08T00:00:00.000000000Z";
+    event.dynamodb.NewImage.notificationSentAt.S = PASSING_FEATURE_DATE;
 
-    const res = await mapEvents([event]);
+    const {processedItems, failedEvents} = await mapEvents([event]);
 
-    expect(res).length(0);
+    expect(processedItems).to.have.length(1);
+    expect(failedEvents).to.have.length(0);
+  });
+
+  it("test event fails when notificationSentAt is malformed", async () => {
+    if (!process.env.FEATURE_DATE) {
+      throw new Error("FEATURE_DATE must be set for eventMapper tests");
+    }
+
+    let event = loadEventFixture();
+    event.dynamodb.NewImage.notificationSentAt.S = "invalid-date-format";
+
+    const {processedItems, failedEvents} = await mapEvents([event]);
+
+    expect(processedItems).to.have.length(0);
+    expect(failedEvents).to.have.length(1);
   });
 
   it("test event filtered when notificationSentAt is before FEATURE_DATE", async () => {
@@ -279,21 +291,22 @@ describe("event mapper tests", function () {
     let event = loadEventFixture();
     event.dynamodb.NewImage.notificationSentAt.S = "2023-08-01T17:23:32.640258864Z";
 
-    const res = await mapEvents([event]);
+    const {processedItems, failedEvents} = await mapEvents([event]);
 
-    expect(res).length(0);
+    expect(processedItems).to.have.length(0);
+    expect(failedEvents).to.have.length(0);
   });
 
   it("test invalid FEATURE_DATE format throws error", async () => {
     const previousFeatureDate = process.env.FEATURE_DATE;
-    process.env.FEATURE_DATE = "2023-08-08T00:00:00.000Z";
+    process.env.FEATURE_DATE = "2023-08-08T00:Z"; // Invalid format
 
     try {
       await mapEvents([loadEventFixture()]);
       expect.fail("Expected mapEvents to throw an invalid FEATURE_DATE error");
     } catch (error) {
       expect(error.message).to.equal(
-        "Invalid FEATURE_DATE format. Expected YYYY-MM-DDTHH:mm:ssZ"
+        "Invalid date format. Expected YYYY-MM-DDTHH:mm:ssZ or YYYY-MM-DDTHH:mm:ss.sssZ with up to 9 decimal places for seconds"
       );
     } finally {
       process.env.FEATURE_DATE = previousFeatureDate;
@@ -301,7 +314,6 @@ describe("event mapper tests", function () {
   });
 
   it("test missing FEATURE_DATE throws error", async () => {
-    const previousFeatureDate = process.env.FEATURE_DATE;
     delete process.env.FEATURE_DATE;
 
     try {
@@ -309,10 +321,8 @@ describe("event mapper tests", function () {
       expect.fail("Expected mapEvents to throw an invalid FEATURE_DATE error");
     } catch (error) {
       expect(error.message).to.equal(
-        "Invalid FEATURE_DATE format. Expected YYYY-MM-DDTHH:mm:ssZ"
+        "Invalid date format. Expected YYYY-MM-DDTHH:mm:ssZ or YYYY-MM-DDTHH:mm:ss.sssZ with up to 9 decimal places for seconds"
       );
-    } finally {
-      process.env.FEATURE_DATE = previousFeatureDate;
     }
   });
 });

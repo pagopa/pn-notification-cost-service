@@ -1,6 +1,5 @@
 const { parseKinesisObjToJsonObj } = require("./utils");
 const crypto = require("crypto");
-const PartialBatchProcessingError = require("./PartialBatchProcessingError");
 
 const EVENT_TYPE = "COST_UPDATE";
 
@@ -34,121 +33,118 @@ function validateAnalogTimelineObj(category, timelineObj) {
 }
 
 
-function checkParsingFeatureDateOrThrow(featureDate) {
-  const expectedFormat = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}Z$/;
+function checkDateParsingOrThrow(dateString) {
+  // Accetta da 1 a 9 cifre decimali per i secondi, per coprire sia i formati con millisecondi che quelli con nanosecondi
+  const expectedFormat = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(\.\d{1,9})?Z$/;
 
-  if (!expectedFormat.test(featureDate)) {
-    throw new Error(
-      "Invalid FEATURE_DATE format. Expected YYYY-MM-DDTHH:mm:ssZ"
-    );
+  const invalidMessage = "Invalid date format. Expected YYYY-MM-DDTHH:mm:ssZ or YYYY-MM-DDTHH:mm:ss.sssZ with up to 9 decimal places for seconds";
+  if (!expectedFormat.test(dateString)) {
+    throw new Error(invalidMessage);
   }
 
-  const timestamp = Date.parse(featureDate);
-
-  if (Number.isNaN(timestamp)) {
-    throw new Error(
-      "Invalid FEATURE_DATE format. Expected YYYY-MM-DDTHH:mm:ssZ"
-    );
-  }
-
-  return featureDate;
+  return dateString;
 }
 
 
 exports.mapEvents = async (events) => {
-  const featureDate = checkParsingFeatureDateOrThrow(process.env.FEATURE_DATE);
-  const result = [];
+  const featureDate = checkDateParsingOrThrow(process.env.FEATURE_DATE);
+  const processedItems = [];
 
   for (let index = 0; index < events.length; index++) {
     const filteredEvent = events[index];
 
-    if (filteredEvent.dynamodb.NewImage.notificationSentAt.S <= featureDate) {
-      continue;
-    }
-
-    const date = new Date();
-
     try {
-      const timelineObj = parseKinesisObjToJsonObj(
-        filteredEvent.dynamodb.NewImage
-      );
-
-      const resultElementBody = {
-        iun: timelineObj.iun,
-        eventType: EVENT_TYPE
-      };
-
-      let messageAttributes = {
-        publisher: {
-          DataType: "String",
-          StringValue: "notificationCostService",
-        },
-        iun: {
-          DataType: "String",
-          StringValue: resultElementBody.iun,
-        },
-        eventId: {
-          DataType: "String",
-          StringValue: crypto.randomUUID(),
-        },
-        createdAt: {
-          DataType: "String",
-          StringValue: date.toISOString(),
-        },
-        eventType: {
-          DataType: "String",
-          StringValue: EVENT_TYPE,
-        },
-      };
-
-      const category = timelineObj.category;
-
-      switch (category) {
-        case "SEND_ANALOG_DOMICILE":
-          validateAnalogTimelineObj(category, timelineObj);
-          resultElementBody.recIndex = timelineObj.details.recIndex;
-          resultElementBody.cost = timelineObj.details.analogCost;
-          resultElementBody.productType = timelineObj.details.productType;
-          const costPhase = updateCostPhaseForSendAnalogDomicile(timelineObj);
-          resultElementBody.costUpdatePhase = costPhase;
-          createAndPushElement(result, filteredEvent, resultElementBody, messageAttributes);
-          break;
-
-        case "SEND_SIMPLE_REGISTERED_LETTER":
-          validateAnalogTimelineObj(category, timelineObj);
-          resultElementBody.recIndex = timelineObj.details.recIndex;
-          resultElementBody.cost = timelineObj.details.analogCost;
-          resultElementBody.productType = timelineObj.details.productType;
-          resultElementBody.costUpdatePhase = "SEND_SIMPLE_REGISTERED_LETTER";
-          createAndPushElement(result, filteredEvent, resultElementBody, messageAttributes);
-          break;
-
-        case "NOTIFICATION_CANCELLED":
-          resultElementBody.isCancelled = true;
-          resultElementBody.costUpdatePhase = "NOTIFICATION_CANCELLED";
-          createAndPushElement(result, filteredEvent, resultElementBody, messageAttributes);
-          break;
-
-        case "REQUEST_REFUSED":
-          resultElementBody.isRefused = true;
-          resultElementBody.costUpdatePhase = "REQUEST_REFUSED";
-          createAndPushElement(result, filteredEvent, resultElementBody, messageAttributes);
-          break;
-        default:
-          throw new Error(`Missing required field category: ${category}`);
+      let notificationSentAt = checkDateParsingOrThrow(filteredEvent.dynamodb.NewImage.notificationSentAt?.S);
+      if (notificationSentAt < featureDate) {
+        console.log(`Skipping event with iun ${filteredEvent.dynamodb.NewImage.iun.S} due to notificationSentAt ${filteredEvent.dynamodb.NewImage.notificationSentAt.S} being before feature date ${featureDate}`);
+        continue;
       }
+      const item = mapSingleEvent(filteredEvent);
+      processedItems.push(item);
     } catch (error) {
-      throw new PartialBatchProcessingError(error.message, {
-        processedItems: [...result],
-        failedEvents: [filteredEvent],
-        cause: error,
-      });
+      console.warn(`Error processing event with sequence number ${filteredEvent.kinesisSeqNumber}: ${error.message}`);
+      return {
+        processedItems,
+        failedEvents: events.slice(index)
+      };
     }
   }
-  return result;
+
+  return { processedItems, failedEvents: [] };
 };
 
-function createAndPushElement(result, filteredEvent, resultElementBody, messageAttributes) {
+function mapSingleEvent(filteredEvent) {
+  const date = new Date();
+
+  const timelineObj = parseKinesisObjToJsonObj(
+    filteredEvent.dynamodb.NewImage
+  );
+
+  const resultElementBody = {
+    iun: timelineObj.iun,
+    eventType: EVENT_TYPE
+  };
+
+  let messageAttributes = {
+    publisher: {
+      DataType: "String",
+      StringValue: "notificationCostService",
+    },
+    iun: {
+      DataType: "String",
+      StringValue: resultElementBody.iun,
+    },
+    eventId: {
+      DataType: "String",
+      StringValue: crypto.randomUUID(),
+    },
+    createdAt: {
+      DataType: "String",
+      StringValue: date.toISOString(),
+    },
+    eventType: {
+      DataType: "String",
+      StringValue: EVENT_TYPE,
+    },
+  };
+
+  const category = timelineObj.category;
+
+  switch (category) {
+    case "SEND_ANALOG_DOMICILE":
+      validateAnalogTimelineObj(category, timelineObj);
+      resultElementBody.recIndex = timelineObj.details.recIndex;
+      resultElementBody.cost = timelineObj.details.analogCost;
+      resultElementBody.productType = timelineObj.details.productType;
+      resultElementBody.costUpdatePhase = updateCostPhaseForSendAnalogDomicile(timelineObj);
+      break;
+
+    case "SEND_SIMPLE_REGISTERED_LETTER":
+      validateAnalogTimelineObj(category, timelineObj);
+      resultElementBody.recIndex = timelineObj.details.recIndex;
+      resultElementBody.cost = timelineObj.details.analogCost;
+      resultElementBody.productType = timelineObj.details.productType;
+      resultElementBody.costUpdatePhase = "SEND_SIMPLE_REGISTERED_LETTER";
+      break;
+
+    case "NOTIFICATION_CANCELLED":
+      resultElementBody.isCancelled = true;
+      resultElementBody.costUpdatePhase = "NOTIFICATION_CANCELLED";
+      break;
+
+    case "REQUEST_REFUSED":
+      resultElementBody.isRefused = true;
+      resultElementBody.costUpdatePhase = "REQUEST_REFUSED";
+      break;
+
+    default:
+      throw new Error(`Missing required field category: ${category}`);
+  }
+
+  return buildResultElement(filteredEvent, resultElementBody, messageAttributes);
+};
+
+function buildResultElement(filteredEvent, resultElementBody, messageAttributes) {
     let resultElement = {
       Id: filteredEvent.kinesisSeqNumber,
       MessageBody: JSON.stringify(resultElementBody),
@@ -156,5 +152,5 @@ function createAndPushElement(result, filteredEvent, resultElementBody, messageA
     };
 
     console.log("Mapped message for the queue: %j", JSON.stringify(resultElement));
-    result.push(resultElement);
+    return resultElement;
 }

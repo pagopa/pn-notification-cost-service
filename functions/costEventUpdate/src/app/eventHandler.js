@@ -4,18 +4,7 @@ const { SQSClient, SendMessageBatchCommand } = require("@aws-sdk/client-sqs");
 
 const sqs = new SQSClient({ region: process.env.REGION });
 const QUEUE_URL = process.env.QUEUE_URL;
-
-function appendBatchItemFailures(batchItemFailures, itemIdentifiers) {
-  const allIdentifiers = [
-    ...batchItemFailures.map((item) => item.itemIdentifier),
-    ...itemIdentifiers,
-  ];
-
-  return [...new Set(allIdentifiers)].map((itemIdentifier) => ({
-    itemIdentifier,
-  }));
-}
-
+const CHUNK_SIZE = 10;
 
 exports.handleEvent = async (event) => {
   // 1. Kinesis data extraction
@@ -27,90 +16,61 @@ exports.handleEvent = async (event) => {
     return {
       batchItemFailures: [],
     };
-  } else {
-    let batchItemFailures = [];
-    while (cdcEvents.length > 0) {
-      // we process them in batches of 10
-      let currentCdcEvents = cdcEvents.splice(0, 10);
-
-      try {
-        // 2. event mapping
-        let processedItems = await mapEvents(currentCdcEvents);
-
-        // 3. SQS message sending
-        if (processedItems.length > 0) {
-          let responseError = await sendMessages(processedItems);
-
-          if (responseError.length > 0) {
-            console.log(
-              "Error in persisting current cdcEvents: ",
-              JSON.stringify(currentCdcEvents)
-            );
-            batchItemFailures = appendBatchItemFailures(
-              batchItemFailures,
-              responseError.map((i) => i.kinesisSeqNumber)
-            );
-          }
-        } else {
-          console.log(
-            "No events to persist in current cdcEvents: ",
-            JSON.stringify(currentCdcEvents)
-          );
-        }
-      } catch (exc) {
-        const processedItems = Array.isArray(exc.processedItems)
-          ? exc.processedItems
-          : [];
-        const failedEvents = Array.isArray(exc.failedEvents)
-          ? exc.failedEvents
-          : currentCdcEvents;
-        const shouldStopProcessing = exc.shouldStopProcessing === true;
-
-        console.log(
-          "Error in persisting current cdcEvents: ",
-          currentCdcEvents
-        );
-
-        if (processedItems.length > 0) {
-          try {
-            const responseError = await sendMessages(processedItems);
-
-            batchItemFailures = appendBatchItemFailures(
-              batchItemFailures,
-              responseError.map((item) => item.kinesisSeqNumber)
-            );
-          } catch (sendError) {
-            console.log(
-              "Error while sending already processed items after partial mapping failure: ",
-              sendError
-            );
-            batchItemFailures = appendBatchItemFailures(
-              batchItemFailures,
-              processedItems.map((item) => item.Id)
-            );
-          }
-        }
-
-        batchItemFailures = appendBatchItemFailures(
-          batchItemFailures,
-          failedEvents.map((item) => item.kinesisSeqNumber)
-        );
-
-        if (shouldStopProcessing) {
-          console.log(
-            "Stopping batch processing after validation error in current cdcEvents"
-          );
-          break;
-        }
-      }
-    }
-    if (batchItemFailures.length > 0) {
-      console.log("process finished with some errors!");
-    }
-    return {
-      batchItemFailures: batchItemFailures,
-    };
   }
+
+  const failedSeqNumbers = new Set();
+  for (let i = 0; i < cdcEvents.length; i += CHUNK_SIZE) {
+    const currentChunk = cdcEvents.slice(i, i + CHUNK_SIZE);
+
+    try {
+      // 2. event mapping
+      const { processedItems, failedEvents } = await mapEvents(currentChunk);
+
+      // 3. SQS message sending
+      // Provo ad inviare gli item mappati con successo a prescindere da eventuali failedEvents restituiti
+      if (processedItems.length > 0) {
+        let sendError = await sendMessages(processedItems);
+
+        if (sendError.length > 0) {
+          console.log(
+            "Error in persisting current chunk of cdcEvents: ",
+            JSON.stringify(currentChunk)
+          );
+          sendError.forEach(e => failedSeqNumbers.add(e.kinesisSeqNumber));
+        }
+      } else {
+        console.log(
+          "No events to persist in current chunk of cdcEvents: ",
+          JSON.stringify(currentChunk)
+        );
+      }
+
+      // Se il mapping di un evento fallisce, evitiamo di processare i successivi per ridurre i duplicati.
+      // Fermando il ciclo ora, deleghiamo ad AWS la risottomissione degli eventi non ancora
+      // lavorati, garantendo una gestione pulita del checkpointing su Kinesis.      
+      if (failedEvents.length > 0) {
+        console.log("Mapping failed for events:", JSON.stringify(failedEvents));
+        failedEvents.forEach(e => failedSeqNumbers.add(e.kinesisSeqNumber));
+        break; 
+      }
+    } catch (exc) {
+      console.log(
+        "Error in persisting current chunk of cdcEvents: ",
+        currentChunk,
+        exc
+      );
+
+      // In caso di errore imprevisto, segno tutti gli eventi rimanenti come falliti e interrompo l'elaborazione del batch
+      cdcEvents.slice(i).forEach(e => failedSeqNumbers.add(e.kinesisSeqNumber));
+      break;
+    }
+  }
+  if (failedSeqNumbers.size > 0) {
+    console.log("process finished with some errors!");
+  }
+  return {
+    batchItemFailures: Array.from(failedSeqNumbers).map(id => ({ itemIdentifier: id }))
+  };
 };
 
 /**
