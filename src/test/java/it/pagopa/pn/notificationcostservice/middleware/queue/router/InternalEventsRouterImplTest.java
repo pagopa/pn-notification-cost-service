@@ -4,7 +4,9 @@ import it.pagopa.pn.notificationcostservice.exception.PnEventRouterException;
 import it.pagopa.pn.notificationcostservice.middleware.queue.consumer.event.InternalEvent;
 import it.pagopa.pn.notificationcostservice.middleware.queue.consumer.event.InternalEventType;
 import it.pagopa.pn.notificationcostservice.middleware.queue.consumer.event.notificationcost.NotificationCostInitializationEvent;
+import it.pagopa.pn.notificationcostservice.middleware.queue.consumer.event.notificationcost.UpdateNotificationCostEvent;
 import it.pagopa.pn.notificationcostservice.middleware.queue.consumer.handler.notificationcost.NotificationCostInitializationEventHandler;
+import it.pagopa.pn.notificationcostservice.middleware.queue.consumer.handler.notificationcost.UpdateNotificationCostEventHandler;
 import it.pagopa.pn.notificationcostservice.middleware.queue.consumer.router.impl.InternalEventsRouterImpl;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
@@ -26,6 +28,9 @@ class InternalEventsRouterImplTest {
 
     @Mock
     private NotificationCostInitializationEventHandler notificationCostInitializationEventHandler;
+
+    @Mock
+    private UpdateNotificationCostEventHandler updateNotificationCostEventHandler;
 
     @InjectMocks
     private InternalEventsRouterImpl router;
@@ -85,6 +90,64 @@ class InternalEventsRouterImplTest {
 
         verify(notificationCostInitializationEventHandler)
                 .handleNotificationCostInitializationEvent(payload);
+    }
+
+    @Test
+    void handleEvent_shouldRouteUpdateNotificationCostPayload() {
+        UpdateNotificationCostEvent.Payload payload = UpdateNotificationCostEvent.Payload.builder()
+                .iun("TEST-IUN-UPDATE")
+                .recIndex(1)
+                .cost(120)
+                .productType("AR")
+                .eventType(InternalEventType.COST_UPDATE)
+                .build();
+
+        Message<InternalEvent> message = MessageBuilder
+                .withPayload((InternalEvent) payload)
+                .setHeader("eventId", "evt-update-123")
+                .build();
+
+        when(updateNotificationCostEventHandler.handleUpdateNotificationCostEvent(payload))
+                .thenReturn(Mono.empty());
+
+        StepVerifier.create(router.handleEvent(message))
+                .verifyComplete();
+
+        verify(updateNotificationCostEventHandler)
+                .handleUpdateNotificationCostEvent(payload);
+        verifyNoInteractions(notificationCostInitializationEventHandler);
+        verifyNoMoreInteractions(updateNotificationCostEventHandler);
+    }
+
+    @Test
+    void handleEvent_shouldPropagateUpdateHandlerError() {
+        UpdateNotificationCostEvent.Payload payload = UpdateNotificationCostEvent.Payload.builder()
+                .iun("TEST-IUN-UPDATE")
+                .recIndex(1)
+                .cost(120)
+                .productType("AR")
+                .eventType(InternalEventType.COST_UPDATE)
+                .build();
+
+        Message<InternalEvent> message = MessageBuilder
+                .withPayload((InternalEvent) payload)
+                .setHeader("eventId", "evt-update-456")
+                .build();
+
+        RuntimeException expectedException = new RuntimeException("update handler failed");
+
+        when(updateNotificationCostEventHandler.handleUpdateNotificationCostEvent(payload))
+                .thenReturn(Mono.error(expectedException));
+
+        StepVerifier.create(router.handleEvent(message))
+                .expectErrorMatches(ex ->
+                        ex instanceof RuntimeException &&
+                                "update handler failed".equals(ex.getMessage()))
+                .verify();
+
+        verify(updateNotificationCostEventHandler)
+                .handleUpdateNotificationCostEvent(payload);
+        verifyNoInteractions(notificationCostInitializationEventHandler);
     }
 
     @Test
