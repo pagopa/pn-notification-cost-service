@@ -24,6 +24,8 @@ import reactor.test.StepVerifier;
 import software.amazon.awssdk.enhanced.dynamodb.DynamoDbEnhancedAsyncClient;
 
 import java.time.Instant;
+import java.util.List;
+import java.util.stream.Collectors;
 
 import static org.junit.jupiter.api.Assertions.fail;
 
@@ -225,5 +227,52 @@ public class NotificationDeliveryCostDaoDynamoTestIT {
                 System.out.println("Nothing to remove");
             }
         }
+    }
+
+    @Test
+    void getAllByIun_returnsOnlyItemsWithSameIun() {
+        String iun = "iun-query-" + System.nanoTime();
+        String otherIun = "iun-other-" + System.nanoTime();
+
+        NotificationDeliveryCostEntity item0 = newNotificationDeliveryCostEntity(iun, 0);
+        NotificationDeliveryCostEntity item1 = newNotificationDeliveryCostEntity(iun, 1);
+        NotificationDeliveryCostEntity itemOther = newNotificationDeliveryCostEntity(otherIun, 0);
+
+        try {
+            testDao.putItem(item0);
+            testDao.putItem(item1);
+            testDao.putItem(itemOther);
+
+            List<NotificationDeliveryCostEntity> items = dao.getAllByIun(iun).collectList().block();
+
+            Assertions.assertNotNull(items);
+            Assertions.assertEquals(2, items.size());
+            Assertions.assertTrue(items.stream().allMatch(item -> iun.equals(item.getIun())));
+
+            List<Integer> recIndexes = items.stream()
+                    .map(NotificationDeliveryCostEntity::getRecIndex)
+                    .sorted()
+                    .collect(Collectors.toList());
+            Assertions.assertEquals(List.of(0, 1), recIndexes);
+        } catch (Exception e) {
+            fail(e);
+        } finally {
+            try {
+                testDao.delete(item0.getIun(), item0.getRecIndex());
+                testDao.delete(item1.getIun(), item1.getRecIndex());
+                testDao.delete(itemOther.getIun(), itemOther.getRecIndex());
+            } catch (Exception e) {
+                System.out.println("Nothing to remove");
+            }
+        }
+    }
+
+    @Test
+    void getAllByIun_returnsEmptyPageWhenNoItemsExist() {
+        String iun = "iun-missing-" + System.nanoTime();
+
+        StepVerifier.create(dao.getAllByIun(iun))
+                .expectNextCount(0)
+                .verifyComplete();
     }
 }

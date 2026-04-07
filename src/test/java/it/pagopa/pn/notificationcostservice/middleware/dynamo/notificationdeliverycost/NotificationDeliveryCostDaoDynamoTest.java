@@ -17,19 +17,25 @@ import it.pagopa.pn.notificationcostservice.model.notificationdeliverycost.analo
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.ArgumentCaptor;
 import org.mockito.ArgumentMatchers;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import reactor.test.StepVerifier;
+import software.amazon.awssdk.core.async.SdkPublisher;
 import software.amazon.awssdk.enhanced.dynamodb.DynamoDbAsyncTable;
 import software.amazon.awssdk.enhanced.dynamodb.DynamoDbEnhancedAsyncClient;
 import software.amazon.awssdk.enhanced.dynamodb.TableSchema;
 import software.amazon.awssdk.enhanced.dynamodb.model.GetItemEnhancedRequest;
+import software.amazon.awssdk.enhanced.dynamodb.model.Page;
+import software.amazon.awssdk.enhanced.dynamodb.model.PagePublisher;
+import software.amazon.awssdk.enhanced.dynamodb.model.QueryEnhancedRequest;
 import software.amazon.awssdk.enhanced.dynamodb.model.UpdateItemEnhancedRequest;
 
 import java.time.Instant;
+import java.util.List;
 import java.util.concurrent.CompletableFuture;
 
 import static org.mockito.ArgumentMatchers.anyString;
@@ -230,6 +236,67 @@ class NotificationDeliveryCostDaoDynamoTest {
         verify(mockTable, times(2)).updateItem(
                 ArgumentMatchers.<UpdateItemEnhancedRequest<NotificationDeliveryCostEntity>>any()
         );
+    }
+
+    @Test
+    void getAllByIun_successAggregatesAllQueryPages() {
+        String iun = "iun-aggregate";
+        NotificationDeliveryCostEntity e1 = newNotificationDeliveryCostEntity(iun, 0);
+        NotificationDeliveryCostEntity e2 = newNotificationDeliveryCostEntity(iun, 1);
+        NotificationDeliveryCostEntity e3 = newNotificationDeliveryCostEntity(iun, 2);
+
+        SdkPublisher<Page<NotificationDeliveryCostEntity>> sdkPublisher = subscriber -> Flux.just(
+                Page.create(List.of(e1, e2)),
+                Page.create(List.of(e3))
+        ).subscribe(subscriber);
+        PagePublisher<NotificationDeliveryCostEntity> pagePublisher = PagePublisher.create(sdkPublisher);
+        when(mockTable.query(ArgumentMatchers.<QueryEnhancedRequest>any()))
+                .thenReturn(pagePublisher);
+
+        StepVerifier.create(dao.getAllByIun(iun))
+                .expectNextMatches(item -> iun.equals(item.getIun()) && item.getRecIndex() == 0)
+                .expectNextMatches(item -> iun.equals(item.getIun()) && item.getRecIndex() == 1)
+                .expectNextMatches(item -> iun.equals(item.getIun()) && item.getRecIndex() == 2)
+                .verifyComplete();
+
+        ArgumentCaptor<QueryEnhancedRequest> requestCaptor = ArgumentCaptor.forClass(QueryEnhancedRequest.class);
+        verify(mockTable).query(requestCaptor.capture());
+        org.junit.jupiter.api.Assertions.assertNotNull(requestCaptor.getValue());
+        org.junit.jupiter.api.Assertions.assertNotNull(requestCaptor.getValue().queryConditional());
+    }
+
+    @Test
+    void getAllByIun_returnsEmptyPageWhenNoItemsFound() {
+        SdkPublisher<Page<NotificationDeliveryCostEntity>> sdkPublisher = subscriber -> Flux
+                .<Page<NotificationDeliveryCostEntity>>empty()
+                .subscribe(subscriber);
+        PagePublisher<NotificationDeliveryCostEntity> pagePublisher = PagePublisher.create(sdkPublisher);
+        when(mockTable.query(ArgumentMatchers.<QueryEnhancedRequest>any()))
+                .thenReturn(pagePublisher);
+
+        StepVerifier.create(dao.getAllByIun("iun-empty"))
+                .expectNextCount(0)
+                .verifyComplete();
+
+        verify(mockTable).query(ArgumentMatchers.<QueryEnhancedRequest>any());
+    }
+
+    @Test
+    void getAllByIun_propagatesErrorWhenQueryFails() {
+        RuntimeException expectedException = new RuntimeException("query failed");
+
+        SdkPublisher<Page<NotificationDeliveryCostEntity>> sdkPublisher = subscriber -> Flux
+                .<Page<NotificationDeliveryCostEntity>>error(expectedException)
+                .subscribe(subscriber);
+        PagePublisher<NotificationDeliveryCostEntity> pagePublisher = PagePublisher.create(sdkPublisher);
+        when(mockTable.query(ArgumentMatchers.<QueryEnhancedRequest>any()))
+                .thenReturn(pagePublisher);
+
+        StepVerifier.create(dao.getAllByIun("iun-error"))
+                .expectErrorMatches(ex -> ex instanceof RuntimeException && "query failed".equals(ex.getMessage()))
+                .verify();
+
+        verify(mockTable).query(ArgumentMatchers.<QueryEnhancedRequest>any());
     }
 
     private static NotificationDeliveryCostEntity newNotificationDeliveryCostEntity(String iun, Integer recIndex) {
