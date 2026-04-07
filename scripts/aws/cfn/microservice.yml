@@ -251,12 +251,10 @@ Parameters:
 
   CdcKinesisSourceStreamArn:
     Type: String
-    Default: ''
     Description: 'ARN for pn-cdc-stream kinesis stream'
 
   CdcKinesisSourceStreamKeyArn:
     Type: String
-    Default: ''
     Description: 'KMS Key ARN for the CDC Kinesis stream'
 
   CdcKinesisSourceStreamName:
@@ -355,17 +353,6 @@ Resources:
             Resource:
               - !Sub "${NotificationDeliveryCostTableArn}"
               - !Sub "${PaymentInfoTableArn}"
-          - Effect: Allow
-            Action:
-              - sqs:DeleteMessage
-              - sqs:ReceiveMessage
-            Resource:
-              - !Ref PnNotificationCostToUpdateQueueARN
-          - Effect: Allow
-            Action:
-              - events:PutEvents
-            Resource:
-              - !Sub arn:aws:events:${AWS::Region}:${AWS::AccountId}:event-bus/${ProjectName}-CoreEventBus
           - Effect: Allow
             Action:
               - sqs:DeleteMessage

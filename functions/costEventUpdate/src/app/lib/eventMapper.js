@@ -42,21 +42,27 @@ function checkDateParsingOrThrow(dateString) {
     throw new Error(invalidMessage);
   }
 
-  return dateString;
+  const timestamp = Date.parse(dateString);
+  if (Number.isNaN(timestamp)) {
+    throw new Error(invalidMessage);
+  }
+
+  return timestamp;
 }
 
 
 exports.mapEvents = async (events) => {
-  const featureDate = checkDateParsingOrThrow(process.env.FEATURE_DATE);
+  const featureDateRaw = process.env.FEATURE_DATE;
+  const featureDate = checkDateParsingOrThrow(featureDateRaw);
   const processedItems = [];
 
   for (let index = 0; index < events.length; index++) {
     const filteredEvent = events[index];
 
     try {
-      let notificationSentAt = checkDateParsingOrThrow(filteredEvent.dynamodb.NewImage.notificationSentAt?.S);
+      const notificationSentAt = checkDateParsingOrThrow(filteredEvent.dynamodb.NewImage.notificationSentAt?.S);
       if (notificationSentAt < featureDate) {
-        console.log(`Skipping event with iun ${filteredEvent.dynamodb.NewImage.iun.S} due to notificationSentAt ${filteredEvent.dynamodb.NewImage.notificationSentAt.S} being before feature date ${featureDate}`);
+        console.log(`Skipping event with iun ${filteredEvent.dynamodb.NewImage.iun.S} due to notificationSentAt ${filteredEvent.dynamodb.NewImage.notificationSentAt.S} being before feature date ${featureDateRaw}`);
         continue;
       }
       const item = mapSingleEvent(filteredEvent);
@@ -138,7 +144,7 @@ function mapSingleEvent(filteredEvent) {
       break;
 
     default:
-      throw new Error(`Missing required field category: ${category}`);
+      throw new Error(`Category is not in supported types: ${category}`);
   }
 
   return buildResultElement(filteredEvent, resultElementBody, messageAttributes);

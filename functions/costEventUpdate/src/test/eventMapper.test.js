@@ -297,6 +297,23 @@ describe("event mapper tests", function () {
     expect(failedEvents).to.have.length(0);
   });
 
+  it("test event filtered correctly when FEATURE_DATE has fractional seconds and notificationSentAt does not", async () => {
+    const previousFeatureDate = process.env.FEATURE_DATE;
+    process.env.FEATURE_DATE = "2023-08-09T01:23:56.1Z";
+
+    try {
+      let event = loadEventFixture();
+      event.dynamodb.NewImage.notificationSentAt.S = "2023-08-09T01:23:56Z";
+
+      const {processedItems, failedEvents} = await mapEvents([event]);
+
+      expect(processedItems).to.have.length(0);
+      expect(failedEvents).to.have.length(0);
+    } finally {
+      process.env.FEATURE_DATE = previousFeatureDate;
+    }
+  });
+
   it("test invalid FEATURE_DATE format throws error", async () => {
     const previousFeatureDate = process.env.FEATURE_DATE;
     process.env.FEATURE_DATE = "2023-08-08T00:Z"; // Invalid format
