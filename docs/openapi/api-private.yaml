@@ -132,7 +132,7 @@ components:
           maxItems: 100
           items:
             $ref: '#/components/schemas/RecipientCostData'
-      
+
     RecipientCostData:
       type: object
       required:
@@ -150,7 +150,7 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/PaymentData'
-    
+
     PaymentData:
       type: object
       required:
@@ -220,7 +220,7 @@ components:
         - NONE
         - SYNC
         - ASYNC
-    
+
     Vat:
       description: IVA applicata ai costi cartacei (es. 22)
       type: integer
@@ -285,7 +285,7 @@ components:
 
     AnalogCostDetail:
       type: object
-      required: [ costWithVat, vat, analogCostComponents ]
+      required: [ costWithVat, vat, cost, analogCostComponents ]
       properties:
         costWithVat:
           description: Costo totale in eurocent (somma algebrica delle componenti) comprensivo di IVA
@@ -293,6 +293,10 @@ components:
           format: int32
         vat:
           $ref: '#/components/schemas/Vat'
+        cost:
+          description: Costo totale in eurocent (somma algebrica delle componenti) escluso IVA
+          type: integer
+          format: int32
         analogCostComponents:
           description: Elenco delle componenti di costo analogiche che concorrono a formare il costo totale
           type: array

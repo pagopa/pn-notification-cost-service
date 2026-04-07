@@ -183,6 +183,7 @@ class NotificationDeliveryCostMapperTest {
         assertNotNull(response.getTotalCost().getDetails());
         AnalogCostDetailDto analogDetail = response.getTotalCost().getDetails().getAnalogCostDetail();
         assertNotNull(analogDetail);
+        assertThat(analogDetail.getCost()).isEqualTo(calculated.getAnalogCost());
         assertThat(analogDetail.getVat()).isEqualTo(22);
         assertThat(analogDetail.getAnalogCostComponents()).hasSize(2);
         assertThat(analogDetail.getAnalogCostComponents().get(0).getCostName()).isEqualTo(AnalogCostNameDto.FIRST_ATTEMPT);

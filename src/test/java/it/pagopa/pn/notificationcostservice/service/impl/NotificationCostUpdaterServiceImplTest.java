@@ -5,12 +5,14 @@ import it.pagopa.pn.notificationcostservice.NotificationDeliveryCostTestBuilder;
 import it.pagopa.pn.notificationcostservice.middleware.dao.NotificationDeliveryCostDao;
 import it.pagopa.pn.notificationcostservice.middleware.dao.dynamo.entity.notificationdeliverycost.BaseCostEntity;
 import it.pagopa.pn.notificationcostservice.middleware.dao.dynamo.entity.notificationdeliverycost.NotificationDeliveryCostEntity;
+import it.pagopa.pn.notificationcostservice.model.cost.CostUpdatePhaseInt;
+import it.pagopa.pn.notificationcostservice.model.cost.NotificationCostUpdate;
 import it.pagopa.pn.notificationcostservice.model.notificationdeliverycost.BaseCost;
 import it.pagopa.pn.notificationcostservice.model.notificationdeliverycost.NotificationDeliveryCost;
 import it.pagopa.pn.notificationcostservice.model.notificationdeliverycost.NotificationFeePolicy;
 import it.pagopa.pn.notificationcostservice.model.notificationdeliverycost.PagoPaIntMode;
 import it.pagopa.pn.notificationcostservice.service.mapper.NotificationCostUpdaterMapper;
-
+import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -27,6 +29,9 @@ import static org.mockito.Mockito.*;
 class NotificationCostUpdaterServiceImplTest {
 
     private static final String IUN_1 = "TEST-IUN-1";
+    private static final Integer REC_INDEX = 0;
+    private static final Integer COST = 100;
+    private static final String PRODUCT_TYPE = "AR_REGISTERED_LETTER";
 
     @Mock
     private NotificationDeliveryCostDao notificationDeliveryCostDao;
@@ -106,6 +111,75 @@ class NotificationCostUpdaterServiceImplTest {
         verifyNoMoreInteractions(notificationCostUpdaterMapper, notificationDeliveryCostDao);
     }
 
+    @Test
+    void updateCostByPhase_shouldErrorWhenNotificationCostUpdateIsNull() {
+        StepVerifier.create(service.updateCostByPhase(null))
+                .expectError(PnInternalException.class)
+                .verify();
+
+        verifyNoInteractions(notificationCostUpdaterMapper, notificationDeliveryCostDao);
+    }
+
+    @Test
+    void updateCostByPhase_shouldCompleteWhenGivenNotificationCostUpdateIsMappedAndUpdated() {
+        NotificationCostUpdate notificationCostUpdate = buildNotificationCostUpdate(CostUpdatePhaseInt.SEND_ANALOG_DOMICILE_ATTEMPT_0);
+        NotificationDeliveryCostEntity entity = buildEntity();
+
+        when(notificationCostUpdaterMapper.mapNotificationCostUpdater(notificationCostUpdate))
+                .thenReturn(entity);
+        when(notificationDeliveryCostDao.updateNotificationDeliveryCostNotNull(entity))
+                .thenReturn(Mono.just(entity));
+
+        StepVerifier.create(service.updateCostByPhase(notificationCostUpdate))
+                .verifyComplete();
+
+        verify(notificationCostUpdaterMapper, times(1))
+                .mapNotificationCostUpdater(notificationCostUpdate);
+        verify(notificationDeliveryCostDao, times(1))
+                .updateNotificationDeliveryCostNotNull(entity);
+        verifyNoMoreInteractions(notificationCostUpdaterMapper, notificationDeliveryCostDao);
+    }
+
+    @Test
+    void updateCostByPhase_shouldPropagateMapperError() {
+        NotificationCostUpdate notificationCostUpdate = buildNotificationCostUpdate(CostUpdatePhaseInt.SEND_SIMPLE_REGISTERED_LETTER);
+
+        when(notificationCostUpdaterMapper.mapNotificationCostUpdater(notificationCostUpdate))
+                .thenThrow(new RuntimeException("mapper error"));
+
+        RuntimeException ex = Assertions.assertThrows(RuntimeException.class,
+                () -> service.updateCostByPhase(notificationCostUpdate).block());
+        Assertions.assertEquals("mapper error", ex.getMessage());
+
+        verify(notificationCostUpdaterMapper, times(1))
+                .mapNotificationCostUpdater(notificationCostUpdate);
+        verifyNoInteractions(notificationDeliveryCostDao);
+    }
+
+    @Test
+    void updateCostByPhase_shouldPropagateDaoError() {
+        NotificationCostUpdate notificationCostUpdate = buildNotificationCostUpdate(CostUpdatePhaseInt.REQUEST_REFUSED);
+        NotificationDeliveryCostEntity entity = buildEntity();
+        RuntimeException expectedException = new RuntimeException("dao error");
+
+        when(notificationCostUpdaterMapper.mapNotificationCostUpdater(notificationCostUpdate))
+                .thenReturn(entity);
+        when(notificationDeliveryCostDao.updateNotificationDeliveryCostNotNull(entity))
+                .thenReturn(Mono.error(expectedException));
+
+        StepVerifier.create(service.updateCostByPhase(notificationCostUpdate))
+                .expectErrorMatches(ex ->
+                        ex instanceof RuntimeException &&
+                                "dao error".equals(ex.getMessage()))
+                .verify();
+
+        verify(notificationCostUpdaterMapper, times(1))
+                .mapNotificationCostUpdater(notificationCostUpdate);
+        verify(notificationDeliveryCostDao, times(1))
+                .updateNotificationDeliveryCostNotNull(entity);
+        verifyNoMoreInteractions(notificationCostUpdaterMapper, notificationDeliveryCostDao);
+    }
+
     private NotificationDeliveryCost buildNotificationDeliveryCost() {
         return NotificationDeliveryCostTestBuilder.builder()
                 .withIun(IUN_1)
@@ -126,7 +200,7 @@ class NotificationCostUpdaterServiceImplTest {
     private NotificationDeliveryCostEntity buildEntity() {
         return NotificationDeliveryCostEntity.builder()
                 .iun(IUN_1)
-                .recIndex(0)
+                .recIndex(REC_INDEX)
                 .baseCost(BaseCostEntity.builder()
                         .sendFee(100)
                         .paFee(50)
@@ -134,6 +208,16 @@ class NotificationCostUpdaterServiceImplTest {
                 .vat(22)
                 .notificationFeePolicy(NotificationFeePolicy.DELIVERY_MODE)
                 .pagoPaIntMode(PagoPaIntMode.SYNC)
+                .build();
+    }
+
+    private NotificationCostUpdate buildNotificationCostUpdate(CostUpdatePhaseInt costUpdatePhase) {
+        return NotificationCostUpdate.builder()
+                .iun(IUN_1)
+                .recIndex(REC_INDEX)
+                .cost(COST)
+                .productType(PRODUCT_TYPE)
+                .costUpdatePhase(costUpdatePhase)
                 .build();
     }
 }
