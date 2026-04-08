@@ -73,5 +73,5 @@ import org.springframework.context.annotation.Configuration;
         NotificationFeePolicyDto.class,
         PagoPaIntModeDto.class
 })
-public class NativeBindingHintsConfig {
+public class NativeBindingClassConfig {
 }

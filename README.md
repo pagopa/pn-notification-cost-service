@@ -154,7 +154,7 @@ cd C:\Users\..\pn-notification-cost-service
 ### Compilare il binario nativo
 
 ```powershell
-.\mvnw.cmd -Pnative -DskipTests clean package
+./mvnw -Pnative native:compile -DskipTests=true
 ```
 
 Al termine della build il binario viene generato in:
