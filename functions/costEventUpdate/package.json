@@ -10,9 +10,10 @@
     "coverage": "nyc report --reporter=lcov",
     "sonar": "node sonarqube-scanner.js -Dsonar.login=${SONAR_TOKEN}"
   },
+  "dependencies": {
+    "@aws-sdk/client-sqs": "^3.1004.0"
+  },
   "devDependencies": {
-    "@aws-sdk/client-sqs": "^3.1004.0",
-    "@aws-sdk/lib-dynamodb": "^3.1004.0",
     "aws-sdk-client-mock": "^2.0.1",
     "chai": "^4.3.6",
     "eslint": "^8.23.1",
