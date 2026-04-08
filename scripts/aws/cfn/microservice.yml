@@ -224,10 +224,6 @@ Parameters:
     Default: 60
     Description: 'BatchSize event source mapping'
 
-  CdcKinesisSourceStreamKeyId:
-    Type: String
-    Description: 'KMS Key ID for the CDC Kinesis stream'
-
   ESMKinesisFailureNotificationsBucketName:
     Type: String
     Description: "S3 bucket name for ESM Kinesis failure notifications"
@@ -248,10 +244,23 @@ Parameters:
     Description: "Maximum record age in seconds for CostEventUpdateLambdaKinesisSource"
     Default: 604800 # 7 days
 
+  CostEventUpdateLambdaMaximumRetryAttempts:
+    Type: Number
+    Description: "Maximum retry attempts for CostEventUpdateLambdaKinesisSource"
+    Default: 5
+
   CostEventUpdateLambdaEventCategories:
     Type: CommaDelimitedList
     Description: "Comma-separated list of timeline categories accepted by CostEventUpdateLambdaKinesisSource filter"
     Default: SEND_ANALOG_DOMICILE,SEND_SIMPLE_REGISTERED_LETTER,NOTIFICATION_CANCELLED,REQUEST_REFUSED
+
+  CdcKinesisSourceStreamArn:
+    Type: String
+    Description: 'ARN for pn-cdc-stream kinesis stream'
+
+  CdcKinesisSourceStreamKeyArn:
+    Type: String
+    Description: 'KMS Key ARN for the CDC Kinesis stream'
 
   CdcKinesisSourceStreamName:
     Type: String
@@ -423,10 +432,10 @@ Resources:
               - kinesis:ListShards
               - kinesis:ListStreams
               - kinesis:SubscribeToShard
-            Resource: !Sub arn:aws:kinesis:${AWS::Region}:${AWS::AccountId}:stream/${CdcKinesisSourceStreamName}
+            Resource: !Ref CdcKinesisSourceStreamArn
           - Action: kms:Decrypt
             Effect: Allow
-            Resource: !Sub arn:aws:kms:${AWS::Region}:${AWS::AccountId}:key/${CdcKinesisSourceStreamKeyId}
+            Resource: !Ref CdcKinesisSourceStreamKeyArn
           - Effect: Allow
             Action:
               - sqs:ChangeMessageVisibility
@@ -452,7 +461,7 @@ Resources:
     Properties:
       BatchSize: !Ref CostEventUpdateLambdaBatchSize
       BisectBatchOnFunctionError: true
-      EventSourceArn: !Sub arn:aws:kinesis:${AWS::Region}:${AWS::AccountId}:stream/${CdcKinesisSourceStreamName}
+      EventSourceArn: !Ref CdcKinesisSourceStreamArn
       FunctionName: !Ref CostEventUpdateLambda
       FunctionResponseTypes:
         - ReportBatchItemFailures
@@ -465,6 +474,7 @@ Resources:
                 - '"] } } } } }'
       MaximumBatchingWindowInSeconds: !Ref CostEventUpdateLambdaMaximumBatchingWindowInSeconds
       MaximumRecordAgeInSeconds: !Ref CostEventUpdateLambdaMaximumRecordAge
+      MaximumRetryAttempts: !Ref CostEventUpdateLambdaMaximumRetryAttempts
       StartingPosition: TRIM_HORIZON
       DestinationConfig:
         OnFailure:

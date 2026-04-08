@@ -10,7 +10,8 @@
     "AutoscalingThreshold": "2500",
     "ConsumedQueueMessagePerMinute": "3000",
     "CostEventUpdateLambdaEventCategories": "SEND_ANALOG_DOMICILE,SEND_SIMPLE_REGISTERED_LETTER,NOTIFICATION_CANCELLED,REQUEST_REFUSED",
-    "CdcKinesisSourceStreamKeyId": "3bc181f8-9590-49c1-a783-fe6ead65adab",
-    "UpdateCostFeatureDate" : "2999-01-01T00:00:00Z"
+    "UpdateCostFeatureDate" : "2999-01-01T00:00:00Z",
+    "CostEventUpdateLambdaBatchSize": "5",
+    "MaximumBatchingWindowInSeconds": "5"
   }
 }
