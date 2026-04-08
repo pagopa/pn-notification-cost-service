@@ -244,6 +244,11 @@ Parameters:
     Description: "Maximum record age in seconds for CostEventUpdateLambdaKinesisSource"
     Default: 604800 # 7 days
 
+  CostEventUpdateLambdaMaximumRetryAttempts:
+    Type: Number
+    Description: "Maximum retry attempts for CostEventUpdateLambdaKinesisSource"
+    Default: 5
+
   CostEventUpdateLambdaEventCategories:
     Type: CommaDelimitedList
     Description: "Comma-separated list of timeline categories accepted by CostEventUpdateLambdaKinesisSource filter"
@@ -469,6 +474,7 @@ Resources:
                 - '"] } } } } }'
       MaximumBatchingWindowInSeconds: !Ref CostEventUpdateLambdaMaximumBatchingWindowInSeconds
       MaximumRecordAgeInSeconds: !Ref CostEventUpdateLambdaMaximumRecordAge
+      MaximumRetryAttempts: !Ref CostEventUpdateLambdaMaximumRetryAttempts
       StartingPosition: TRIM_HORIZON
       DestinationConfig:
         OnFailure:
