@@ -15,16 +15,20 @@ import it.pagopa.pn.notificationcostservice.model.notificationdeliverycost.Notif
 import it.pagopa.pn.notificationcostservice.model.notificationdeliverycost.PagoPaIntMode;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
+import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import software.amazon.awssdk.enhanced.dynamodb.DynamoDbAsyncTable;
 import software.amazon.awssdk.enhanced.dynamodb.DynamoDbEnhancedAsyncClient;
 import software.amazon.awssdk.enhanced.dynamodb.EnhancedType;
+import software.amazon.awssdk.enhanced.dynamodb.Key;
 import software.amazon.awssdk.enhanced.dynamodb.TableSchema;
 import software.amazon.awssdk.enhanced.dynamodb.mapper.StaticTableSchema;
 import software.amazon.awssdk.enhanced.dynamodb.model.GetItemEnhancedRequest;
 import software.amazon.awssdk.enhanced.dynamodb.model.UpdateItemEnhancedRequest;
+import software.amazon.awssdk.enhanced.dynamodb.model.*;
 
 import java.time.Instant;
+import java.util.List;
 import java.util.concurrent.CompletableFuture;
 
 import static it.pagopa.pn.notificationcostservice.exception.PnNotificationCostServiceExceptionCodes.ERROR_CODE_NOTIFICATIONDELIVERYCOST_NOTFOUND;
@@ -52,6 +56,26 @@ public class NotificationDeliveryCostDaoDynamo extends BaseDao implements Notifi
     }
 
     @Override
+    public Flux<NotificationDeliveryCostEntity> getAllByIun(String iun) {
+        QueryConditional queryConditional = QueryConditional.keyEqualTo(Key.builder()
+                .partitionValue(iun)
+                .build());
+
+        QueryEnhancedRequest queryEnhancedRequest = QueryEnhancedRequest.builder()
+                .queryConditional(queryConditional)
+                .build();
+
+        return Flux.from(notificationDeliveryCostTable.query(queryEnhancedRequest).flatMapIterable(Page::items));
+    }
+
+    /**
+     * Il metodo si occupa di:
+     * - prendere un determinato item dalla tabella 'pn-NotificationDeliveryCost' in base alla chiave primaria composta da iun
+     *
+     * @param iun,recIndex identificativi della notifica
+     * @return oggetto di notifica con costi
+     */
+    @Override
     public Mono<NotificationDeliveryCost> getNotificationDeliveryCostItem(String iun, Integer recIndex) {
         return Mono.fromFuture(retrieveItem(iun, recIndex))
                 .switchIfEmpty(Mono.error(() -> new PnNotFoundException(
@@ -61,7 +85,14 @@ public class NotificationDeliveryCostDaoDynamo extends BaseDao implements Notifi
                 .map(entityToDto::entity2Dto)
                 .doOnError(e -> log.error("Error retrieving item with iun: {}", iun, e));
     }
-
+    /**
+     * Il metodo si occupa di:
+     * - effettuare l’update dei dati di pagamenti correlati alla notifica e del baseCost sulla tabella 'pn-NotificationDeliveryCost'
+     *   Aggiornamento dell'entità, aggiornando solo i campi non impostati su null
+     *
+     * @param entity lista di pagamenti correlati alla notifica
+     * @return void
+     */
     @Override
     public Mono<NotificationDeliveryCostEntity> updateNotificationDeliveryCostNotNull(NotificationDeliveryCostEntity entity) {
         return Mono.fromFuture(notificationDeliveryCostTable.updateItem(updateItemEnhancedRequest(entity)))

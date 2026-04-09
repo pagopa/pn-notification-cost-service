@@ -6,9 +6,9 @@ import lombok.Getter;
 @Builder
 @Getter
 public class CalculatedCosts {
-    private Integer totalCostWithVat;
-    private Integer analogCost;
-    private Integer analogCostWithVat;
-    private Integer baseCost;
-    private Integer vat;
+    private int totalCostWithVat;
+    private int analogCost;
+    private int analogCostWithVat;
+    private int baseCost;
+    private int vat;
 }
