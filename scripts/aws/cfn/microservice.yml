@@ -359,7 +359,11 @@ Resources:
               - !Sub "${PaymentInfoTableArn}"
           - Effect: Allow
             Action:
+              - sqs:SendMessage
+              - sqs:GetQueueUrl
+              - sqs:ChangeMessageVisibility
               - sqs:DeleteMessage
+              - sqs:GetQueueAttributes
               - sqs:ReceiveMessage
             Resource:
               - !Ref PnNotificationCostToUpdateQueueARN
