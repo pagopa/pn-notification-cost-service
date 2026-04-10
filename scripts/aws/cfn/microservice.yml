@@ -338,7 +338,8 @@ Resources:
           - ','
           - - !GetAtt NotificationCostServiceMicroservice.Outputs.FatalLogsMetricAlarmArn
             - !Ref PnNotificationCostToUpdateQueueAlarmARN
-            - !Sub '/aws/lambda/${CostEventUpdateLambdaName}'
+            - !GetAtt CostEventUpdateLambdaAlarms.Outputs.LambdaInvocationErrorLogsMetricAlarm
+        LambdaArns: !GetAtt CostEventUpdateLambda.Arn
         QueueArns: !Ref PnNotificationCostToUpdateQueueARN
         LogGroupsNames: !Sub '/aws/ecs/${ProjectName}-notification-cost-service'
 
