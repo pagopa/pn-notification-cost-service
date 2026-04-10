@@ -393,7 +393,7 @@ Resources:
       Environment:
         Variables:
           REGION: !Sub ${AWS::Region}
-          FEATURE_DATE: !Sub {{resolve:ssm:/config/notification-cost-service/start-date}}
+          FEATURE_DATE: "{{resolve:ssm:/config/notification-cost-service/start-date}}"
           QUEUE_URL: !Ref PnNotificationCostToUpdateQueueURL
       TracingConfig:
         Mode: Active
