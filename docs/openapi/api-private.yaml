@@ -153,11 +153,7 @@ components:
         - applyCost
       properties:
         iuv:
-          type: string
-          description: >
-            Identificativo univoco assegnato a ogni pagamento, formato da creditorTaxId##noticeCode
-          example: '77777777777##362981250372662822'
-          pattern: '^[0-9]{11}##[0-9]{18}$'
+          $ref: '#/components/schemas/IUV'
         applyCost:
           type: boolean
           description: Indica se applicare o meno i costi di notificazione
@@ -208,6 +204,14 @@ components:
           description: Dettaglio del costo analogico di notificazione
           allOf:
             - $ref: '#/components/schemas/AnalogCostDetail'
+
+    IUV:
+      type: string
+      description: >
+        Identificativo univoco assegnato a ogni pagamento, formato da creditorTaxId##noticeCode
+      example: '77777777777##362981250372662822'
+      pattern: '^[0-9]{11}##[0-9]{18}$'
+
     PagoPaIntMode:
       type: string
       description: >-
