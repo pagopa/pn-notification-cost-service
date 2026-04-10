@@ -237,7 +237,7 @@ class NotificationDeliveryCostMapperTest {
         assertThat(response.getPartialCost()).isNotNull();
         assertThat(response.getPartialCost().getCost()).isEqualTo(300);
         BaseCostDetailDto baseDetail = response.getPartialCost().getDetails().getBaseCostDetail();
-        assertThat(baseDetail.getCost()).isEqualTo(500L);
+        assertThat(baseDetail.getCost()).isEqualTo(dto.getBaseCost().getSendFee());
         assertThat(baseDetail.getBaseCostComponents()).hasSize(1);
         assertThat(baseDetail.getBaseCostComponents().getFirst().getCostName()).isEqualTo(BaseCostNameDto.SEND_FEE);
     }

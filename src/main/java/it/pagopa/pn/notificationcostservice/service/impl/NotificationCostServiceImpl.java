@@ -100,7 +100,6 @@ public class NotificationCostServiceImpl implements NotificationCostService {
                     }
                     log.info("Item retrieved for iun: {} and recIndex: {}", iun, recIndex);
                     return dto;
-                })
-                .doOnError(e -> log.error("Error processing cost recipient for iun: {} and recIndex: {}", iun, recIndex, e));
+                });
     }
 }

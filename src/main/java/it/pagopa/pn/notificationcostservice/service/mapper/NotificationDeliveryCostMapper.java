@@ -119,7 +119,7 @@ public class NotificationDeliveryCostMapper {
                 .details(new PartialCostDetailsDto()
                         .analogCostDetail(mapAnalogCostDetail(dto, calculatedCosts))
                         .baseCostDetail(new BaseCostDetailDto()
-                                .cost(calculatedCosts.getBaseCost())
+                                .cost(dto.getBaseCost().getSendFee())
                                 .baseCostComponents(List.of(
                                         new BaseCostComponentDto().costName(BaseCostNameDto.SEND_FEE).cost(dto.getBaseCost().getSendFee())
                                 ))));

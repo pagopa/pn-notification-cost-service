@@ -275,13 +275,13 @@ components:
       title: Dettaglio componente costo parziale
       description: Dettaglio di una singola componente del costo parziale
       type: object
-      required: [ baseCostDetail, analogCostDetail ]
+      required: [ baseCostDetail ]
       properties:
         baseCostDetail:
           description: Dettaglio del costo base di notificazione
           $ref: '#/components/schemas/BaseCostDetail'
         analogCostDetail:
-          description: Dettaglio del costo anlogico di notificazione
+          description: Dettaglio del costo analogico di notificazione
           $ref: '#/components/schemas/AnalogCostDetail'
 
     PagoPaIntMode:
