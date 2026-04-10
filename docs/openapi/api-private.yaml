@@ -16,11 +16,7 @@ paths:
       tags:
         - NotificationCostRecipient
       parameters:
-        - name: iun
-          in: path
-          required: true
-          schema:
-            $ref: './remote-refs.yaml#/components/schemas/IUN'
+        - $ref: '#/components/parameters/pathIun'
         - name: recIndex
           in: path
           required: true
@@ -62,11 +58,7 @@ paths:
       tags:
         - NotificationCostRecipient
       parameters:
-        - name: iun
-          in: path
-          required: true
-          schema:
-            $ref: './remote-refs.yaml#/components/schemas/IUN'
+        - $ref: '#/components/parameters/pathIun'
       requestBody:
         required: true
         content:
@@ -93,6 +85,13 @@ paths:
               schema:
                 $ref: '#/components/schemas/Problem'
 components:
+  parameters:
+    pathIun:
+      name: iun
+      in: path
+      required: true
+      schema:
+        $ref: './remote-refs.yaml#/components/schemas/IUN'
   schemas:
     NewNotificationCostRequest:
       type: object
