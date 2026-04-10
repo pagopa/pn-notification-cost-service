@@ -11,4 +11,5 @@ public class CalculatedCosts {
     private int analogCostWithVat;
     private int baseCost;
     private int vat;
+    private int partialCost;
 }

@@ -10,7 +10,7 @@ paths:
   "/notification-cost-private/cost/{iun}/recipient/{recIndex}":
     get:
       operationId: getNotificationCost
-      summary: Retrieve notification cost for recipient
+      summary: Recupera il costo della notifica per un destinatario
       description: >-
         Servizio che restituisce il costo di notificazione per il singolo destinatario
       tags:
@@ -40,6 +40,47 @@ paths:
                 $ref: '#/components/schemas/NotificationCostRecipientResponse'
         '400':
           description: Invalid input
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+        '404':
+          description: Not Found
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+        '500':
+          description: Internal Server Error
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+  "/notification-cost-private/cost/payment/{iuv}":
+    get:
+      operationId: getNotificationCostByPayment
+      summary: Recupera il costo della notifica per un pagamento
+      description: >-
+        Servizio che restituisce il costo di notificazione per il singolo pagamento identificato dall'IUV
+      tags:
+        - NotificationCostRecipient
+      parameters:
+        - name: iuv
+          in: path
+          required: true
+          description: Identificativo univoco assegnato a ogni pagamento, formato da creditorTaxId##noticeCode
+          schema:
+            type: string
+          example: '77777777777##362981250372662822'
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/NotificationCostPaymentResponse'
+        '400':
+          description: Bad Request
           content:
             application/problem+json:
               schema:
@@ -202,6 +243,40 @@ components:
       properties:
         notificationFeePolicy:
           $ref: '#/components/schemas/NotificationFeePolicy'
+        baseCostDetail:
+          description: Dettaglio del costo base di notificazione
+          $ref: '#/components/schemas/BaseCostDetail'
+        analogCostDetail:
+          description: Dettaglio del costo anlogico di notificazione
+          $ref: '#/components/schemas/AnalogCostDetail'
+
+    NotificationCostPaymentResponse:
+      allOf:
+        - $ref: '#/components/schemas/NotificationCostRecipientResponse'
+      type: object
+      properties:
+        partialCost:
+          $ref: '#/components/schemas/PartialCost'
+
+    PartialCost:
+      title: Costo parziale di notificazione
+      description: Dettaglio del costo parziale e delle sue componenti
+      type: object
+      required: [ cost, details ]
+      properties:
+        cost:
+          description: Costo parziale in eurocent (somma algebrica dei dettagli) esclusivo di IVA
+          type: integer
+          format: int32
+        details:
+          $ref: '#/components/schemas/PartialCostDetails'
+
+    PartialCostDetails:
+      title: Dettaglio componente costo parziale
+      description: Dettaglio di una singola componente del costo parziale
+      type: object
+      required: [ baseCostDetail, analogCostDetail ]
+      properties:
         baseCostDetail:
           description: Dettaglio del costo base di notificazione
           $ref: '#/components/schemas/BaseCostDetail'

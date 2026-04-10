@@ -33,6 +33,7 @@ class CostCalculatorImplTest {
        assertEquals(150, result.getBaseCost());
        assertEquals(0, result.getAnalogCost());
        assertEquals(22, result.getVat());
+       assertEquals(0, result.getPartialCost());
     }
 
     @Test
@@ -55,6 +56,7 @@ class CostCalculatorImplTest {
        assertEquals(150, result.getBaseCost());
        assertEquals(200, result.getAnalogCost());
        assertEquals(10, result.getVat());
+       assertEquals(250, result.getPartialCost());
     }
 
     @Test

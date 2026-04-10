@@ -2,6 +2,7 @@ package it.pagopa.pn.notificationcostservice.rest;
 
 import it.pagopa.pn.notification_cost_service.generated.openapi.server.v1.dto.NewNotificationCostRequestDto;
 import it.pagopa.pn.notification_cost_service.generated.openapi.server.v1.dto.NotificationCostRecipientResponseDto;
+import it.pagopa.pn.notification_cost_service.generated.openapi.server.v1.dto.NotificationCostPaymentResponseDto;
 import it.pagopa.pn.notificationcostservice.model.ValidationStatus;
 import it.pagopa.pn.notificationcostservice.model.notificationdeliverycost.NotificationDeliveryCost;
 import it.pagopa.pn.notificationcostservice.model.paymentinfo.PaymentInfo;
@@ -113,6 +114,29 @@ class NotificationCostServiceControllerTest {
         verify(mapper).mapDtoToNotificationDeliveryCost(eq(TEST_IUN), same(requestDto));
         verify(paymentInfoMapper).mapDtoToPaymentInfo(eq(TEST_IUN), same(requestDto));
         verify(notificationCostService).saveNotificationCost(TEST_IUN, notificationCosts, payments);
+    }
+
+    @Test
+    void testNotificationCostByPayment_Success() {
+        String testIuv = "TEST-IUV-456";
+        NotificationCostPaymentResponseDto response = new NotificationCostPaymentResponseDto();
+
+        when(notificationCostService.getNotificationCostPaymentInfo(testIuv))
+                .thenReturn(Mono.just(response));
+
+        Mono<ResponseEntity<NotificationCostPaymentResponseDto>> result =
+                controller.getNotificationCostByPayment(testIuv, null);
+
+        StepVerifier.create(result)
+                .assertNext(responseEntity -> {
+                    assertNotNull(responseEntity);
+                    assertEquals(HttpStatus.OK, responseEntity.getStatusCode());
+                    assertNotNull(responseEntity.getBody());
+                    assertEquals(response, responseEntity.getBody());
+                })
+                .verifyComplete();
+
+        verify(notificationCostService).getNotificationCostPaymentInfo(testIuv);
     }
 }
 

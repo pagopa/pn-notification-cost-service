@@ -7,4 +7,5 @@ import java.util.List;
 
 public interface PaymentInfoDao {
     Mono<Void> updateItem(List<PaymentInfo> payments);
+    Mono<PaymentInfo> getPaymentInfoByIuv(String iuv);
 }
