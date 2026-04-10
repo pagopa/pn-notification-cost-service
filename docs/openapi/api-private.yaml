@@ -16,13 +16,7 @@ paths:
       tags:
         - NotificationCostRecipient
       parameters:
-        - name: iun
-          in: path
-          required: true
-          description: Identificativo Univoco Notifica (IUN)
-          schema:
-            type: string
-          example: '00000000-0000-0000-0000-000000000000'
+        - $ref: '#/components/parameters/pathIun'
         - name: recIndex
           in: path
           required: true
@@ -105,13 +99,7 @@ paths:
       tags:
         - NotificationCostRecipient
       parameters:
-        - name: iun
-          in: path
-          required: true
-          description: Identificativo Univoco Notifica (IUN)
-          schema:
-            type: string
-          example: '00000000-0000-0000-0000-000000000000'
+        - $ref: '#/components/parameters/pathIun'
       requestBody:
         required: true
         content:
@@ -138,6 +126,13 @@ paths:
               schema:
                 $ref: '#/components/schemas/Problem'
 components:
+  parameters:
+    pathIun:
+      name: iun
+      in: path
+      required: true
+      schema:
+        $ref: './remote-refs.yaml#/components/schemas/IUN'
   schemas:
     NewNotificationCostRequest:
       type: object
@@ -199,8 +194,7 @@ components:
         - applyCost
       properties:
         iuv:
-          type: string
-          description: IUV del bollettino di pagamento
+          $ref: '#/components/schemas/IUV'
         applyCost:
           type: boolean
           description: Indica se applicare o meno i costi di notificazione
@@ -245,10 +239,19 @@ components:
           $ref: '#/components/schemas/NotificationFeePolicy'
         baseCostDetail:
           description: Dettaglio del costo base di notificazione
-          $ref: '#/components/schemas/BaseCostDetail'
+          allOf:
+            - $ref: '#/components/schemas/BaseCostDetail'
         analogCostDetail:
-          description: Dettaglio del costo anlogico di notificazione
-          $ref: '#/components/schemas/AnalogCostDetail'
+          description: Dettaglio del costo analogico di notificazione
+          allOf:
+            - $ref: '#/components/schemas/AnalogCostDetail'
+
+    IUV:
+      type: string
+      description: >
+        Identificativo univoco assegnato a ogni pagamento, formato da creditorTaxId##noticeCode
+      example: '77777777777##362981250372662822'
+      pattern: '^[0-9]{11}##[0-9]{18}$'
 
     NotificationCostPaymentResponse:
       allOf:
