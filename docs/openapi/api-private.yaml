@@ -19,10 +19,8 @@ paths:
         - name: iun
           in: path
           required: true
-          description: Identificativo Univoco Notifica (IUN)
           schema:
-            type: string
-          example: '00000000-0000-0000-0000-000000000000'
+            $ref: './remote-refs.yaml#/components/schemas/IUN'
         - name: recIndex
           in: path
           required: true
@@ -67,10 +65,8 @@ paths:
         - name: iun
           in: path
           required: true
-          description: Identificativo Univoco Notifica (IUN)
           schema:
-            type: string
-          example: '00000000-0000-0000-0000-000000000000'
+            $ref: './remote-refs.yaml#/components/schemas/IUN'
       requestBody:
         required: true
         content:
@@ -159,7 +155,10 @@ components:
       properties:
         iuv:
           type: string
-          description: IUV del bollettino di pagamento
+          description: >
+            Identificativo univoco assegnato a ogni pagamento, formato da creditorTaxId##noticeCode
+          example: '77777777777##362981250372662822'
+          pattern: '^[0-9]{11}##[0-9]{18}$'
         applyCost:
           type: boolean
           description: Indica se applicare o meno i costi di notificazione
@@ -204,11 +203,12 @@ components:
           $ref: '#/components/schemas/NotificationFeePolicy'
         baseCostDetail:
           description: Dettaglio del costo base di notificazione
-          $ref: '#/components/schemas/BaseCostDetail'
+          allOf:
+            - $ref: '#/components/schemas/BaseCostDetail'
         analogCostDetail:
-          description: Dettaglio del costo anlogico di notificazione
-          $ref: '#/components/schemas/AnalogCostDetail'
-
+          description: Dettaglio del costo analogico di notificazione
+          allOf:
+            - $ref: '#/components/schemas/AnalogCostDetail'
     PagoPaIntMode:
       type: string
       description: >-
