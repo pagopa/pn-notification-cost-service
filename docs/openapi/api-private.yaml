@@ -254,6 +254,7 @@ components:
       allOf:
         - $ref: '#/components/schemas/NotificationCostRecipientResponse'
       type: object
+      required: [ partialCost ]
       properties:
         partialCost:
           $ref: '#/components/schemas/PartialCost'
