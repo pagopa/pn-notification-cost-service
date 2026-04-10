@@ -341,7 +341,10 @@ Resources:
             - !GetAtt CostEventUpdateLambdaAlarms.Outputs.LambdaInvocationErrorLogsMetricAlarm
         LambdaArns: !GetAtt CostEventUpdateLambda.Arn
         QueueArns: !Ref PnNotificationCostToUpdateQueueARN
-        LogGroupsNames: !Sub '/aws/ecs/${ProjectName}-notification-cost-service'
+        LogGroupsNames: !Join
+          - ','
+          - - !Sub '/aws/ecs/${ProjectName}-notification-cost-service'
+            - !Sub '/aws/lambda/${CostEventUpdateLambdaName}'
 
   # Grant operational rights to Pn-NotificationCostService microservice
   NotificationCostServiceMicroserviceTaskManagedPolicy:
