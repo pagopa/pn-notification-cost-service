@@ -20,6 +20,8 @@ import it.pagopa.pn.notification_cost_service.generated.openapi.server.v1.dto.To
 import it.pagopa.pn.notificationcostservice.middleware.queue.consumer.event.InternalEvent;
 import it.pagopa.pn.notificationcostservice.middleware.queue.consumer.event.InternalEventType;
 import it.pagopa.pn.notificationcostservice.middleware.queue.consumer.event.notificationcost.NotificationCostInitializationEvent;
+import it.pagopa.pn.notificationcostservice.middleware.queue.consumer.event.notificationcost.UpdateNotificationCostEvent;
+import it.pagopa.pn.notificationcostservice.middleware.queue.producer.sqs.InitializeCostProducer;
 import it.pagopa.pn.notificationcostservice.model.notificationdeliverycost.BaseCost;
 import it.pagopa.pn.notificationcostservice.model.notificationdeliverycost.NotificationDeliveryCost;
 import it.pagopa.pn.notificationcostservice.model.notificationdeliverycost.NotificationFeePolicy;
@@ -40,6 +42,8 @@ import org.springframework.context.annotation.Configuration;
         InternalEventType.class,
         NotificationCostInitializationEvent.class,
         NotificationCostInitializationEvent.Payload.class,
+        UpdateNotificationCostEvent.class,
+        UpdateNotificationCostEvent.Payload.class,
 
         // domain models used in SQS payloads
         NotificationDeliveryCost.class,
@@ -75,9 +79,13 @@ import org.springframework.context.annotation.Configuration;
         PagoPaIntModeDto.class
 })
 @RegisterReflection(classes = {
+        InitializeCostProducer.class,
+        NotificationCostInitializationEvent.class,
+        NotificationCostInitializationEvent.Payload.class,
+        UpdateNotificationCostEvent.class,
+        UpdateNotificationCostEvent.Payload.class,
         net.logstash.logback.encoder.LogstashEncoder.class,
-        net.logstash.logback.stacktrace.ShortenedThrowableConverter.class,
-        ch.qos.logback.classic.encoder.PatternLayoutEncoder.class
+        net.logstash.logback.stacktrace.ShortenedThrowableConverter.class
 })
 public class NativeBindingClassConfig {
 }
