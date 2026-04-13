@@ -84,8 +84,12 @@ import org.springframework.context.annotation.Configuration;
         NotificationCostInitializationEvent.Payload.class,
         UpdateNotificationCostEvent.class,
         UpdateNotificationCostEvent.Payload.class,
+        PnNotificationCostValidationEvent.class,
+        PnNotificationCostValidationEvent.Detail.class,
+        PnNotificationCostValidationEventPayload.class,
         net.logstash.logback.encoder.LogstashEncoder.class,
-        net.logstash.logback.stacktrace.ShortenedThrowableConverter.class
+        net.logstash.logback.stacktrace.ShortenedThrowableConverter.class,
+        net.logstash.logback.argument.StructuredArgument.class
 })
 public class NativeBindingClassConfig {
 }
