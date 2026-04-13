@@ -29,6 +29,7 @@ import it.pagopa.pn.notificationcostservice.model.notificationdeliverycost.analo
 import it.pagopa.pn.notificationcostservice.model.notificationdeliverycost.analogcost.SecondAnalogCost;
 import it.pagopa.pn.notificationcostservice.model.notificationdeliverycost.analogcost.SimpleRegisteredLetterCost;
 import it.pagopa.pn.notificationcostservice.model.paymentinfo.PaymentInfo;
+import org.springframework.aot.hint.annotation.RegisterReflection;
 import org.springframework.aot.hint.annotation.RegisterReflectionForBinding;
 import org.springframework.context.annotation.Configuration;
 
@@ -72,6 +73,11 @@ import org.springframework.context.annotation.Configuration;
         AnalogCostNameDto.class,
         NotificationFeePolicyDto.class,
         PagoPaIntModeDto.class
+})
+@RegisterReflection(classes = {
+        net.logstash.logback.encoder.LogstashEncoder.class,
+        net.logstash.logback.stacktrace.ShortenedThrowableConverter.class,
+        ch.qos.logback.classic.encoder.PatternLayoutEncoder.class
 })
 public class NativeBindingClassConfig {
 }
