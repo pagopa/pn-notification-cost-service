@@ -6,9 +6,6 @@
       },
       {
         "pattern": "META-INF/services/com.fasterxml.jackson.databind.Module"
-      },
-      {
-        "pattern": "logback.xml"
       }
     ]
   }

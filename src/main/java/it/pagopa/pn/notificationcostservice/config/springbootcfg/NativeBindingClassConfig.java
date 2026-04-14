@@ -31,7 +31,6 @@ import it.pagopa.pn.notificationcostservice.model.notificationdeliverycost.analo
 import it.pagopa.pn.notificationcostservice.model.notificationdeliverycost.analogcost.SecondAnalogCost;
 import it.pagopa.pn.notificationcostservice.model.notificationdeliverycost.analogcost.SimpleRegisteredLetterCost;
 import it.pagopa.pn.notificationcostservice.model.paymentinfo.PaymentInfo;
-import org.springframework.aot.hint.annotation.RegisterReflection;
 import org.springframework.aot.hint.annotation.RegisterReflectionForBinding;
 import org.springframework.context.annotation.Configuration;
 
@@ -40,6 +39,7 @@ import org.springframework.context.annotation.Configuration;
         // internal queue payloads
         InternalEvent.class,
         InternalEventType.class,
+        InitializeCostProducer.class,
         NotificationCostInitializationEvent.class,
         NotificationCostInitializationEvent.Payload.class,
         UpdateNotificationCostEvent.class,
@@ -77,19 +77,6 @@ import org.springframework.context.annotation.Configuration;
         AnalogCostNameDto.class,
         NotificationFeePolicyDto.class,
         PagoPaIntModeDto.class
-})
-@RegisterReflection(classes = {
-        InitializeCostProducer.class,
-        NotificationCostInitializationEvent.class,
-        NotificationCostInitializationEvent.Payload.class,
-        UpdateNotificationCostEvent.class,
-        UpdateNotificationCostEvent.Payload.class,
-        PnNotificationCostValidationEvent.class,
-        PnNotificationCostValidationEvent.Detail.class,
-        PnNotificationCostValidationEventPayload.class,
-        net.logstash.logback.encoder.LogstashEncoder.class,
-        net.logstash.logback.stacktrace.ShortenedThrowableConverter.class,
-        net.logstash.logback.argument.StructuredArgument.class
 })
 public class NativeBindingClassConfig {
 }
