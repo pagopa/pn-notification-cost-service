@@ -118,14 +118,16 @@ class NotificationCostServiceControllerTest {
 
     @Test
     void testNotificationCostByPayment_Success() {
-        String testIuv = "TEST-IUV-456";
+        String creditorTaxId = "77777777777";
+        String noticeCode = "398918182323606420";
+        String expectedIuv = creditorTaxId + "##" + noticeCode;
         NotificationCostPaymentResponseDto response = new NotificationCostPaymentResponseDto();
 
-        when(notificationCostService.getNotificationCostPaymentInfo(testIuv))
+        when(notificationCostService.getNotificationCostPaymentInfo(expectedIuv))
                 .thenReturn(Mono.just(response));
 
         Mono<ResponseEntity<NotificationCostPaymentResponseDto>> result =
-                controller.getNotificationCostByPayment(testIuv, null);
+                controller.getNotificationCostByPayment(creditorTaxId, noticeCode, null);
 
         StepVerifier.create(result)
                 .assertNext(responseEntity -> {
@@ -136,7 +138,7 @@ class NotificationCostServiceControllerTest {
                 })
                 .verifyComplete();
 
-        verify(notificationCostService).getNotificationCostPaymentInfo(testIuv);
+        verify(notificationCostService).getNotificationCostPaymentInfo(expectedIuv);
     }
 }
 

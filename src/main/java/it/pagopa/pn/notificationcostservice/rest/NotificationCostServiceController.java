@@ -15,6 +15,8 @@ import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.server.ServerWebExchange;
 import reactor.core.publisher.Mono;
 
+import static it.pagopa.pn.notificationcostservice.utils.PaymentUtils.composeIuv;
+
 @RestController
 @AllArgsConstructor
 @CustomLog
@@ -44,8 +46,8 @@ public class NotificationCostServiceController implements NotificationCostRecipi
     }
 
     @Override
-    public Mono<ResponseEntity<NotificationCostPaymentResponseDto>> getNotificationCostByPayment(String iuv, final ServerWebExchange exchange) {
-        return notificationCostService.getNotificationCostPaymentInfo(iuv)
+    public Mono<ResponseEntity<NotificationCostPaymentResponseDto>> getNotificationCostByPayment(String creditorTaxId, String noticeCode,  final ServerWebExchange exchange) {
+        return notificationCostService.getNotificationCostPaymentInfo(composeIuv(creditorTaxId, noticeCode))
                 .map(ResponseEntity::ok);
     }
 }

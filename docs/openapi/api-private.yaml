@@ -51,7 +51,7 @@ paths:
               schema:
                 $ref: '#/components/schemas/Problem'
 
-  "/notification-cost-private/cost/payment/{iuv}":
+  "/notification-cost-private/cost/payment/{creditorTaxId}/{noticeCode}":
     get:
       operationId: getNotificationCostByPayment
       summary: Recupera il costo della notifica per un pagamento
@@ -60,7 +60,8 @@ paths:
       tags:
         - NotificationCostRecipient
       parameters:
-        - $ref: '#/components/parameters/pathIuv'
+        - $ref: '#/components/parameters/pathCreditorTaxId'
+        - $ref: '#/components/parameters/pathNoticeCode'
       responses:
         '200':
           description: OK
@@ -130,12 +131,19 @@ components:
       schema:
         $ref: './remote-refs.yaml#/components/schemas/IUN'
 
-    pathIuv:
-      name: iuv
+    pathCreditorTaxId:
+      name: creditorTaxId
       in: path
       required: true
       schema:
-        $ref: '#/components/schemas/IUV'
+        $ref: './remote-refs.yaml#/components/schemas/paTaxId'
+
+    pathNoticeCode:
+       name: noticeCode
+       in: path
+       required: true
+       schema:
+         $ref: './remote-refs.yaml#/components/schemas/noticeCode'
 
   schemas:
     NewNotificationCostRequest:
