@@ -11,7 +11,11 @@ import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import software.amazon.awssdk.enhanced.dynamodb.DynamoDbAsyncTable;
 import software.amazon.awssdk.enhanced.dynamodb.DynamoDbEnhancedAsyncClient;
+import software.amazon.awssdk.enhanced.dynamodb.Key;
 import software.amazon.awssdk.enhanced.dynamodb.TableSchema;
+import software.amazon.awssdk.enhanced.dynamodb.model.Page;
+import software.amazon.awssdk.enhanced.dynamodb.model.QueryConditional;
+import software.amazon.awssdk.enhanced.dynamodb.model.QueryEnhancedRequest;
 import software.amazon.awssdk.enhanced.dynamodb.model.UpdateItemEnhancedRequest;
 
 import java.util.List;
@@ -48,6 +52,30 @@ public class PaymentInfoDaoDynamo extends BaseDao implements PaymentInfoDao {
                 .map(dtoToEntityPaymentInfo::dtoToEntity)
                 .flatMap(this::updateItem)
                 .then();
+    }
+
+    @Override
+    public Mono<Void> deleteItemsByIun(String iun) {
+        return getAllByIun(iun)
+                .flatMap(paymentInfoEntity ->
+                        deleteItemByIuv(paymentInfoEntity.getIuv()))
+                .then();
+    }
+
+    private Flux<PaymentInfoEntity> getAllByIun(String iun) {
+        QueryEnhancedRequest queryEnhancedRequest = QueryEnhancedRequest.builder()
+                .queryConditional(QueryConditional.keyEqualTo(Key.builder().partitionValue(iun).build()))
+                .build();
+
+        return Flux.from(paymentInfoEntityDynamoTable.index(PaymentInfoEntity.IUN_GSI)
+                .query(queryEnhancedRequest)
+                .flatMapIterable(Page::items));
+    }
+
+    private Mono<Void> deleteItemByIuv(String iuv) {
+        return Mono.fromFuture(paymentInfoEntityDynamoTable.deleteItem(Key.builder().partitionValue(iuv).build()))
+                .then()
+                .doOnError(e -> log.error("Error deleting item with IUV: {}", iuv, e));
     }
 
     private Mono<PaymentInfoEntity> updateItem(PaymentInfoEntity entity) {

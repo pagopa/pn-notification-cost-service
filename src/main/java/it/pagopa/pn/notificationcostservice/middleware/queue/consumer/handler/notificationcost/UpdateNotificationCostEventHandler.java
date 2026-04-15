@@ -2,6 +2,7 @@ package it.pagopa.pn.notificationcostservice.middleware.queue.consumer.handler.n
 
 import it.pagopa.pn.commons.exceptions.PnInternalException;
 import it.pagopa.pn.notificationcostservice.middleware.dao.NotificationDeliveryCostDao;
+import it.pagopa.pn.notificationcostservice.middleware.dao.PaymentInfoDao;
 import it.pagopa.pn.notificationcostservice.middleware.dao.dynamo.entity.notificationdeliverycost.NotificationDeliveryCostEntity;
 import it.pagopa.pn.notificationcostservice.middleware.queue.consumer.event.notificationcost.UpdateNotificationCostEvent;
 import it.pagopa.pn.notificationcostservice.model.cost.CostUpdatePhaseInt;
@@ -26,12 +27,14 @@ public class UpdateNotificationCostEventHandler {
 
     private final NotificationCostUpdaterService notificationCostUpdaterService;
     private final NotificationDeliveryCostDao notificationDeliveryCostDao;
+    private final PaymentInfoDao paymentInfoDao;
 
     public Mono<Void> handleUpdateNotificationCostEvent(UpdateNotificationCostEvent.Payload payload) {
         log.info("Handling UpdateNotificationCostEvent for iun={}", payload.getIun());
         log.info("Start processing UpdateNotificationCostEvent for iun={}", payload.getIun());
 
         return validateUpdateNotificationCostEvent(payload)
+                .flatMap(this::handlePaymentInfoDeletionIfNeeded)
                 .flatMapMany(this::checkForRefusedOrCancelled)
                 .flatMap(notificationCostUpdaterService::updateCostByPhase)
                 .then()
@@ -66,7 +69,7 @@ public class UpdateNotificationCostEventHandler {
                             ERROR_CODE_NOTIFICATIONCOSTSERVICE_INTERNAL_SERVER_ERROR));
                 }
             }
-        };
+        }
         
         return Mono.just(payload);
     }
@@ -82,6 +85,16 @@ public class UpdateNotificationCostEventHandler {
         }
 
         return createNotificationCostUpdateList(payload, phase);
+    }
+
+    private Mono<UpdateNotificationCostEvent.Payload> handlePaymentInfoDeletionIfNeeded(UpdateNotificationCostEvent.Payload payload) {
+        CostUpdatePhaseInt phase = payload.getCostUpdatePhase();
+        if (phase == CostUpdatePhaseInt.NOTIFICATION_CANCELLED || phase == CostUpdatePhaseInt.REQUEST_REFUSED) {
+            return paymentInfoDao.deleteItemsByIun(payload.getIun())
+                    .doOnSuccess(ignored -> log.info("Deleted payment info for iun={}", payload.getIun()))
+                    .thenReturn(payload);
+        }
+        return Mono.just(payload);
     }
 
     private Flux<NotificationCostUpdate> createNotificationCostUpdateList(UpdateNotificationCostEvent.Payload payload, CostUpdatePhaseInt phase) {
