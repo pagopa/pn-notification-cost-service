@@ -24,6 +24,8 @@ import java.util.List;
 @Slf4j
 public class PaymentInfoDaoDynamo extends BaseDao implements PaymentInfoDao {
 
+    private static final int DELETE_ITEMS_BY_IUN_MAX_CONCURRENCY = 10;
+
     DynamoDbEnhancedAsyncClient dynamoDbEnhancedAsyncClient;
     DynamoDbAsyncTable<PaymentInfoEntity> paymentInfoEntityDynamoTable;
     DtoToEntityPaymentInfoMapper dtoToEntityPaymentInfo;
@@ -58,7 +60,8 @@ public class PaymentInfoDaoDynamo extends BaseDao implements PaymentInfoDao {
     public Mono<Void> deleteItemsByIun(String iun) {
         return getAllByIun(iun)
                 .flatMap(paymentInfoEntity ->
-                        deleteItemByIuv(paymentInfoEntity.getIuv()))
+                                deleteItemByIuv(paymentInfoEntity.getIuv()),
+                        DELETE_ITEMS_BY_IUN_MAX_CONCURRENCY)
                 .then();
     }
 
