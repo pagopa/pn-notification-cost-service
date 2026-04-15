@@ -31,7 +31,6 @@ public class UpdateNotificationCostEventHandler {
 
     public Mono<Void> handleUpdateNotificationCostEvent(UpdateNotificationCostEvent.Payload payload) {
         log.info("Handling UpdateNotificationCostEvent for iun={}", payload.getIun());
-        log.info("Start processing UpdateNotificationCostEvent for iun={}", payload.getIun());
 
         return validateUpdateNotificationCostEvent(payload)
                 .flatMap(this::handlePaymentInfoDeletionIfNeeded)
