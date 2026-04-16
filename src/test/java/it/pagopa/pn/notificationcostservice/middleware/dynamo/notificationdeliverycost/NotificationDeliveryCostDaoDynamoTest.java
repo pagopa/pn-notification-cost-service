@@ -242,12 +242,15 @@ class NotificationDeliveryCostDaoDynamoTest {
                 AttributeValue.builder().s("taxId").build(),
                 NotificationDeliveryCostEntity.COL_RECIPIENT_INTERNAL_ID,
                 AttributeValue.builder().s("recipientInternalId").build(),
+                NotificationDeliveryCostEntity.COL_LAST_UPDATE,
+                AttributeValue.builder().s(Instant.now().toString()).build(),
                 NotificationDeliveryCostEntity.COL_BASE_COST,
                 AttributeValue.builder().m(Map.of(
                         BaseCostEntity.COL_SEND_FEE, AttributeValue.builder().n("10").build(),
                         BaseCostEntity.COL_PA_FEE, AttributeValue.builder().n("2").build()
                 )).build()
         );
+
 
         when(dynamoDbAsyncClient.updateItem(any(UpdateItemRequest.class)))
                 .thenReturn(CompletableFuture.completedFuture(

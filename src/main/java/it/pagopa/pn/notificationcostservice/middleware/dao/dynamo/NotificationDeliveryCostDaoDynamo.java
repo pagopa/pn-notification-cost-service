@@ -20,10 +20,9 @@ import software.amazon.awssdk.enhanced.dynamodb.TableSchema;
 import software.amazon.awssdk.enhanced.dynamodb.model.*;
 import software.amazon.awssdk.services.dynamodb.DynamoDbAsyncClient;
 import software.amazon.awssdk.services.dynamodb.model.AttributeValue;
-
+import java.time.Instant;
 import java.util.LinkedHashMap;
 import java.util.Map;
-
 import static it.pagopa.pn.notificationcostservice.exception.PnNotificationCostServiceExceptionCodes.ERROR_CODE_NOTIFICATIONDELIVERYCOST_NOTFOUND;
 import static it.pagopa.pn.notificationcostservice.middleware.dao.dynamo.entity.notificationdeliverycost.BaseCostEntity.COL_PA_FEE;
 import static it.pagopa.pn.notificationcostservice.middleware.dao.dynamo.entity.notificationdeliverycost.BaseCostEntity.COL_SEND_FEE;
@@ -127,7 +126,8 @@ public class NotificationDeliveryCostDaoDynamo extends BaseDao implements Notifi
                 COL_PAGO_PA_INT_MODE, AttributeValue.builder().s(entity.getPagoPaIntMode().name()).build(),
                 COL_SENDER_PA_ID, AttributeValue.builder().s(entity.getSenderPaId()).build(),
                 COL_SENDER_TAX_ID, AttributeValue.builder().s(entity.getSenderTaxId()).build(),
-                COL_RECIPIENT_INTERNAL_ID, AttributeValue.builder().s(entity.getRecipientInternalId()).build()
+                COL_RECIPIENT_INTERNAL_ID, AttributeValue.builder().s(entity.getRecipientInternalId()).build(),
+                COL_LAST_UPDATE, AttributeValue.builder().s(Instant.now().toString()).build()
         );
 
         Map<String, AttributeValue> baseCostFields = new LinkedHashMap<>();
@@ -151,6 +151,7 @@ public class NotificationDeliveryCostDaoDynamo extends BaseDao implements Notifi
         entity.setSenderPaId(response.get(COL_SENDER_PA_ID).s());
         entity.setSenderTaxId(response.get(COL_SENDER_TAX_ID).s());
         entity.setRecipientInternalId(response.get(COL_RECIPIENT_INTERNAL_ID).s());
+        entity.setLastUpdate(Instant.parse(response.get(NotificationDeliveryCostEntity.COL_LAST_UPDATE).s()));
 
         Map<String, AttributeValue> baseCostMap = response.get(COL_BASE_COST).m();
         BaseCostEntity baseCost = new BaseCostEntity();

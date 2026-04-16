@@ -29,56 +29,38 @@ public class PaymentInfoDaoDynamo extends BaseDao implements PaymentInfoDao {
 
     private static final int DELETE_ITEMS_BY_IUN_MAX_CONCURRENCY = 10;
 
-    DynamoDbEnhancedAsyncClient dynamoDbEnhancedAsyncClient;
-    DynamoDbAsyncTable<PaymentInfoEntity> paymentInfoEntityDynamoTable;
-    EntityToDtoPaymentInfoMapper entityToDtoPaymentInfoMapper;
-    DtoToEntityPaymentInfoMapper dtoToEntityPaymentInfoMapper;
+    private final DynamoDbAsyncTable<PaymentInfoEntity> paymentInfoEntityDynamoTable;
+    private final EntityToDtoPaymentInfoMapper entityToDtoPaymentInfoMapper;
+    private final DtoToEntityPaymentInfoMapper dtoToEntityPaymentInfo;
 
     public PaymentInfoDaoDynamo(
             DynamoDbEnhancedAsyncClient dynamoDbEnhancedAsyncClient,
             DynamoDbAsyncClient dynamoDbAsyncClient,
             PnNotificationCostServiceConfigs awsConfigs,
-            DtoToEntityPaymentInfoMapper dtoToEntityPaymentInfo
+            DtoToEntityPaymentInfoMapper dtoToEntityPaymentInfo,
+            EntityToDtoPaymentInfoMapper entityToDtoPaymentInfoMapper
     ) {
         super(dynamoDbAsyncClient, awsConfigs.getPaymentInfoTable().getTableName());
-        this.paymentInfoEntityDynamoTable = dynamoDbEnhancedAsyncClient.table(awsConfigs.getPaymentInfoTable().getTableName(), TableSchema.fromBean(PaymentInfoEntity.class));
-        this.dynamoDbEnhancedAsyncClient = dynamoDbEnhancedAsyncClient;
+        this.paymentInfoEntityDynamoTable = dynamoDbEnhancedAsyncClient.table(
+                awsConfigs.getPaymentInfoTable().getTableName(),
+                TableSchema.fromBean(PaymentInfoEntity.class)
+        );
+        this.dtoToEntityPaymentInfo = dtoToEntityPaymentInfo;
         this.entityToDtoPaymentInfoMapper = entityToDtoPaymentInfoMapper;
-        this.dtoToEntityPaymentInfoMapper = dtoToEntityPaymentInfoMapper;
-
     }
 
-    /**
-     * Il metodo si occupa di:
-     * - effettuare l’update dei dati di pagamenti correlati agli IUV sulla tabella 'pn-PaymentInfo'
-     *
-     * @param payments lista di pagamenti
-     * @return void
-     */
     @Override
     public Mono<Void> updateItemIfNotExistsOrMatch(List<PaymentInfo> payments) {
-        if (payments == null || payments.isEmpty()) {
-            return Mono.empty();
-        }
-
         return Flux.fromIterable(payments)
-               .map(dtoToEntityPaymentInfoMapper::dtoToEntity)
-               .flatMap(this::updateItem)
-               .then();
+                .map(dtoToEntityPaymentInfo::dtoToEntity)
+                .flatMap(this::createUpdateItemRequestAndPerformUpdate)
+                .then();
     }
 
     @Override
     public Mono<PaymentInfo> getPaymentInfoByIuv(String iuv) {
         return Mono.fromFuture(paymentInfoEntityDynamoTable.getItem(r -> r.key(k -> k.partitionValue(iuv))))
                 .map(entityToDtoPaymentInfoMapper::entityToDto);
-    }
-
-    private Mono<PaymentInfoEntity> updateItem(PaymentInfoEntity entity) {
-        return Mono.fromFuture(paymentInfoEntityDynamoTable.updateItem(createUpdateItemEnhancedRequest(entity)))
-                .doOnError(e -> log.error("Error updating item with IUV: {}", entity.getIuv(), e));
-                .map(dtoToEntityPaymentInfo::dtoToEntity)
-                .flatMap(this::createUpdateItemRequestAndPerformUpdate)
-                .then();
     }
 
     private Mono<Void> createUpdateItemRequestAndPerformUpdate(PaymentInfoEntity entity) {
