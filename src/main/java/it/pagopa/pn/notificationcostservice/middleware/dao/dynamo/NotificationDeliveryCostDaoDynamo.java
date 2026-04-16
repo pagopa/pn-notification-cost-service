@@ -152,7 +152,6 @@ public class NotificationDeliveryCostDaoDynamo extends BaseDao implements Notifi
 
         return this.updateIfMatchOrNotExists(keyAttributes, flatAttributes, mapAttrs, setOnlyFlatAttributes)
                 .map(this::mapFromAttributeValue);
-
     }
 
     private NotificationDeliveryCostEntity mapFromAttributeValue(Map<String, AttributeValue> response) {

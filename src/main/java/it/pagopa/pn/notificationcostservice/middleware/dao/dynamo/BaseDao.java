@@ -27,6 +27,7 @@ public class BaseDao {
      * @param keyAttributes chiave primaria dell'item
      * @param flatAttributes attributi semplici da aggiornare e verificare
      * @param mapAttributes attributi annidati da aggiornare e verificare
+     * @param setOnlyFlatAttributes attributi volatili da aggiornare
      * @return un {@link Mono} con gli attributi aggiornati restituiti da DynamoDB
      */
     protected Mono<Map<String, AttributeValue>> updateIfMatchOrNotExists(
