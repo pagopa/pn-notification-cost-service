@@ -13,6 +13,9 @@ import software.amazon.awssdk.enhanced.dynamodb.DynamoDbAsyncTable;
 import software.amazon.awssdk.enhanced.dynamodb.DynamoDbEnhancedAsyncClient;
 import software.amazon.awssdk.enhanced.dynamodb.Key;
 import software.amazon.awssdk.enhanced.dynamodb.TableSchema;
+import software.amazon.awssdk.enhanced.dynamodb.model.Page;
+import software.amazon.awssdk.enhanced.dynamodb.model.QueryConditional;
+import software.amazon.awssdk.enhanced.dynamodb.model.QueryEnhancedRequest;
 import software.amazon.awssdk.services.dynamodb.DynamoDbAsyncClient;
 import software.amazon.awssdk.services.dynamodb.model.AttributeValue;
 
@@ -48,6 +51,7 @@ public class PaymentInfoDaoDynamo extends BaseDao implements PaymentInfoDao {
      * @param payments lista di pagamenti
      * @return void
      */
+    @Override
     public Mono<Void> updateItemIfNotExistsOrMatch(List<PaymentInfo> payments) {
         if (payments == null || payments.isEmpty()) {
             return Mono.empty();
@@ -63,6 +67,16 @@ public class PaymentInfoDaoDynamo extends BaseDao implements PaymentInfoDao {
         Map<String, AttributeValue> keyAttributes = Map.of(
                 PaymentInfoEntity.COL_PK, AttributeValue.builder().s(entity.getIuv()).build()
         );
+
+        Map<String, AttributeValue> flatAttributes = Map.of(
+                PaymentInfoEntity.COL_IUN, AttributeValue.builder().s(entity.getIun()).build(),
+                PaymentInfoEntity.COL_REC_INDEX, AttributeValue.builder().n(String.valueOf(entity.getRecIndex())).build(),
+                PaymentInfoEntity.COL_APPLY_COST, AttributeValue.builder().bool(entity.isApplyCost()).build()
+        );
+
+        return this.updateIfMatchOrNotExists(keyAttributes, flatAttributes, null)
+                .then();
+    }
     @Override
     public Mono<Void> deleteItemsByIun(String iun) {
         return getAllByIun(iun)
@@ -88,20 +102,5 @@ public class PaymentInfoDaoDynamo extends BaseDao implements PaymentInfoDao {
         return Mono.fromFuture(paymentInfoEntityDynamoTable.deleteItem(Key.builder().partitionValue(iuv).build()))
                 .then()
                 .doOnError(e -> log.error("Error deleting item with IUV: {}", iuv, e));
-    }
-
-    private Mono<PaymentInfoEntity> updateItem(PaymentInfoEntity entity) {
-        return Mono.fromFuture(paymentInfoEntityDynamoTable.updateItem(createUpdateItemEnhancedRequest(entity)))
-                .doOnError(e -> log.error("Error updating item with IUV: {}", entity.getIuv(), e));
-    }
-
-        Map<String, AttributeValue> flatAttributes = Map.of(
-                PaymentInfoEntity.COL_IUN, AttributeValue.builder().s(entity.getIun()).build(),
-                PaymentInfoEntity.COL_REC_INDEX, AttributeValue.builder().n(String.valueOf(entity.getRecIndex())).build(),
-                PaymentInfoEntity.COL_APPLY_COST, AttributeValue.builder().bool(entity.isApplyCost()).build()
-        );
-
-        return this.updateIfMatchOrNotExists(keyAttributes, flatAttributes, null)
-                .then();
     }
 }
