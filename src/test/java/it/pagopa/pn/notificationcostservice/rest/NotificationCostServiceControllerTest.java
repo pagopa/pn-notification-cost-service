@@ -2,6 +2,7 @@ package it.pagopa.pn.notificationcostservice.rest;
 
 import it.pagopa.pn.notification_cost_service.generated.openapi.server.v1.dto.NewNotificationCostRequestDto;
 import it.pagopa.pn.notification_cost_service.generated.openapi.server.v1.dto.NotificationCostRecipientResponseDto;
+import it.pagopa.pn.notification_cost_service.generated.openapi.server.v1.dto.NotificationCostPaymentResponseDto;
 import it.pagopa.pn.notificationcostservice.model.ValidationStatus;
 import it.pagopa.pn.notificationcostservice.model.notificationdeliverycost.NotificationDeliveryCost;
 import it.pagopa.pn.notificationcostservice.model.paymentinfo.PaymentInfo;
@@ -113,6 +114,31 @@ class NotificationCostServiceControllerTest {
         verify(mapper).mapDtoToNotificationDeliveryCost(eq(TEST_IUN), same(requestDto));
         verify(paymentInfoMapper).mapDtoToPaymentInfo(eq(TEST_IUN), same(requestDto));
         verify(notificationCostService).saveNotificationCost(TEST_IUN, notificationCosts, payments);
+    }
+
+    @Test
+    void testNotificationCostByPayment_Success() {
+        String creditorTaxId = "77777777777";
+        String noticeCode = "398918182323606420";
+        String expectedIuv = creditorTaxId + "##" + noticeCode;
+        NotificationCostPaymentResponseDto response = new NotificationCostPaymentResponseDto();
+
+        when(notificationCostService.getNotificationCostPaymentInfo(expectedIuv))
+                .thenReturn(Mono.just(response));
+
+        Mono<ResponseEntity<NotificationCostPaymentResponseDto>> result =
+                controller.getNotificationCostByPayment(creditorTaxId, noticeCode, null);
+
+        StepVerifier.create(result)
+                .assertNext(responseEntity -> {
+                    assertNotNull(responseEntity);
+                    assertEquals(HttpStatus.OK, responseEntity.getStatusCode());
+                    assertNotNull(responseEntity.getBody());
+                    assertEquals(response, responseEntity.getBody());
+                })
+                .verifyComplete();
+
+        verify(notificationCostService).getNotificationCostPaymentInfo(expectedIuv);
     }
 }
 

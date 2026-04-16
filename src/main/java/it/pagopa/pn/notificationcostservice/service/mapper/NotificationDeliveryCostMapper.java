@@ -46,13 +46,23 @@ public class NotificationDeliveryCostMapper {
                         .build())
                 .build();
     }
-    public NotificationCostRecipientResponseDto mapDtoToResponse(NotificationDeliveryCost dto, CalculatedCosts calculatedCosts) {
+    public NotificationCostRecipientResponseDto mapToNotificationCostRecipientResponse(NotificationDeliveryCost dto, CalculatedCosts calculatedCosts) {
         return new NotificationCostRecipientResponseDto()
                 .lastUpdate(dto.getLastUpdate())
                 .pagoPaIntMode(PagoPaIntModeDto.fromValue(dto.getPagoPaIntMode().name()))
                 .totalCost(new TotalCostDto()
                         .costWithVat(calculatedCosts.getTotalCostWithVat())
                         .details(mapTotalCostDetails(dto, calculatedCosts)));
+    }
+
+    public NotificationCostPaymentResponseDto mapToNotificationCostPaymentResponse(NotificationDeliveryCost dto, CalculatedCosts calculatedCosts) {
+        return new NotificationCostPaymentResponseDto()
+                .lastUpdate(dto.getLastUpdate())
+                .pagoPaIntMode(PagoPaIntModeDto.fromValue(dto.getPagoPaIntMode().name()))
+                .totalCost(new TotalCostDto()
+                        .costWithVat(calculatedCosts.getTotalCostWithVat())
+                        .details(mapTotalCostDetails(dto, calculatedCosts)))
+                .partialCost(mapPartialCost(dto, calculatedCosts));
     }
 
     private TotalCostDetailsDto mapTotalCostDetails(NotificationDeliveryCost dto, CalculatedCosts calculatedCosts) {
@@ -101,5 +111,17 @@ public class NotificationDeliveryCostMapper {
                 .cost(dto.getCost())
                 .costName(costName)
                 .productType(dto.getProductType());
+    }
+
+    private PartialCostDto mapPartialCost(NotificationDeliveryCost dto, CalculatedCosts calculatedCosts) {
+        return new PartialCostDto()
+                .cost(calculatedCosts.getPartialCost())
+                .details(new PartialCostDetailsDto()
+                        .analogCostDetail(mapAnalogCostDetail(dto, calculatedCosts))
+                        .baseCostDetail(new BaseCostDetailDto()
+                                .cost(dto.getBaseCost().getSendFee())
+                                .baseCostComponents(List.of(
+                                        new BaseCostComponentDto().costName(BaseCostNameDto.SEND_FEE).cost(dto.getBaseCost().getSendFee())
+                                ))));
     }
 }

@@ -27,11 +27,11 @@ class NotificationDeliveryCostMapperTest {
     private NotificationDeliveryCostMapper mapper;
 
     @BeforeEach
-    void init(){
+    void init() {
         PnNotificationCostServiceConfigs configs = Mockito.mock(PnNotificationCostServiceConfigs.class);
         Integer sendFee = 100;
         Mockito.when(configs.getSendFee()).thenReturn(sendFee);
-        mapper= new NotificationDeliveryCostMapper(configs);
+        mapper = new NotificationDeliveryCostMapper(configs);
     }
 
     @Test
@@ -102,7 +102,7 @@ class NotificationDeliveryCostMapperTest {
                 .build();
 
         // When
-        NotificationCostRecipientResponseDto response = mapper.mapDtoToResponse(dto, calculated);
+        NotificationCostRecipientResponseDto response = mapper.mapToNotificationCostRecipientResponse(dto, calculated);
 
         // Then
         assertThat(response.getTotalCost().getCostWithVat()).isEqualTo(1000);
@@ -129,7 +129,7 @@ class NotificationDeliveryCostMapperTest {
                 .build();
 
         // When
-        NotificationCostRecipientResponseDto firstResponse = mapper.mapDtoToResponse(dto, calculated);
+        NotificationCostRecipientResponseDto firstResponse = mapper.mapToNotificationCostRecipientResponse(dto, calculated);
 
         // Then
         assertNotNull(firstResponse.getTotalCost());
@@ -145,7 +145,7 @@ class NotificationDeliveryCostMapperTest {
         dto.setSimpleRegisteredLetterCost(null);
         dto.setFirstAnalogCost(FirstAnalogCost.builder().cost(150).productType("AR").build());
         // When
-        NotificationCostRecipientResponseDto secondResponse = mapper.mapDtoToResponse(dto, calculated);
+        NotificationCostRecipientResponseDto secondResponse = mapper.mapToNotificationCostRecipientResponse(dto, calculated);
 
         // Then
         assertNotNull(secondResponse.getTotalCost());
@@ -176,7 +176,7 @@ class NotificationDeliveryCostMapperTest {
                 .build();
 
         // When
-        NotificationCostRecipientResponseDto response = mapper.mapDtoToResponse(dto, calculated);
+        NotificationCostRecipientResponseDto response = mapper.mapToNotificationCostRecipientResponse(dto, calculated);
 
         // Then
         assertNotNull(response.getTotalCost());
@@ -204,9 +204,103 @@ class NotificationDeliveryCostMapperTest {
         CalculatedCosts calculated = CalculatedCosts.builder().build();
 
         // When
-        NotificationCostRecipientResponseDto response = mapper.mapDtoToResponse(dto, calculated);
+        NotificationCostRecipientResponseDto response = mapper.mapToNotificationCostRecipientResponse(dto, calculated);
 
         // Then
         assertThat(response.getTotalCost().getDetails().getAnalogCostDetail()).isNull();
+    }
+
+    @Test
+    @DisplayName("Dovrebbe mappare correttamente totalCost e partialCost nella payment response")
+    void shouldMapPaymentResponseWithPartialCost() {
+        // Given
+        NotificationDeliveryCost dto = NotificationDeliveryCostTestBuilder.builder()
+                .withVat(22)
+                .withSenderPaId("TEST-SENDER-PA-ID")
+                .withSenderTaxId("TEST-SENDER-TAX-ID")
+                .withLastUpdate(Instant.now())
+                .build();
+
+        CalculatedCosts calculated = CalculatedCosts.builder()
+                .totalCostWithVat(1000)
+                .baseCost(500)
+                .partialCost(300)
+                .build();
+
+        // When
+        NotificationCostPaymentResponseDto response =
+                mapper.mapToNotificationCostPaymentResponse(dto, calculated);
+
+        // Then
+        assertNotNull(response);
+        assertThat(response.getTotalCost().getCostWithVat()).isEqualTo(1000);
+        assertThat(response.getPartialCost()).isNotNull();
+        assertThat(response.getPartialCost().getCost()).isEqualTo(300);
+        BaseCostDetailDto baseDetail = response.getPartialCost().getDetails().getBaseCostDetail();
+        assertThat(baseDetail.getCost()).isEqualTo(dto.getBaseCost().getSendFee());
+        assertThat(baseDetail.getBaseCostComponents()).hasSize(1);
+        assertThat(baseDetail.getBaseCostComponents().getFirst().getCostName()).isEqualTo(BaseCostNameDto.SEND_FEE);
+    }
+
+    @Test
+    @DisplayName("Dovrebbe mappare correttamente l'analogCostDetail nel partialCost della payment response")
+    void shouldMapAnalogCostInsidePartialCost() {
+        // Given
+        NotificationDeliveryCost dto = NotificationDeliveryCostTestBuilder.builder()
+                .withFirstAnalogCost(
+                        FirstAnalogCost.builder()
+                                .cost(100)
+                                .productType("AR")
+                                .build()
+                )
+                .withVat(22)
+                .withSenderPaId("TEST-SENDER-PA-ID")
+                .withSenderTaxId("TEST-SENDER-TAX-ID")
+                .withLastUpdate(Instant.now())
+                .build();
+
+        CalculatedCosts calculated = CalculatedCosts.builder()
+                .analogCost(100)
+                .analogCostWithVat(122)
+                .partialCost(300)
+                .baseCost(200)
+                .build();
+
+        // When
+        NotificationCostPaymentResponseDto response =
+                mapper.mapToNotificationCostPaymentResponse(dto, calculated);
+
+        // Then
+        assertNotNull(response.getPartialCost());
+        AnalogCostDetailDto analogDetail = response.getPartialCost().getDetails().getAnalogCostDetail();
+        assertNotNull(analogDetail);
+        assertThat(analogDetail.getVat()).isEqualTo(22);
+        assertThat(analogDetail.getAnalogCostComponents()).hasSize(1);
+        assertThat(analogDetail.getAnalogCostComponents().getFirst().getCostName()).isEqualTo(AnalogCostNameDto.FIRST_ATTEMPT);
+        assertThat(analogDetail.getAnalogCostComponents().getFirst().getCost()).isEqualTo(100);
+    }
+
+    @Test
+    @DisplayName("Dovrebbe restituire analogCostDetail null nel partialCost se non ci sono costi analogici")
+    void shouldReturnNullAnalogDetailInPartialCostWhenNoAnalogCostsPresent() {
+        // Given
+        NotificationDeliveryCost dto = NotificationDeliveryCostTestBuilder.builder()
+                .withSenderPaId("TEST-SENDER-PA-ID")
+                .withSenderTaxId("TEST-SENDER-TAX-ID")
+                .withLastUpdate(Instant.now())
+                .build();
+
+        CalculatedCosts calculated = CalculatedCosts.builder()
+                .partialCost(200)
+                .baseCost(150)
+                .build();
+
+        // When
+        NotificationCostPaymentResponseDto response =
+                mapper.mapToNotificationCostPaymentResponse(dto, calculated);
+
+        // Then
+        assertNotNull(response.getPartialCost());
+        assertThat(response.getPartialCost().getDetails().getAnalogCostDetail()).isNull();
     }
 }

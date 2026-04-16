@@ -5,6 +5,7 @@ import it.pagopa.pn.notificationcostservice.middleware.dao.dynamo.entity.notific
 import org.springframework.boot.test.context.SpringBootTest;
 import software.amazon.awssdk.enhanced.dynamodb.DynamoDbAsyncTable;
 import software.amazon.awssdk.enhanced.dynamodb.DynamoDbEnhancedAsyncClient;
+import software.amazon.awssdk.enhanced.dynamodb.Key;
 import software.amazon.awssdk.enhanced.dynamodb.TableSchema;
 import software.amazon.awssdk.enhanced.dynamodb.model.DeleteItemEnhancedRequest;
 import software.amazon.awssdk.enhanced.dynamodb.model.PutItemEnhancedRequest;
@@ -14,23 +15,27 @@ import java.util.concurrent.ExecutionException;
 @SpringBootTest
 public class TestDao extends BaseDao {
 
-    DynamoDbAsyncTable<NotificationDeliveryCostEntity> table;
+    private final DynamoDbAsyncTable<NotificationDeliveryCostEntity> table;
 
-    public TestDao(DynamoDbEnhancedAsyncClient dynamoDbEnhancedAsyncClient, String table) {
-        this.table = dynamoDbEnhancedAsyncClient.table(table, TableSchema.fromBean(NotificationDeliveryCostEntity.class));
+    public TestDao(DynamoDbEnhancedAsyncClient dynamoDbEnhancedAsyncClient, String tableName) {
+        super(null,tableName);
+        this.table = dynamoDbEnhancedAsyncClient.table(
+                tableName,
+                TableSchema.fromBean(NotificationDeliveryCostEntity.class)
+        );
     }
 
     public void putItem(NotificationDeliveryCostEntity entity) {
-        PutItemEnhancedRequest<NotificationDeliveryCostEntity> req = PutItemEnhancedRequest.builder(NotificationDeliveryCostEntity.class)
-                .item(entity)
-                .build();
+        PutItemEnhancedRequest<NotificationDeliveryCostEntity> req =
+                PutItemEnhancedRequest.builder(NotificationDeliveryCostEntity.class)
+                        .item(entity)
+                        .build();
         table.putItem(req);
     }
 
     public void delete(String pk, Integer sk) throws ExecutionException, InterruptedException {
-
         DeleteItemEnhancedRequest req = DeleteItemEnhancedRequest.builder()
-                .key(getKeyBuild(pk, sk))
+                .key(Key.builder().partitionValue(pk).sortValue(sk).build())
                 .build();
 
         table.deleteItem(req).get();

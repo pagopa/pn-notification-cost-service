@@ -5,10 +5,10 @@ import it.pagopa.pn.notificationcostservice.model.notificationdeliverycost.Notif
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
-import java.util.List;
-
 public interface NotificationDeliveryCostDao {
     Mono<NotificationDeliveryCost> getNotificationDeliveryCostItem(String iun, Integer recIndex);
     Mono<NotificationDeliveryCostEntity> updateNotificationDeliveryCostNotNull(NotificationDeliveryCostEntity notificationDeliveryCosts);
+    Mono<NotificationDeliveryCostEntity> updateBaseCostIfNotExistsOrMatch(NotificationDeliveryCostEntity notificationDeliveryCosts);
+
     Flux<NotificationDeliveryCostEntity> getAllByIun(String iun);
 }

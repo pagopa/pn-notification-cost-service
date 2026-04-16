@@ -22,11 +22,10 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.context.annotation.Import;
 import reactor.test.StepVerifier;
 import software.amazon.awssdk.enhanced.dynamodb.DynamoDbEnhancedAsyncClient;
-
 import java.time.Instant;
 import java.util.List;
+import java.util.Objects;
 import java.util.stream.Collectors;
-
 import static org.junit.jupiter.api.Assertions.fail;
 
 @SpringBootTest
@@ -114,6 +113,7 @@ public class NotificationDeliveryCostDaoDynamoTestIT {
                 .simpleRegisteredLetterCost(null)
                 .recipientInternalId("recipientInternalId")
                 .senderPaId("senderInternalId")
+                .senderTaxId("senderTaxId")
                 .build();
     }
 
@@ -131,15 +131,141 @@ public class NotificationDeliveryCostDaoDynamoTestIT {
                 .expectError(PnNotFoundException.class)
                 .verify();
     }
+    @Test
+    void updateBaseCostIfNotExistsOrMatch_whenExistingItemDoesNotMatch_returnsError() {
+        String iun = "iun-update-mismatch-" + System.nanoTime();
+        int recIndex = 2;
+
+        NotificationDeliveryCostEntity original = newNotificationDeliveryCostEntity(iun, recIndex);
+
+        NotificationDeliveryCostEntity updated = NotificationDeliveryCostEntity.builder()
+                .iun(iun)
+                .recIndex(recIndex)
+                .recipientInternalId("recipient-updated")
+                .senderPaId("senderInternalId")
+                .senderTaxId("senderTaxId")
+                .baseCost(BaseCostEntity.builder()
+                        .paFee(5)
+                        .sendFee(15)
+                        .build())
+                .vat(0)
+                .notificationFeePolicy(NotificationFeePolicy.DELIVERY_MODE)
+                .pagoPaIntMode(PagoPaIntMode.ASYNC)
+                .build();
+
+        try {
+            StepVerifier.create(dao.updateBaseCostIfNotExistsOrMatch(original))
+                    .expectNextCount(1)
+                    .verifyComplete();
+
+            StepVerifier.create(dao.updateBaseCostIfNotExistsOrMatch(updated))
+                    .expectErrorMatches(Objects::nonNull)
+                    .verify();
+
+            NotificationDeliveryCost elementFromDb = dao.getNotificationDeliveryCostItem(iun, recIndex).block();
+
+            Assertions.assertNotNull(elementFromDb);
+            Assertions.assertEquals(original.getRecipientInternalId(), elementFromDb.getRecipientInternalId());
+            Assertions.assertEquals(original.getBaseCost().getPaFee(), elementFromDb.getBaseCost().getPaFee());
+            Assertions.assertEquals(original.getBaseCost().getSendFee(), elementFromDb.getBaseCost().getSendFee());
+        } catch (Exception e) {
+            fail(e);
+        } finally {
+            try {
+                testDao.delete(iun, recIndex);
+            } catch (Exception e) {
+                System.out.println("Nothing to remove");
+            }
+        }
+    }
 
     @Test
-    void updateNotNullWhenItemDoesNotExist() {
+    void updateBaseCostIfNotExistsOrMatch_whenExistingItemMatchesCondition_returnsOk() {
+        String iun = "iun-update-ok-" + System.nanoTime();
+        int recIndex = 3;
+
+        NotificationDeliveryCostEntity original = newNotificationDeliveryCostEntity(iun, recIndex);
+
+        try {
+            // primo inserimento
+            StepVerifier.create(dao.updateBaseCostIfNotExistsOrMatch(original))
+                    .assertNext(saved -> {
+                        Assertions.assertEquals(original.getIun(), saved.getIun());
+                        Assertions.assertEquals(original.getRecIndex(), saved.getRecIndex());
+                        Assertions.assertEquals(original.getVat(), saved.getVat());
+                        Assertions.assertEquals(original.getNotificationFeePolicy(), saved.getNotificationFeePolicy());
+                        Assertions.assertEquals(original.getPagoPaIntMode(), saved.getPagoPaIntMode());
+                        Assertions.assertEquals(original.getSenderPaId(), saved.getSenderPaId());
+                        Assertions.assertEquals(original.getSenderTaxId(), saved.getSenderTaxId());
+                        Assertions.assertEquals(original.getRecipientInternalId(), saved.getRecipientInternalId());
+                        Assertions.assertNotNull(saved.getBaseCost());
+                        Assertions.assertEquals(original.getBaseCost().getPaFee(), saved.getBaseCost().getPaFee());
+                        Assertions.assertEquals(original.getBaseCost().getSendFee(), saved.getBaseCost().getSendFee());
+                    })
+                    .verifyComplete();
+
+            // seconda chiamata con stessi dati: deve andare ancora OK
+            StepVerifier.create(dao.updateBaseCostIfNotExistsOrMatch(original))
+                    .assertNext(saved -> {
+                        Assertions.assertEquals(original.getIun(), saved.getIun());
+                        Assertions.assertEquals(original.getRecIndex(), saved.getRecIndex());
+                        Assertions.assertEquals(original.getVat(), saved.getVat());
+                        Assertions.assertEquals(original.getNotificationFeePolicy(), saved.getNotificationFeePolicy());
+                        Assertions.assertEquals(original.getPagoPaIntMode(), saved.getPagoPaIntMode());
+                        Assertions.assertEquals(original.getSenderPaId(), saved.getSenderPaId());
+                        Assertions.assertEquals(original.getSenderTaxId(), saved.getSenderTaxId());
+                        Assertions.assertEquals(original.getRecipientInternalId(), saved.getRecipientInternalId());
+                        Assertions.assertNotNull(saved.getBaseCost());
+                        Assertions.assertEquals(original.getBaseCost().getPaFee(), saved.getBaseCost().getPaFee());
+                        Assertions.assertEquals(original.getBaseCost().getSendFee(), saved.getBaseCost().getSendFee());
+                    })
+                    .verifyComplete();
+
+            NotificationDeliveryCost elementFromDb = dao.getNotificationDeliveryCostItem(iun, recIndex).block();
+
+            Assertions.assertNotNull(elementFromDb);
+            Assertions.assertEquals(original.getIun(), elementFromDb.getIun());
+            Assertions.assertEquals(original.getRecIndex(), elementFromDb.getRecIndex());
+            Assertions.assertEquals(original.getRecipientInternalId(), elementFromDb.getRecipientInternalId());
+            Assertions.assertEquals(original.getSenderPaId(), elementFromDb.getSenderPaId());
+            Assertions.assertEquals(original.getSenderTaxId(), elementFromDb.getSenderTaxId());
+            Assertions.assertEquals(original.getBaseCost().getPaFee(), elementFromDb.getBaseCost().getPaFee());
+            Assertions.assertEquals(original.getBaseCost().getSendFee(), elementFromDb.getBaseCost().getSendFee());
+            Assertions.assertEquals(original.getVat(), elementFromDb.getVat());
+            Assertions.assertEquals(original.getNotificationFeePolicy(), elementFromDb.getNotificationFeePolicy());
+            Assertions.assertEquals(original.getPagoPaIntMode(), elementFromDb.getPagoPaIntMode());
+        } catch (Exception e) {
+            fail(e);
+        } finally {
+            try {
+                testDao.delete(iun, recIndex);
+            } catch (Exception e) {
+                System.out.println("Nothing to remove");
+            }
+        }
+    }
+
+    @Test
+    void updateBaseCostIfNotExistsOrMatch_whenItemDoesNotExist_createsItem() {
         String iun = "iun-put-if-absent-" + System.nanoTime();
         Integer recIndex = 0;
         NotificationDeliveryCostEntity notification = newNotificationDeliveryCostEntity(iun, recIndex);
 
         try {
-            StepVerifier.create(dao.updateNotificationDeliveryCostNotNull(notification))
+            StepVerifier.create(dao.updateBaseCostIfNotExistsOrMatch(notification))
+                    .assertNext(saved -> {
+                        Assertions.assertEquals(notification.getIun(), saved.getIun());
+                        Assertions.assertEquals(notification.getRecIndex(), saved.getRecIndex());
+                        Assertions.assertEquals(notification.getVat(), saved.getVat());
+                        Assertions.assertEquals(notification.getNotificationFeePolicy(), saved.getNotificationFeePolicy());
+                        Assertions.assertEquals(notification.getPagoPaIntMode(), saved.getPagoPaIntMode());
+                        Assertions.assertEquals(notification.getSenderPaId(), saved.getSenderPaId());
+                        Assertions.assertEquals(notification.getSenderTaxId(), saved.getSenderTaxId());
+                        Assertions.assertEquals(notification.getRecipientInternalId(), saved.getRecipientInternalId());
+                        Assertions.assertNotNull(saved.getBaseCost());
+                        Assertions.assertEquals(notification.getBaseCost().getPaFee(), saved.getBaseCost().getPaFee());
+                        Assertions.assertEquals(notification.getBaseCost().getSendFee(), saved.getBaseCost().getSendFee());
+                    })
                     .verifyComplete();
 
             NotificationDeliveryCost elementFromDb = dao.getNotificationDeliveryCostItem(iun, recIndex).block();
@@ -149,6 +275,7 @@ public class NotificationDeliveryCostDaoDynamoTestIT {
             Assertions.assertEquals(notification.getRecIndex(), elementFromDb.getRecIndex());
             Assertions.assertEquals(notification.getRecipientInternalId(), elementFromDb.getRecipientInternalId());
             Assertions.assertEquals(notification.getSenderPaId(), elementFromDb.getSenderPaId());
+            Assertions.assertEquals(notification.getSenderTaxId(), elementFromDb.getSenderTaxId());
             Assertions.assertEquals(notification.getBaseCost().getPaFee(), elementFromDb.getBaseCost().getPaFee());
             Assertions.assertEquals(notification.getBaseCost().getSendFee(), elementFromDb.getBaseCost().getSendFee());
             Assertions.assertEquals(notification.getVat(), elementFromDb.getVat());
@@ -165,69 +292,6 @@ public class NotificationDeliveryCostDaoDynamoTestIT {
         }
     }
 
-    @Test
-    void updateNotificationDeliveryCost_whenNotNullAlreadyExists_updatesOnlyNonNullFields() {
-        String iun = "iun-update-existing-" + System.nanoTime();
-        int recIndex = 1;
-
-        NotificationDeliveryCostEntity original = NotificationDeliveryCostEntity.builder()
-                .iun(iun)
-                .recIndex(recIndex)
-                .recipientInternalId("recipient-original")
-                .senderPaId("sender-original")
-                .baseCost(BaseCostEntity.builder()
-                        .paFee(2)
-                        .sendFee(10)
-                        .build())
-                .vat(22)
-                .notificationFeePolicy(NotificationFeePolicy.DELIVERY_MODE)
-                .pagoPaIntMode(PagoPaIntMode.ASYNC)
-                .isDeleted(false)
-                .lastUpdate(Instant.now())
-                .build();
-
-        NotificationDeliveryCostEntity updated = NotificationDeliveryCostEntity.builder()
-                .iun(iun)
-                .recIndex(recIndex)
-                .recipientInternalId("recipient-updated")
-                .senderPaId(null)
-                .baseCost(BaseCostEntity.builder()
-                        .paFee(5)
-                        .sendFee(15)
-                        .build())
-                .vat(22)
-                .notificationFeePolicy(NotificationFeePolicy.DELIVERY_MODE)
-                .pagoPaIntMode(PagoPaIntMode.ASYNC)
-                .isDeleted(false)
-                .lastUpdate(Instant.now())
-                .build();
-
-        try {
-            StepVerifier.create(dao.updateNotificationDeliveryCostNotNull(original))
-                    .verifyComplete();
-
-            StepVerifier.create(dao.updateNotificationDeliveryCostNotNull(updated))
-                    .verifyComplete();
-
-            NotificationDeliveryCost elementFromDb = dao.getNotificationDeliveryCostItem(iun, recIndex).block();
-
-            Assertions.assertNotNull(elementFromDb);
-            Assertions.assertEquals("recipient-updated", elementFromDb.getRecipientInternalId());
-            Assertions.assertEquals("sender-original", elementFromDb.getSenderPaId());
-            Assertions.assertEquals(5, elementFromDb.getBaseCost().getPaFee());
-            Assertions.assertEquals(15, elementFromDb.getBaseCost().getSendFee());
-            Assertions.assertEquals(NotificationFeePolicy.DELIVERY_MODE, elementFromDb.getNotificationFeePolicy());
-            Assertions.assertEquals(PagoPaIntMode.ASYNC, elementFromDb.getPagoPaIntMode());
-        } catch (Exception e) {
-            fail(e);
-        } finally {
-            try {
-                testDao.delete(iun, recIndex);
-            } catch (Exception e) {
-                System.out.println("Nothing to remove");
-            }
-        }
-    }
 
     @Test
     void getAllByIun_returnsOnlyItemsWithSameIun() {

@@ -2,6 +2,7 @@ package it.pagopa.pn.notificationcostservice.middleware.queue.consumer.handler.n
 
 import it.pagopa.pn.commons.exceptions.PnInternalException;
 import it.pagopa.pn.notificationcostservice.middleware.dao.NotificationDeliveryCostDao;
+import it.pagopa.pn.notificationcostservice.middleware.dao.PaymentInfoDao;
 import it.pagopa.pn.notificationcostservice.middleware.dao.dynamo.entity.notificationdeliverycost.NotificationDeliveryCostEntity;
 import it.pagopa.pn.notificationcostservice.middleware.queue.consumer.event.notificationcost.UpdateNotificationCostEvent;
 import it.pagopa.pn.notificationcostservice.model.cost.CostUpdatePhaseInt;
@@ -26,10 +27,10 @@ public class UpdateNotificationCostEventHandler {
 
     private final NotificationCostUpdaterService notificationCostUpdaterService;
     private final NotificationDeliveryCostDao notificationDeliveryCostDao;
+    private final PaymentInfoDao paymentInfoDao;
 
     public Mono<Void> handleUpdateNotificationCostEvent(UpdateNotificationCostEvent.Payload payload) {
         log.info("Handling UpdateNotificationCostEvent for iun={}", payload.getIun());
-        log.info("Start processing UpdateNotificationCostEvent for iun={}", payload.getIun());
 
         return validateUpdateNotificationCostEvent(payload)
                 .flatMapMany(this::checkForRefusedOrCancelled)
@@ -66,7 +67,7 @@ public class UpdateNotificationCostEventHandler {
                             ERROR_CODE_NOTIFICATIONCOSTSERVICE_INTERNAL_SERVER_ERROR));
                 }
             }
-        };
+        }
         
         return Mono.just(payload);
     }
@@ -74,14 +75,40 @@ public class UpdateNotificationCostEventHandler {
     private Flux<NotificationCostUpdate> checkForRefusedOrCancelled(UpdateNotificationCostEvent.Payload payload) {
         CostUpdatePhaseInt phase = payload.getCostUpdatePhase();
 
-        if (phase == CostUpdatePhaseInt.NOTIFICATION_CANCELLED || phase == CostUpdatePhaseInt.REQUEST_REFUSED) {
-            return notificationDeliveryCostDao.getAllByIun(payload.getIun())
-                    .switchIfEmpty(Mono.error(new PnInternalException("Entities not found for iun = " + payload.getIun(),
-                            ERROR_CODE_NOTIFICATIONDELIVERYCOST_NOTFOUND)))
-                    .map(entity -> this.mapToDeletedNotificationDeliveryCost(entity, phase));
+        if (isRefusedOrCancelled(phase)) {
+            return processPaymentDeletionAndMapping(payload, phase);
         }
 
         return createNotificationCostUpdateList(payload, phase);
+    }
+
+    private boolean isRefusedOrCancelled(CostUpdatePhaseInt phase) {
+        return phase == CostUpdatePhaseInt.NOTIFICATION_CANCELLED ||
+                phase == CostUpdatePhaseInt.REQUEST_REFUSED;
+    }
+
+    private Flux<NotificationCostUpdate> processPaymentDeletionAndMapping(UpdateNotificationCostEvent.Payload payload, CostUpdatePhaseInt phase) {
+        return handlePaymentInfoDeletion(payload)
+                .doOnNext(v -> log.info("Handled paymentInfo deletion for iun={}", v.getIun()))
+                .flatMapMany(v -> notificationDeliveryCostDao.getAllByIun(v.getIun())
+                        .switchIfEmpty(handleEmptyCosts(v.getIun(), phase))
+                        .map(entity -> this.mapToDeletedNotificationDeliveryCost(entity, phase))
+                );
+    }
+
+    private Mono<UpdateNotificationCostEvent.Payload> handlePaymentInfoDeletion(UpdateNotificationCostEvent.Payload payload) {
+        return paymentInfoDao.deleteItemsByIun(payload.getIun())
+                .thenReturn(payload);
+    }
+
+    private <T> Flux<T> handleEmptyCosts(String iun, CostUpdatePhaseInt phase) {
+        if (phase == CostUpdatePhaseInt.NOTIFICATION_CANCELLED) {
+            return Flux.error(new PnInternalException(
+                    "Entities not found for iun = " + iun,
+                    ERROR_CODE_NOTIFICATIONDELIVERYCOST_NOTFOUND));
+        }
+        log.debug("No notification delivery cost entities found for iun = {}, no updates will be performed", iun);
+        return Flux.empty();
     }
 
     private Flux<NotificationCostUpdate> createNotificationCostUpdateList(UpdateNotificationCostEvent.Payload payload, CostUpdatePhaseInt phase) {

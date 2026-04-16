@@ -1,12 +1,13 @@
 package it.pagopa.pn.notificationcostservice.middleware.queue.consumer.handler.notificationcost;
 
 import it.pagopa.pn.commons.exceptions.PnInternalException;
+import it.pagopa.pn.notificationcostservice.middleware.dao.NotificationDeliveryCostDao;
+import it.pagopa.pn.notificationcostservice.middleware.dao.PaymentInfoDao;
 import it.pagopa.pn.notificationcostservice.middleware.dao.dynamo.entity.notificationdeliverycost.NotificationDeliveryCostEntity;
 import it.pagopa.pn.notificationcostservice.middleware.queue.consumer.event.notificationcost.UpdateNotificationCostEvent;
 import it.pagopa.pn.notificationcostservice.model.cost.CostUpdatePhaseInt;
 import it.pagopa.pn.notificationcostservice.model.cost.NotificationCostUpdate;
 import it.pagopa.pn.notificationcostservice.service.NotificationCostUpdaterService;
-import it.pagopa.pn.notificationcostservice.middleware.dao.dynamo.NotificationDeliveryCostDaoDynamo;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
@@ -17,8 +18,8 @@ import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import reactor.test.StepVerifier;
 
-import java.util.List;
 import java.util.Comparator;
+import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
@@ -36,7 +37,10 @@ class UpdateNotificationCostEventHandlerTest {
     private NotificationCostUpdaterService notificationCostUpdaterService;
 
     @Mock
-    private NotificationDeliveryCostDaoDynamo notificationCostUpdateDao;
+    private NotificationDeliveryCostDao notificationDeliveryCostDao;
+
+    @Mock
+    private PaymentInfoDao paymentInfoDao;
 
     @InjectMocks
     private UpdateNotificationCostEventHandler handler;
@@ -51,7 +55,7 @@ class UpdateNotificationCostEventHandlerTest {
                 .expectError(PnInternalException.class)
                 .verify();
 
-        verifyNoInteractions(notificationCostUpdaterService, notificationCostUpdateDao);
+        verifyNoInteractions(notificationCostUpdaterService, notificationDeliveryCostDao, paymentInfoDao);
     }
 
     @Test
@@ -67,12 +71,11 @@ class UpdateNotificationCostEventHandlerTest {
         StepVerifier.create(handler.handleUpdateNotificationCostEvent(payload))
                 .verifyComplete();
 
-        verify(notificationCostUpdaterService)
-                .updateCostByPhase(notificationCostsCaptor.capture());
-        verifyNoInteractions(notificationCostUpdateDao);
+        verify(notificationCostUpdaterService).updateCostByPhase(notificationCostsCaptor.capture());
+        verifyNoInteractions(notificationDeliveryCostDao, paymentInfoDao);
 
         NotificationCostUpdate notificationCostUpdate = getSingleCapturedNotificationCost(notificationCostsCaptor);
-        assertStandardNotificationCost(notificationCostUpdate, IUN, REC_INDEX, COST, PRODUCT_TYPE,
+        assertStandardNotificationCost(notificationCostUpdate,
                 CostUpdatePhaseInt.SEND_SIMPLE_REGISTERED_LETTER);
     }
 
@@ -89,12 +92,11 @@ class UpdateNotificationCostEventHandlerTest {
         StepVerifier.create(handler.handleUpdateNotificationCostEvent(payload))
                 .verifyComplete();
 
-        verify(notificationCostUpdaterService)
-                .updateCostByPhase(notificationCostsCaptor.capture());
-        verifyNoInteractions(notificationCostUpdateDao);
+        verify(notificationCostUpdaterService).updateCostByPhase(notificationCostsCaptor.capture());
+        verifyNoInteractions(notificationDeliveryCostDao, paymentInfoDao);
 
         NotificationCostUpdate notificationCostUpdate = getSingleCapturedNotificationCost(notificationCostsCaptor);
-        assertStandardNotificationCost(notificationCostUpdate, IUN, REC_INDEX, COST, PRODUCT_TYPE,
+        assertStandardNotificationCost(notificationCostUpdate,
                 CostUpdatePhaseInt.SEND_ANALOG_DOMICILE_ATTEMPT_0);
     }
 
@@ -111,12 +113,11 @@ class UpdateNotificationCostEventHandlerTest {
         StepVerifier.create(handler.handleUpdateNotificationCostEvent(payload))
                 .verifyComplete();
 
-        verify(notificationCostUpdaterService)
-                .updateCostByPhase(notificationCostsCaptor.capture());
-        verifyNoInteractions(notificationCostUpdateDao);
+        verify(notificationCostUpdaterService).updateCostByPhase(notificationCostsCaptor.capture());
+        verifyNoInteractions(notificationDeliveryCostDao, paymentInfoDao);
 
         NotificationCostUpdate notificationCostUpdate = getSingleCapturedNotificationCost(notificationCostsCaptor);
-        assertStandardNotificationCost(notificationCostUpdate, IUN, REC_INDEX, COST, PRODUCT_TYPE,
+        assertStandardNotificationCost(notificationCostUpdate,
                 CostUpdatePhaseInt.SEND_ANALOG_DOMICILE_ATTEMPT_1);
     }
 
@@ -131,23 +132,26 @@ class UpdateNotificationCostEventHandlerTest {
                 NotificationDeliveryCostEntity.builder().iun(IUN).recIndex(1).build()
         );
 
-        when(notificationCostUpdateDao.getAllByIun(IUN)).thenReturn(Flux.fromIterable(entities));
+        when(paymentInfoDao.deleteItemsByIun(IUN)).thenReturn(Mono.empty());
+        when(notificationDeliveryCostDao.getAllByIun(IUN)).thenReturn(Flux.fromIterable(entities));
         when(notificationCostUpdaterService.updateCostByPhase(any(NotificationCostUpdate.class)))
                 .thenReturn(Mono.empty());
 
         StepVerifier.create(handler.handleUpdateNotificationCostEvent(payload))
                 .verifyComplete();
 
-        verify(notificationCostUpdateDao).getAllByIun(IUN);
+        verify(paymentInfoDao).deleteItemsByIun(IUN);
+        verify(notificationDeliveryCostDao).getAllByIun(IUN);
         verify(notificationCostUpdaterService, times(2))
                 .updateCostByPhase(notificationCostsCaptor.capture());
 
         List<NotificationCostUpdate> captured = notificationCostsCaptor.getAllValues().stream()
                 .sorted(Comparator.comparing(NotificationCostUpdate::getRecIndex))
                 .toList();
+
         assertEquals(2, captured.size());
-        assertDeletedNotificationCost(captured.get(0), IUN, 0, CostUpdatePhaseInt.REQUEST_REFUSED);
-        assertDeletedNotificationCost(captured.get(1), IUN, 1, CostUpdatePhaseInt.REQUEST_REFUSED);
+        assertDeletedNotificationCost(captured.get(0), 0, CostUpdatePhaseInt.REQUEST_REFUSED);
+        assertDeletedNotificationCost(captured.get(1), 1, CostUpdatePhaseInt.REQUEST_REFUSED);
     }
 
     @Test
@@ -161,14 +165,16 @@ class UpdateNotificationCostEventHandlerTest {
                 NotificationDeliveryCostEntity.builder().iun(IUN).recIndex(3).build()
         );
 
-        when(notificationCostUpdateDao.getAllByIun(IUN)).thenReturn(Flux.fromIterable(entities));
+        when(paymentInfoDao.deleteItemsByIun(IUN)).thenReturn(Mono.empty());
+        when(notificationDeliveryCostDao.getAllByIun(IUN)).thenReturn(Flux.fromIterable(entities));
         when(notificationCostUpdaterService.updateCostByPhase(any(NotificationCostUpdate.class)))
                 .thenReturn(Mono.empty());
 
         StepVerifier.create(handler.handleUpdateNotificationCostEvent(payload))
                 .verifyComplete();
 
-        verify(notificationCostUpdateDao).getAllByIun(IUN);
+        verify(paymentInfoDao).deleteItemsByIun(IUN);
+        verify(notificationDeliveryCostDao).getAllByIun(IUN);
         verify(notificationCostUpdaterService, times(2))
                 .updateCostByPhase(notificationCostsCaptor.capture());
 
@@ -176,8 +182,8 @@ class UpdateNotificationCostEventHandlerTest {
                 .sorted(Comparator.comparing(NotificationCostUpdate::getRecIndex))
                 .toList();
         assertEquals(2, captured.size());
-        assertDeletedNotificationCost(captured.get(0), IUN, 1, CostUpdatePhaseInt.NOTIFICATION_CANCELLED);
-        assertDeletedNotificationCost(captured.get(1), IUN, 3, CostUpdatePhaseInt.NOTIFICATION_CANCELLED);
+        assertDeletedNotificationCost(captured.get(0), 1, CostUpdatePhaseInt.NOTIFICATION_CANCELLED);
+        assertDeletedNotificationCost(captured.get(1), 3, CostUpdatePhaseInt.NOTIFICATION_CANCELLED);
     }
 
     @Test
@@ -190,7 +196,7 @@ class UpdateNotificationCostEventHandlerTest {
                 .expectError(PnInternalException.class)
                 .verify();
 
-        verifyNoInteractions(notificationCostUpdaterService, notificationCostUpdateDao);
+        verifyNoInteractions(notificationCostUpdaterService, notificationDeliveryCostDao, paymentInfoDao);
     }
 
     @Test
@@ -301,40 +307,36 @@ class UpdateNotificationCostEventHandlerTest {
         StepVerifier.create(handler.handleUpdateNotificationCostEvent(payload))
                 .expectErrorSatisfies(ex -> {
                     assertInstanceOf(PnInternalException.class, ex);
-                    assertTrue(((PnInternalException) ex).getProblem().getDetail().contains("Missing required field"));
-                    assertTrue(((PnInternalException) ex).getProblem().getDetail().contains(expectedMessageFragment));
+                    String detail = ((PnInternalException) ex).getProblem().getDetail();
+                    assertNotNull(detail);
+                    assertTrue(detail.contains("Missing required field"));
+                    assertTrue(detail.contains(expectedMessageFragment));
                 })
                 .verify();
 
-        verifyNoInteractions(notificationCostUpdaterService, notificationCostUpdateDao);
+        verifyNoInteractions(notificationCostUpdaterService, notificationDeliveryCostDao, paymentInfoDao);
     }
 
     private void assertStandardNotificationCost(
             NotificationCostUpdate notificationCostUpdate,
-            String iun,
-            int recIndex,
-            int cost,
-            String productType,
             CostUpdatePhaseInt costUpdatePhase
     ) {
-        assertEquals(iun, notificationCostUpdate.getIun());
-        assertEquals(recIndex, notificationCostUpdate.getRecIndex());
-        assertEquals(cost, notificationCostUpdate.getCost());
-        assertEquals(productType, notificationCostUpdate.getProductType());
+        assertEquals(IUN, notificationCostUpdate.getIun());
+        assertEquals(REC_INDEX, notificationCostUpdate.getRecIndex());
+        assertEquals(COST, notificationCostUpdate.getCost());
+        assertEquals(PRODUCT_TYPE, notificationCostUpdate.getProductType());
         assertEquals(costUpdatePhase, notificationCostUpdate.getCostUpdatePhase());
     }
 
     private void assertDeletedNotificationCost(
             NotificationCostUpdate notificationCostUpdate,
-            String iun,
             int recIndex,
             CostUpdatePhaseInt costUpdatePhase
     ) {
-        assertEquals(iun, notificationCostUpdate.getIun());
+        assertEquals(IUN, notificationCostUpdate.getIun());
         assertEquals(recIndex, notificationCostUpdate.getRecIndex());
         assertNull(notificationCostUpdate.getCost());
         assertNull(notificationCostUpdate.getProductType());
         assertEquals(costUpdatePhase, notificationCostUpdate.getCostUpdatePhase());
     }
 }
-
