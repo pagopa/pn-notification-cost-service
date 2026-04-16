@@ -37,12 +37,12 @@
 			<groupId>it.pagopa.pn</groupId>
 			<artifactId>pn-commons</artifactId>
 			<version>2.20.0-SPRINGBOOT3</version>
-<!--			<exclusions>-->
-<!--				<exclusion>-->
-<!--					<groupId>commons-logging</groupId>-->
-<!--					<artifactId>commons-logging</artifactId>-->
-<!--				</exclusion>-->
-<!--			</exclusions>-->
+			<exclusions>
+				<exclusion>
+					<groupId>commons-logging</groupId>
+					<artifactId>commons-logging</artifactId>
+				</exclusion>
+			</exclusions>
 		</dependency>
 
 		<dependency>
