@@ -11,6 +11,7 @@ import it.pagopa.pn.notificationcostservice.model.paymentinfo.PaymentInfo;
 import it.pagopa.pn.notificationcostservice.service.NotificationCostUpdaterService;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
@@ -92,7 +93,7 @@ class NotificationCostInitializationEventHandlerTest {
                 .updateBaseCost(notificationCosts.getFirst());
         verify(notificationCostUpdaterService, never())
                 .updateBaseCost(notificationCosts.get(1));
-        verify(paymentInfoDao, never()).updateItem(anyList());
+        verify(paymentInfoDao, never()).updateItemIfNotExistsOrMatch(anyList());
         verify(producer, never()).sendEvent(any(PnNotificationCostValidationEvent.class));
     }
 
@@ -120,7 +121,7 @@ class NotificationCostInitializationEventHandlerTest {
                 .updateBaseCost(notificationCosts.getFirst());
         verify(notificationCostUpdaterService, times(1))
                 .updateBaseCost(notificationCosts.get(1));
-        verify(paymentInfoDao, never()).updateItem(anyList());
+        verify(paymentInfoDao, never()).updateItemIfNotExistsOrMatch(anyList());
         verify(producer, never()).sendEvent(any(PnNotificationCostValidationEvent.class));
     }
 
@@ -134,7 +135,8 @@ class NotificationCostInitializationEventHandlerTest {
 
         when(notificationCostUpdaterService.updateBaseCost(notificationCosts.getFirst()))
                 .thenReturn(Mono.empty());
-        when(paymentInfoDao.updateItem(payments)).thenReturn(Mono.error(expectedException));
+        when(paymentInfoDao.updateItemIfNotExistsOrMatch(payments))
+                .thenReturn(Mono.error(expectedException));
 
         StepVerifier.create(handler.handleNotificationCostInitializationEvent(payload))
                 .expectErrorMatches(ex ->
@@ -144,9 +146,41 @@ class NotificationCostInitializationEventHandlerTest {
 
         verify(notificationCostUpdaterService)
                 .updateBaseCost(notificationCosts.getFirst());
-        verify(paymentInfoDao).updateItem(payments);
+        verify(paymentInfoDao).updateItemIfNotExistsOrMatch(payments);
         verify(producer, never()).sendEvent(any(PnNotificationCostValidationEvent.class));
     }
+
+    @Test
+    void handleNotificationCostInitializationEvent_shouldCompleteAndSendOkValidationEvent() {
+        List<NotificationDeliveryCost> notificationCosts = buildSingleItemNotificationCosts();
+        List<PaymentInfo> payments = buildPayments();
+        NotificationCostInitializationEvent.Payload payload = buildPayload(notificationCosts, payments);
+
+        when(notificationCostUpdaterService.updateBaseCost(notificationCosts.getFirst()))
+                .thenReturn(Mono.empty());
+        when(paymentInfoDao.updateItemIfNotExistsOrMatch(payments))
+                .thenReturn(Mono.empty());
+        when(producer.sendEvent(any(PnNotificationCostValidationEvent.class)))
+                .thenReturn(Mono.empty());
+
+        StepVerifier.create(handler.handleNotificationCostInitializationEvent(payload))
+                .verifyComplete();
+
+        verify(notificationCostUpdaterService).updateBaseCost(notificationCosts.getFirst());
+        verify(paymentInfoDao).updateItemIfNotExistsOrMatch(payments);
+
+        ArgumentCaptor<PnNotificationCostValidationEvent> captor =
+                ArgumentCaptor.forClass(PnNotificationCostValidationEvent.class);
+        verify(producer).sendEvent(captor.capture());
+
+        PnNotificationCostValidationEvent event = captor.getValue();
+        org.junit.jupiter.api.Assertions.assertNotNull(event);
+        org.junit.jupiter.api.Assertions.assertEquals(
+                IUN_1,
+                event.getDetail().getPnNotificationCostValidationPayload().getIun()
+        );
+    }
+
 
     @Test
     void handleNotificationCostInitializationEvent_shouldPropagateErrorWhenSendingOutcomeEventFails() {
@@ -158,7 +192,7 @@ class NotificationCostInitializationEventHandlerTest {
 
         when(notificationCostUpdaterService.updateBaseCost(notificationCosts.getFirst()))
                 .thenReturn(Mono.empty());
-        when(paymentInfoDao.updateItem(payments)).thenReturn(Mono.empty());
+        when(paymentInfoDao.updateItemIfNotExistsOrMatch(payments)).thenReturn(Mono.empty());
         when(producer.sendEvent(any(PnNotificationCostValidationEvent.class)))
                 .thenReturn(Mono.error(expectedException));
 
@@ -170,7 +204,7 @@ class NotificationCostInitializationEventHandlerTest {
 
         verify(notificationCostUpdaterService)
                 .updateBaseCost(notificationCosts.getFirst());
-        verify(paymentInfoDao).updateItem(payments);
+        verify(paymentInfoDao).updateItemIfNotExistsOrMatch(payments);
         verify(producer).sendEvent(any(PnNotificationCostValidationEvent.class));
     }
 
