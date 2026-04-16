@@ -13,10 +13,34 @@ aws --profile $PROFILE --region $REGION --endpoint-url=$ENDPOINT \
     --provisioned-throughput ReadCapacityUnits=5,WriteCapacityUnits=5
 
 aws --profile $PROFILE --region $REGION --endpoint-url=$ENDPOINT \
-    dynamodb create-table --table-name pn-PaymentInfo \
-    --attribute-definitions AttributeName=pk,AttributeType=S \
-    --key-schema AttributeName=pk,KeyType=HASH \
-    --provisioned-throughput ReadCapacityUnits=10,WriteCapacityUnits=5
+    dynamodb create-table \
+    --table-name pn-PaymentInfo \
+    --attribute-definitions \
+        AttributeName=pk,AttributeType=S \
+        AttributeName=iun,AttributeType=S \
+    --key-schema \
+        AttributeName=pk,KeyType=HASH \
+    --global-secondary-indexes \
+        '[
+          {
+            "IndexName": "iun_gsi",
+            "KeySchema": [
+              {
+                "AttributeName": "iun",
+                "KeyType": "HASH"
+              }
+            ],
+            "Projection": {
+              "ProjectionType": "ALL"
+            },
+            "ProvisionedThroughput": {
+              "ReadCapacityUnits": 10,
+              "WriteCapacityUnits": 5
+            }
+          }
+        ]' \
+    --provisioned-throughput \
+        ReadCapacityUnits=10,WriteCapacityUnits=5
 
 echo "### 2. CREATE QUEUES ###"
 queues="pn-notification-cost-to-update pn-notification-cost-outcome"

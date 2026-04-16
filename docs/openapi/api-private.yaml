@@ -10,7 +10,7 @@ paths:
   "/notification-cost-private/cost/{iun}/recipient/{recIndex}":
     get:
       operationId: getNotificationCost
-      summary: Retrieve notification cost for recipient
+      summary: Recupera il costo della notifica per un destinatario
       description: >-
         Servizio che restituisce il costo di notificazione per il singolo destinatario
       tags:
@@ -50,6 +50,44 @@ paths:
             application/problem+json:
               schema:
                 $ref: '#/components/schemas/Problem'
+
+  "/notification-cost-private/cost/payment/{creditorTaxId}/{noticeCode}":
+    get:
+      operationId: getNotificationCostByPayment
+      summary: Recupera il costo della notifica per un pagamento
+      description: >-
+        Servizio che restituisce il costo di notificazione per il singolo pagamento identificato dall'IUV
+      tags:
+        - NotificationCostRecipient
+      parameters:
+        - $ref: '#/components/parameters/pathCreditorTaxId'
+        - $ref: '#/components/parameters/pathNoticeCode'
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/NotificationCostPaymentResponse'
+        '400':
+          description: Bad Request
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+        '404':
+          description: Not Found
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+        '500':
+          description: Internal Server Error
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+
   "/notification-cost-private/cost/initialize/{iun}":
     post:
       operationId: initializeNotificationCost
@@ -92,6 +130,21 @@ components:
       required: true
       schema:
         $ref: './remote-refs.yaml#/components/schemas/IUN'
+
+    pathCreditorTaxId:
+      name: creditorTaxId
+      in: path
+      required: true
+      schema:
+        $ref: './remote-refs.yaml#/components/schemas/paTaxId'
+
+    pathNoticeCode:
+       name: noticeCode
+       in: path
+       required: true
+       schema:
+         $ref: './remote-refs.yaml#/components/schemas/noticeCode'
+
   schemas:
     NewNotificationCostRequest:
       type: object
@@ -211,6 +264,41 @@ components:
         Identificativo univoco assegnato a ogni pagamento, formato da creditorTaxId##noticeCode
       example: '77777777777##362981250372662822'
       pattern: '^[0-9]{11}##[0-9]{18}$'
+
+    NotificationCostPaymentResponse:
+      allOf:
+        - $ref: '#/components/schemas/NotificationCostRecipientResponse'
+      type: object
+      required: [ partialCost ]
+      properties:
+        partialCost:
+          $ref: '#/components/schemas/PartialCost'
+
+    PartialCost:
+      title: Costo parziale di notificazione
+      description: Dettaglio del costo parziale e delle sue componenti
+      type: object
+      required: [ cost, details ]
+      properties:
+        cost:
+          description: Costo parziale in eurocent (somma algebrica dei dettagli) esclusivo di IVA
+          type: integer
+          format: int32
+        details:
+          $ref: '#/components/schemas/PartialCostDetails'
+
+    PartialCostDetails:
+      title: Dettaglio componente costo parziale
+      description: Dettaglio di una singola componente del costo parziale
+      type: object
+      required: [ baseCostDetail ]
+      properties:
+        baseCostDetail:
+          description: Dettaglio del costo base di notificazione
+          $ref: '#/components/schemas/BaseCostDetail'
+        analogCostDetail:
+          description: Dettaglio del costo analogico di notificazione
+          $ref: '#/components/schemas/AnalogCostDetail'
 
     PagoPaIntMode:
       type: string

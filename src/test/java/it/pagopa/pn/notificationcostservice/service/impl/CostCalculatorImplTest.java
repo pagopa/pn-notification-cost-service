@@ -33,6 +33,7 @@ class CostCalculatorImplTest {
        assertEquals(150, result.getBaseCost());
        assertEquals(0, result.getAnalogCost());
        assertEquals(22, result.getVat());
+       assertEquals(0, result.getPartialCost());
     }
 
     @Test
@@ -55,6 +56,7 @@ class CostCalculatorImplTest {
        assertEquals(150, result.getBaseCost());
        assertEquals(200, result.getAnalogCost());
        assertEquals(10, result.getVat());
+       assertEquals(250, result.getPartialCost());
     }
 
     @Test
@@ -83,5 +85,45 @@ class CostCalculatorImplTest {
                .build();
 
        assertEquals(0, calculator.analogCost(notificationDeliveryCost));
+    }
+
+    @Test
+    void calculateCosts_returnZeroWhenApplyCostIsFalseAndNotificationFeePolicyIsFlatRate() {
+        NotificationDeliveryCost notificationDeliveryCost = NotificationDeliveryCostTestBuilder.builder()
+                .withBaseCost(BaseCost.builder().paFee(100).sendFee(50).build())
+                .withNotificationFeePolicy(NotificationFeePolicy.FLAT_RATE)
+                .withVat(22)
+                .withSenderPaId("TEST-SENDER-PA-ID")
+                .withSenderTaxId("TEST-SENDER-TAX-ID")
+                .withLastUpdate(Instant.now())
+                .build();
+
+        var result = calculator.calculateCosts(notificationDeliveryCost, false);
+
+        assertEquals(0, result.getTotalCostWithVat());
+        assertEquals(150, result.getBaseCost());
+        assertEquals(0, result.getAnalogCost());
+        assertEquals(22, result.getVat());
+        assertEquals(0, result.getPartialCost());
+    }
+
+    @Test
+    void calculateCosts_returnZeroWhenApplyCostIsFalseAndNotificationFeePolicyIsDeliveryMode() {
+        NotificationDeliveryCost notificationDeliveryCost = NotificationDeliveryCostTestBuilder.builder()
+                .withBaseCost(BaseCost.builder().paFee(100).sendFee(50).build())
+                .withNotificationFeePolicy(NotificationFeePolicy.DELIVERY_MODE)
+                .withVat(22)
+                .withSenderPaId("TEST-SENDER-PA-ID")
+                .withSenderTaxId("TEST-SENDER-TAX-ID")
+                .withLastUpdate(Instant.now())
+                .build();
+
+        var result = calculator.calculateCosts(notificationDeliveryCost, false);
+
+        assertEquals(0, result.getTotalCostWithVat());
+        assertEquals(150, result.getBaseCost());
+        assertEquals(0, result.getAnalogCost());
+        assertEquals(22, result.getVat());
+        assertEquals(0, result.getPartialCost());
     }
 }

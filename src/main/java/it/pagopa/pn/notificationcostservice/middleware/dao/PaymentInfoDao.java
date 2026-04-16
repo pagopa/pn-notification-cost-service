@@ -6,5 +6,7 @@ import reactor.core.publisher.Mono;
 import java.util.List;
 
 public interface PaymentInfoDao {
-    Mono<Void> updateItem(List<PaymentInfo> payments);
+    Mono<PaymentInfo> getPaymentInfoByIuv(String iuv);
+    Mono<Void> updateItemIfNotExistsOrMatch(List<PaymentInfo> payments);
+    Mono<Void> deleteItemsByIun(String iun);
 }

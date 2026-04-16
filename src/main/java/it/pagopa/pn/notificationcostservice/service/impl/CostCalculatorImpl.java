@@ -16,17 +16,25 @@ public class CostCalculatorImpl implements CostCalculator {
 
     @Override
     public CalculatedCosts calculateCosts(NotificationDeliveryCost notificationDeliveryCost) {
-        log.debug("calculateCosts - notificationDeliveryCost={}", notificationDeliveryCost);
+        return this.calculateCosts(notificationDeliveryCost, true);
+    }
+
+    @Override
+    public CalculatedCosts calculateCosts(NotificationDeliveryCost notificationDeliveryCost, boolean applyCost) {
+        log.debug("calculateCosts - notificationDeliveryCost={}, applyCost={}", notificationDeliveryCost, applyCost);
         int vat = notificationDeliveryCost.getVat();
         int baseCost = baseCost(notificationDeliveryCost.getBaseCost());
         int analogCost = analogCost(notificationDeliveryCost);
         int analogCostWithVat = CostUtils.getCostWithVat(analogCost, vat);
         int totalCostWithVat = 0;
-        if(notificationDeliveryCost.getNotificationFeePolicy() == NotificationFeePolicy.DELIVERY_MODE) {
+        int partialCost = 0;
+        if (notificationDeliveryCost.getNotificationFeePolicy() == NotificationFeePolicy.DELIVERY_MODE && applyCost) {
             totalCostWithVat = baseCost + analogCostWithVat;
+            partialCost = notificationDeliveryCost.getBaseCost().getSendFee() + analogCost;
         }
         return CalculatedCosts.builder()
                 .totalCostWithVat(totalCostWithVat)
+                .partialCost(partialCost)
                 .baseCost(baseCost)
                 .analogCost(analogCost)
                 .analogCostWithVat(analogCostWithVat)

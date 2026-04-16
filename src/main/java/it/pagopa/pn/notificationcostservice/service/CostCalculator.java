@@ -5,4 +5,6 @@ import it.pagopa.pn.notificationcostservice.model.notificationdeliverycost.Notif
 
 public interface CostCalculator {
     CalculatedCosts calculateCosts(NotificationDeliveryCost notificationDeliveryCost);
+    CalculatedCosts calculateCosts(NotificationDeliveryCost notificationDeliveryCost, boolean applyCost);
+
 }
