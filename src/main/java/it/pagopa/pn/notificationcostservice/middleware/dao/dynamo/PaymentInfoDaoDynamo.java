@@ -72,7 +72,7 @@ public class PaymentInfoDaoDynamo extends BaseDao implements PaymentInfoDao {
         Map<String, AttributeValue> flatAttributes = Map.of(
                 PaymentInfoEntity.COL_IUN, AttributeValue.builder().s(entity.getIun()).build(),
                 PaymentInfoEntity.COL_REC_INDEX, AttributeValue.builder().n(String.valueOf(entity.getRecIndex())).build(),
-                PaymentInfoEntity.COL_APPLY_COST, AttributeValue.builder().bool(entity.isApplyCost()).build()
+                PaymentInfoEntity.COL_APPLY_COST, AttributeValue.builder().bool(entity.getApplyCost()).build()
         );
 
         return this.updateIfMatchOrNotExists(keyAttributes, flatAttributes, null)
