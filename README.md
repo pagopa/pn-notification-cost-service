@@ -116,6 +116,8 @@ Analizza le notifiche e le relative timeline per calcolare i costi di consegna.
 *Nota: Obbligatori solo per ambienti diversi da local.
 
 # Esecuzione dello script
+Prima di eseguire lo script, è necessario assicurarsi che le tabelle DynamoDB `pn-Timelines`, `NotificationDeliveryCost` e `PaymentInfo` siano correttamente configurate e accessibili.
+Installare le dipendenze del progetto con `npm install`.
 Per eseguire correttamente lo script, è necessario configurare l'ambiente come segue:
 
 # Ambienti non locali (es. dev):
