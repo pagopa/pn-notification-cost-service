@@ -137,5 +137,37 @@ In locale è sufficiente inizializzare la variabile `NODE_ENV` a `local`. È nec
 il file `init-for-migration.sh`, quindi lanciare il comando:
 
 Bash
-`NODE_TLS_REJECT_UNAUTHORIZED=0 node index.js IUN-STANDARD-MIX IUN-SIMPLE-LETTER`
+`node index.js IUN-STANDARD-MIX IUN-SIMPLE-LETTER`
 
+## Build ed esecuzione nativa
+
+### Prerequisiti 
+- JDK GraalVM 22 o superiore
+- Su Windows: Visual Studio Build Tools con workload C++
+
+### Posizionarsi nella cartella corretta
+Tutti i comandi vanno eseguiti dalla root del progetto:
+
+```powershell
+cd C:\Users\..\pn-notification-cost-service
+```
+### Compilare il binario nativo
+
+```powershell
+./mvnw -Pnative native:compile -DskipTests=true
+```
+
+Al termine della build il binario viene generato in:
+
+`target\pn-notification-cost-service.exe`
+
+### Avviare il binario nativo
+
+Posizionarsi nella cartella `target`
+```powershell
+cd C:\Users\..\pn-notification-cost-service\target
+```
+e avviare l'eseguibile:
+```powershell
+.\pn-notification-cost-service.exe
+```

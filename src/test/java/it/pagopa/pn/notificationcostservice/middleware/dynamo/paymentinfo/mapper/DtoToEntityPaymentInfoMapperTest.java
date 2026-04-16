@@ -32,7 +32,7 @@ class DtoToEntityPaymentInfoMapperTest {
         assertEquals("iun", entity.getIun());
         assertEquals(1, entity.getRecIndex());
         assertEquals("iuv", entity.getIuv());
-        assertTrue(entity.isApplyCost());
+        assertTrue(entity.getApplyCost());
     }
 
     @Test

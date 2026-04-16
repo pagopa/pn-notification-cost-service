@@ -11,7 +11,6 @@ public class PnNotificationCostServiceApplication {
     public static void main(String[] args) {
         buildSpringApplicationWithListener().run(args);
     }
-
     static SpringApplication buildSpringApplicationWithListener() {
         SpringApplication app = new SpringApplication(PnNotificationCostServiceApplication.class);
         app.addListeners(new TaskIdApplicationListener());

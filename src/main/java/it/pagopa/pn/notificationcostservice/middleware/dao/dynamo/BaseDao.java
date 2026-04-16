@@ -114,4 +114,5 @@ public class BaseDao {
         return Mono.fromFuture(dynamoDbAsyncClient.updateItem(request))
                 .map(UpdateItemResponse::attributes);
     }
+
 }

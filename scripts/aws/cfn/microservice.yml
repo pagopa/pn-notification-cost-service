@@ -325,7 +325,7 @@ Resources:
         EcsLogGroup: !Ref EcsNotificationCostServiceLogGroup
         LogAlarmStrategyV1: !Ref LogAlarmStrategy
         
-  NotificationCostServiceMicroserviceCloudWatchDashboard:
+  NotificationCostServiceMicroserviceCloudWatchDashboard: 
     Type: AWS::CloudFormation::Stack
     Properties:
       TemplateURL: !Sub "${TemplateBucketBaseUrl}/fragments/microservice-cloudwatch-dashboard.yaml"

@@ -1,13 +1,16 @@
 package it.pagopa.pn.notificationcostservice.middleware.dao.dynamo.entity.notificationdeliverycost.analogcost;
 
 import lombok.AllArgsConstructor;
-import lombok.Data;
+import lombok.Getter;
 import lombok.NoArgsConstructor;
+import lombok.Setter;
 import lombok.experimental.SuperBuilder;
+import software.amazon.awssdk.enhanced.dynamodb.mapper.annotations.DynamoDbAttribute;
 import software.amazon.awssdk.enhanced.dynamodb.mapper.annotations.DynamoDbBean;
 
 @DynamoDbBean
-@Data
+@Getter
+@Setter
 @NoArgsConstructor
 @AllArgsConstructor
 @SuperBuilder(toBuilder = true)
@@ -18,4 +21,14 @@ public class AnalogCostEntity {
 
     private Integer cost;
     private String productType;
+
+    @DynamoDbAttribute(COL_PRODUCT_TYPE)
+    public String getProductType() {
+        return productType;
+    }
+
+    @DynamoDbAttribute(COL_COST)
+    public Integer getCost() {
+        return cost;
+    }
 }

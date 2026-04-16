@@ -13,7 +13,7 @@ import reactor.core.publisher.Mono;
 import software.amazon.awssdk.enhanced.dynamodb.DynamoDbAsyncTable;
 import software.amazon.awssdk.enhanced.dynamodb.DynamoDbEnhancedAsyncClient;
 import software.amazon.awssdk.enhanced.dynamodb.Key;
-import software.amazon.awssdk.enhanced.dynamodb.TableSchema;
+import software.amazon.awssdk.enhanced.dynamodb.mapper.StaticTableSchema;
 import software.amazon.awssdk.enhanced.dynamodb.model.Page;
 import software.amazon.awssdk.enhanced.dynamodb.model.QueryConditional;
 import software.amazon.awssdk.enhanced.dynamodb.model.QueryEnhancedRequest;
@@ -23,6 +23,8 @@ import software.amazon.awssdk.services.dynamodb.model.AttributeValue;
 import java.util.List;
 import java.util.Map;
 
+import static software.amazon.awssdk.enhanced.dynamodb.mapper.StaticAttributeTags.primaryPartitionKey;
+import static software.amazon.awssdk.enhanced.dynamodb.mapper.StaticAttributeTags.secondaryPartitionKey;
 @Component
 @Slf4j
 public class PaymentInfoDaoDynamo extends BaseDao implements PaymentInfoDao {
@@ -41,9 +43,9 @@ public class PaymentInfoDaoDynamo extends BaseDao implements PaymentInfoDao {
             EntityToDtoPaymentInfoMapper entityToDtoPaymentInfoMapper
     ) {
         super(dynamoDbAsyncClient, awsConfigs.getPaymentInfoTable().getTableName());
-        this.paymentInfoEntityDynamoTable = dynamoDbEnhancedAsyncClient.table(
+        this.paymentInfoEntityDynamoTable = initializeTable(
                 awsConfigs.getPaymentInfoTable().getTableName(),
-                TableSchema.fromBean(PaymentInfoEntity.class)
+                dynamoDbEnhancedAsyncClient
         );
         this.dtoToEntityPaymentInfo = dtoToEntityPaymentInfo;
         this.entityToDtoPaymentInfoMapper = entityToDtoPaymentInfoMapper;
@@ -71,7 +73,7 @@ public class PaymentInfoDaoDynamo extends BaseDao implements PaymentInfoDao {
         Map<String, AttributeValue> flatAttributes = Map.of(
                 PaymentInfoEntity.COL_IUN, AttributeValue.builder().s(entity.getIun()).build(),
                 PaymentInfoEntity.COL_REC_INDEX, AttributeValue.builder().n(String.valueOf(entity.getRecIndex())).build(),
-                PaymentInfoEntity.COL_APPLY_COST, AttributeValue.builder().bool(entity.isApplyCost()).build()
+                PaymentInfoEntity.COL_APPLY_COST, AttributeValue.builder().bool(entity.getApplyCost()).build()
         );
 
         return this.updateIfMatchOrNotExists(keyAttributes, flatAttributes, null,null)
@@ -102,5 +104,28 @@ public class PaymentInfoDaoDynamo extends BaseDao implements PaymentInfoDao {
         return Mono.fromFuture(paymentInfoEntityDynamoTable.deleteItem(Key.builder().partitionValue(iuv).build()))
                 .then()
                 .doOnError(e -> log.error("Error deleting item with IUV: {}", iuv, e));
+    }
+
+    private DynamoDbAsyncTable<PaymentInfoEntity> initializeTable(String tableName,
+                                                                  DynamoDbEnhancedAsyncClient dynamoDbEnhancedAsyncClient) {
+        StaticTableSchema<PaymentInfoEntity> schemaTable = StaticTableSchema.builder(PaymentInfoEntity.class)
+                .newItemSupplier(PaymentInfoEntity::new)
+                .addAttribute(String.class, a -> a.name(PaymentInfoEntity.COL_PK)
+                        .getter(PaymentInfoEntity::getIuv)
+                        .setter(PaymentInfoEntity::setIuv)
+                        .tags(primaryPartitionKey()))
+                .addAttribute(Integer.class, a -> a.name(PaymentInfoEntity.COL_REC_INDEX)
+                        .getter(PaymentInfoEntity::getRecIndex)
+                        .setter(PaymentInfoEntity::setRecIndex))
+                .addAttribute(Boolean.class, a -> a.name(PaymentInfoEntity.COL_APPLY_COST)
+                        .getter(PaymentInfoEntity::getApplyCost)
+                        .setter(PaymentInfoEntity::setApplyCost))
+                .addAttribute(String.class, a -> a.name(PaymentInfoEntity.COL_IUN)
+                        .getter(PaymentInfoEntity::getIun)
+                        .setter(PaymentInfoEntity::setIun)
+                        .tags(secondaryPartitionKey(PaymentInfoEntity.IUN_GSI)))
+                .build();
+
+        return dynamoDbEnhancedAsyncClient.table(tableName, schemaTable);
     }
 }
