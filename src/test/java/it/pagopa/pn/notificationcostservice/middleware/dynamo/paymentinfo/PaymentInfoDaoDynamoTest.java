@@ -4,6 +4,7 @@ import it.pagopa.pn.notificationcostservice.config.PnNotificationCostServiceConf
 import it.pagopa.pn.notificationcostservice.middleware.dao.dynamo.PaymentInfoDaoDynamo;
 import it.pagopa.pn.notificationcostservice.middleware.dao.dynamo.entity.paymentinfo.PaymentInfoEntity;
 import it.pagopa.pn.notificationcostservice.middleware.dao.dynamo.mapper.paymentinfo.DtoToEntityPaymentInfoMapper;
+import it.pagopa.pn.notificationcostservice.middleware.dao.dynamo.mapper.paymentinfo.EntityToDtoPaymentInfoMapper;
 import it.pagopa.pn.notificationcostservice.model.paymentinfo.PaymentInfo;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
@@ -35,6 +36,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
+import java.util.function.Consumer;
 
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.*;
@@ -60,6 +62,9 @@ public class PaymentInfoDaoDynamoTest {
     private DynamoDbAsyncIndex<PaymentInfoEntity> mockIndex;
 
     @Mock
+    private EntityToDtoPaymentInfoMapper entityToDtoPaymentInfoMapper;
+  
+    @Mock
     private DtoToEntityPaymentInfoMapper dtoToEntityPaymentInfoMapper;
 
     private PaymentInfoDaoDynamo dao;
@@ -77,6 +82,7 @@ public class PaymentInfoDaoDynamoTest {
                 dynamoDbEnhancedAsyncClient,
                 dynamoDbAsyncClient,
                 configs,
+                entityToDtoPaymentInfoMapper,
                 dtoToEntityPaymentInfoMapper
         );
     }
@@ -280,5 +286,39 @@ public class PaymentInfoDaoDynamoTest {
                 .recIndex(recIndex)
                 .applyCost(true)
                 .build();
+    }
+
+    @Test
+    void getPaymentInfoByIuv_found() {
+        String iuv = "IUV-FOUND";
+        PaymentInfoEntity entity = new PaymentInfoEntity();
+        entity.setIuv(iuv);
+        PaymentInfo expectedDto = PaymentInfo.builder().iuv(iuv).build();
+
+        when(mockTable.getItem(any(Consumer.class))).thenReturn(CompletableFuture.completedFuture(entity));
+        when(entityToDtoPaymentInfoMapper.entityToDto(entity)).thenReturn(expectedDto);
+
+        Mono<PaymentInfo> result = dao.getPaymentInfoByIuv(iuv);
+
+        StepVerifier.create(result)
+                .expectNext(expectedDto)
+                .verifyComplete();
+
+        verify(mockTable).getItem(any(Consumer.class));
+        verify(entityToDtoPaymentInfoMapper).entityToDto(entity);
+    }
+
+    @Test
+    void getPaymentInfoByIuv_notFound() {
+        String iuv = "IUV-NOT-FOUND";
+        when(mockTable.getItem(any(Consumer.class))).thenReturn(CompletableFuture.completedFuture(null));
+
+        Mono<PaymentInfo> result = dao.getPaymentInfoByIuv(iuv);
+
+        StepVerifier.create(result)
+                .verifyComplete();
+
+        verify(mockTable).getItem(any(Consumer.class));
+        verifyNoInteractions(entityToDtoPaymentInfoMapper);
     }
 }
