@@ -58,7 +58,7 @@ class NotificationCostUpdaterServiceImplTest {
 
         when(notificationCostUpdaterMapper.toEntityForBaseCostUpdate(notificationDeliveryCost))
                 .thenReturn(entity);
-        when(notificationDeliveryCostDao.updateNotificationDeliveryCostNotNull(entity))
+        when(notificationDeliveryCostDao.updateBaseCostIfNotExistsOrMatch(entity))
                 .thenReturn(Mono.just(entity));
 
         StepVerifier.create(service.updateBaseCost(notificationDeliveryCost))
@@ -67,9 +67,12 @@ class NotificationCostUpdaterServiceImplTest {
         verify(notificationCostUpdaterMapper, times(1))
                 .toEntityForBaseCostUpdate(notificationDeliveryCost);
         verify(notificationDeliveryCostDao, times(1))
-                .updateNotificationDeliveryCostNotNull(entity);
+                .updateBaseCostIfNotExistsOrMatch(entity);
+        verify(notificationDeliveryCostDao, never())
+                .updateNotificationDeliveryCostNotNull(any());
         verifyNoMoreInteractions(notificationCostUpdaterMapper, notificationDeliveryCostDao);
     }
+
 
     @Test
     void updateBaseCost_shouldPropagateMapperError() {
@@ -95,7 +98,7 @@ class NotificationCostUpdaterServiceImplTest {
 
         when(notificationCostUpdaterMapper.toEntityForBaseCostUpdate(notificationDeliveryCost))
                 .thenReturn(entity);
-        when(notificationDeliveryCostDao.updateNotificationDeliveryCostNotNull(entity))
+        when(notificationDeliveryCostDao.updateBaseCostIfNotExistsOrMatch(entity))
                 .thenReturn(Mono.error(expectedException));
 
         StepVerifier.create(service.updateBaseCost(notificationDeliveryCost))
@@ -107,7 +110,9 @@ class NotificationCostUpdaterServiceImplTest {
         verify(notificationCostUpdaterMapper, times(1))
                 .toEntityForBaseCostUpdate(notificationDeliveryCost);
         verify(notificationDeliveryCostDao, times(1))
-                .updateNotificationDeliveryCostNotNull(entity);
+                .updateBaseCostIfNotExistsOrMatch(entity);
+        verify(notificationDeliveryCostDao, never())
+                .updateNotificationDeliveryCostNotNull(any());
         verifyNoMoreInteractions(notificationCostUpdaterMapper, notificationDeliveryCostDao);
     }
 

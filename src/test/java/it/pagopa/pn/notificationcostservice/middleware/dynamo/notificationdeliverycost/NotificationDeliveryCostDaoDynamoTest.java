@@ -14,6 +14,7 @@ import it.pagopa.pn.notificationcostservice.model.notificationdeliverycost.Notif
 import it.pagopa.pn.notificationcostservice.model.notificationdeliverycost.PagoPaIntMode;
 import it.pagopa.pn.notificationcostservice.model.notificationdeliverycost.analogcost.FirstAnalogCost;
 import it.pagopa.pn.notificationcostservice.model.notificationdeliverycost.analogcost.SecondAnalogCost;
+import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -33,9 +34,14 @@ import software.amazon.awssdk.enhanced.dynamodb.model.Page;
 import software.amazon.awssdk.enhanced.dynamodb.model.PagePublisher;
 import software.amazon.awssdk.enhanced.dynamodb.model.QueryEnhancedRequest;
 import software.amazon.awssdk.enhanced.dynamodb.model.UpdateItemEnhancedRequest;
+import software.amazon.awssdk.services.dynamodb.DynamoDbAsyncClient;
+import software.amazon.awssdk.services.dynamodb.model.AttributeValue;
+import software.amazon.awssdk.services.dynamodb.model.UpdateItemRequest;
+import software.amazon.awssdk.services.dynamodb.model.UpdateItemResponse;
 
 import java.time.Instant;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 
 import static org.mockito.ArgumentMatchers.anyString;
@@ -59,6 +65,9 @@ class NotificationDeliveryCostDaoDynamoTest {
     @Mock
     private EntityToDtoNotificationDeliveryCostMapper entityToDtoMapper;
 
+    @Mock
+    private DynamoDbAsyncClient dynamoDbAsyncClient;
+
     private NotificationDeliveryCostDaoDynamo dao;
 
     @BeforeEach
@@ -72,6 +81,7 @@ class NotificationDeliveryCostDaoDynamoTest {
 
         dao = new NotificationDeliveryCostDaoDynamo(
                 dynamoDbEnhancedAsyncClient,
+                dynamoDbAsyncClient,
                 configs,
                 entityToDtoMapper
         );
@@ -213,6 +223,84 @@ class NotificationDeliveryCostDaoDynamoTest {
                 )
         );
     }
+
+    @Test
+    void updateBaseCostIfNotExistsOrMatch_success_buildsConditionalRequestAndMapsResponse() {
+        NotificationDeliveryCostEntity entity = newNotificationDeliveryCostEntity("iun-base-123", 7);
+
+        Map<String, AttributeValue> responseAttributes = Map.of(
+                NotificationDeliveryCostEntity.COL_PK, AttributeValue.builder().s("iun-base-123").build(),
+                NotificationDeliveryCostEntity.COL_SK, AttributeValue.builder().n("7").build(),
+                NotificationDeliveryCostEntity.COL_VAT, AttributeValue.builder().n("0").build(),
+                NotificationDeliveryCostEntity.COL_NOTIFICATION_FEE_POLICY,
+                AttributeValue.builder().s(NotificationFeePolicy.DELIVERY_MODE.name()).build(),
+                NotificationDeliveryCostEntity.COL_PAGO_PA_INT_MODE,
+                AttributeValue.builder().s(PagoPaIntMode.ASYNC.name()).build(),
+                NotificationDeliveryCostEntity.COL_SENDER_PA_ID,
+                AttributeValue.builder().s("paId").build(),
+                NotificationDeliveryCostEntity.COL_SENDER_TAX_ID,
+                AttributeValue.builder().s("taxId").build(),
+                NotificationDeliveryCostEntity.COL_RECIPIENT_INTERNAL_ID,
+                AttributeValue.builder().s("recipientInternalId").build(),
+                NotificationDeliveryCostEntity.COL_BASE_COST,
+                AttributeValue.builder().m(Map.of(
+                        BaseCostEntity.COL_SEND_FEE, AttributeValue.builder().n("10").build(),
+                        BaseCostEntity.COL_PA_FEE, AttributeValue.builder().n("2").build()
+                )).build()
+        );
+
+        when(dynamoDbAsyncClient.updateItem(any(UpdateItemRequest.class)))
+                .thenReturn(CompletableFuture.completedFuture(
+                        UpdateItemResponse.builder()
+                                .attributes(responseAttributes)
+                                .build()
+                ));
+
+        StepVerifier.create(dao.updateBaseCostIfNotExistsOrMatch(entity))
+                .assertNext(updated -> {
+                    Assertions.assertEquals("iun-base-123", updated.getIun());
+                    Assertions.assertEquals(7, updated.getRecIndex());
+                    Assertions.assertEquals(0, updated.getVat());
+                    Assertions.assertEquals(NotificationFeePolicy.DELIVERY_MODE, updated.getNotificationFeePolicy());
+                    Assertions.assertEquals(PagoPaIntMode.ASYNC, updated.getPagoPaIntMode());
+                    Assertions.assertEquals("paId", updated.getSenderPaId());
+                    Assertions.assertEquals("taxId", updated.getSenderTaxId());
+                    Assertions.assertEquals("recipientInternalId", updated.getRecipientInternalId());
+                    Assertions.assertNotNull(updated.getBaseCost());
+                    Assertions.assertEquals(10, updated.getBaseCost().getSendFee());
+                    Assertions.assertEquals(2, updated.getBaseCost().getPaFee());
+                })
+                .verifyComplete();
+
+        ArgumentCaptor<UpdateItemRequest> captor = ArgumentCaptor.forClass(UpdateItemRequest.class);
+        verify(dynamoDbAsyncClient).updateItem(captor.capture());
+
+        UpdateItemRequest request = captor.getValue();
+        Assertions.assertEquals("NotificationDeliveryCost", request.tableName());
+        Assertions.assertEquals("iun-base-123", request.key().get(NotificationDeliveryCostEntity.COL_PK).s());
+        Assertions.assertEquals("7", request.key().get(NotificationDeliveryCostEntity.COL_SK).n());
+        Assertions.assertTrue(request.updateExpression().contains("#baseCost = :baseCost"));
+        Assertions.assertTrue(request.conditionExpression().contains("attribute_not_exists(#pk)"));
+        Assertions.assertTrue(request.conditionExpression().contains("attribute_not_exists(#sk)"));
+    }
+
+    @Test
+    void updateBaseCostIfNotExistsOrMatch_propagatesDynamoError() {
+        NotificationDeliveryCostEntity entity = newNotificationDeliveryCostEntity("iun-base-err", 3);
+
+        CompletableFuture<UpdateItemResponse> failedFuture = new CompletableFuture<>();
+        failedFuture.completeExceptionally(new RuntimeException("conditional base cost update failed"));
+
+        when(dynamoDbAsyncClient.updateItem(any(UpdateItemRequest.class)))
+                .thenReturn(failedFuture);
+
+        StepVerifier.create(dao.updateBaseCostIfNotExistsOrMatch(entity))
+                .expectError(RuntimeException.class)
+                .verify();
+
+        verify(dynamoDbAsyncClient).updateItem(any(UpdateItemRequest.class));
+    }
+
 
     @Test
     void updateNotificationDeliveryCostNotNull_multipleNotifications_success() {

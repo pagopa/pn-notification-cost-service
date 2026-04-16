@@ -49,12 +49,12 @@ class PaymentInfoDaoDynamoTestIT {
     }
 
     @Test
-    void updateItem_shouldPersistSinglePayment() throws Exception {
+    void updateItemIfNotExistsOrMatch_shouldPersistSinglePayment() throws Exception {
         String iuv = "IUV-SINGLE-" + System.nanoTime();
         PaymentInfo payment = newPaymentInfo(iuv, "IUN-SINGLE", 0, true);
 
         try {
-            StepVerifier.create(dao.updateItem(List.of(payment)))
+            StepVerifier.create(dao.updateItemIfNotExistsOrMatch(List.of(payment)))
                     .verifyComplete();
 
             PaymentInfoEntity persisted = getItem(iuv);
@@ -70,16 +70,16 @@ class PaymentInfoDaoDynamoTestIT {
     }
 
     @Test
-    void updateItem_shouldOverwriteExistingItem() throws Exception {
+    void updateItemIfNotExistsOrMatch_shouldSucceedWhenExistingItemMatchesCondition() throws Exception {
         String iuv = "IUV-UPDATE-" + System.nanoTime();
 
         PaymentInfoEntity existing = newPaymentInfoEntity(iuv);
-        PaymentInfo updated = newPaymentInfo(iuv, "IUN-NEW", 5, true);
+        PaymentInfo updated = newPaymentInfo(iuv, "IUN-OLD", 1, true);
 
         try {
             putItem(existing);
 
-            StepVerifier.create(dao.updateItem(List.of(updated)))
+            StepVerifier.create(dao.updateItemIfNotExistsOrMatch(List.of(updated)))
                     .verifyComplete();
 
             PaymentInfoEntity persisted = getItem(iuv);
@@ -95,7 +95,7 @@ class PaymentInfoDaoDynamoTestIT {
     }
 
     @Test
-    void updateItem_shouldPersistMultiplePayments() throws Exception {
+    void updateItemIfNotExistsOrMatch_shouldPersistMultiplePayments() throws Exception {
         String iuv1 = "IUV-MULTI-1-" + System.nanoTime();
         String iuv2 = "IUV-MULTI-2-" + System.nanoTime();
 
@@ -103,7 +103,7 @@ class PaymentInfoDaoDynamoTestIT {
         PaymentInfo payment2 = newPaymentInfo(iuv2, "IUN-MULTI-2", 1, false);
 
         try {
-            StepVerifier.create(dao.updateItem(List.of(payment1, payment2)))
+            StepVerifier.create(dao.updateItemIfNotExistsOrMatch(List.of(payment1, payment2)))
                     .verifyComplete();
 
             PaymentInfoEntity persisted1 = getItem(iuv1);

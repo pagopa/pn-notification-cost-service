@@ -19,8 +19,28 @@ aws --profile default --region us-east-1 --endpoint-url=http://localstack:4566 \
     --table-name pn-PaymentInfo \
     --attribute-definitions \
         AttributeName=pk,AttributeType=S \
+        AttributeName=iun,AttributeType=S \
     --key-schema \
         AttributeName=pk,KeyType=HASH \
+    --global-secondary-indexes \
+        '[
+          {
+            "IndexName": "iun_gsi",
+            "KeySchema": [
+              {
+                "AttributeName": "iun",
+                "KeyType": "HASH"
+              }
+            ],
+            "Projection": {
+              "ProjectionType": "ALL"
+            },
+            "ProvisionedThroughput": {
+              "ReadCapacityUnits": 10,
+              "WriteCapacityUnits": 5
+            }
+          }
+        ]' \
     --provisioned-throughput \
         ReadCapacityUnits=10,WriteCapacityUnits=5
 
