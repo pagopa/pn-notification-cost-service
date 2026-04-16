@@ -126,8 +126,7 @@ public class NotificationDeliveryCostDaoDynamo extends BaseDao implements Notifi
                 COL_PAGO_PA_INT_MODE, AttributeValue.builder().s(entity.getPagoPaIntMode().name()).build(),
                 COL_SENDER_PA_ID, AttributeValue.builder().s(entity.getSenderPaId()).build(),
                 COL_SENDER_TAX_ID, AttributeValue.builder().s(entity.getSenderTaxId()).build(),
-                COL_RECIPIENT_INTERNAL_ID, AttributeValue.builder().s(entity.getRecipientInternalId()).build(),
-                COL_LAST_UPDATE, AttributeValue.builder().s(Instant.now().toString()).build()
+                COL_RECIPIENT_INTERNAL_ID, AttributeValue.builder().s(entity.getRecipientInternalId()).build()
         );
 
         Map<String, AttributeValue> baseCostFields = new LinkedHashMap<>();
@@ -137,7 +136,10 @@ public class NotificationDeliveryCostDaoDynamo extends BaseDao implements Notifi
         Map<String, Map<String, AttributeValue>> mapAttrs = new LinkedHashMap<>();
         mapAttrs.put(COL_BASE_COST, baseCostFields);
 
-        return this.updateIfMatchOrNotExists(keyAttributes, flatAttributes, mapAttrs)
+        Map<String, AttributeValue> setOnlyFlatAttributes = Map.of(
+                COL_LAST_UPDATE, AttributeValue.builder().s(Instant.now().toString()).build()
+        );
+        return this.updateIfMatchOrNotExists(keyAttributes, flatAttributes, mapAttrs, setOnlyFlatAttributes)
                 .map(this::mapFromAttributeValue);
     }
 
