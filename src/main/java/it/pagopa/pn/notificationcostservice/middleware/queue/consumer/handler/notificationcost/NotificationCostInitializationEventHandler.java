@@ -64,7 +64,12 @@ public class NotificationCostInitializationEventHandler {
     }
 
     private Mono<Void> updatePaymentsInfo(List<PaymentInfo> payments) {
-        return paymentInfoDao.updateItem(payments)
+        if (payments == null || payments.isEmpty()) {
+            log.info("No payments to update");
+            return Mono.empty();
+        }
+
+        return paymentInfoDao.updateItemIfNotExistsOrMatch(payments)
                 .doOnSuccess(ignored -> log.info("Successfully updated payments info for iun={}", payments.getFirst().getIun()))
                 .doOnError(ex -> log.error("Error updating payments info", ex));
     }

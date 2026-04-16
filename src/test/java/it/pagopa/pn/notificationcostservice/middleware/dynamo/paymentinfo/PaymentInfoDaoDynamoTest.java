@@ -5,10 +5,12 @@ import it.pagopa.pn.notificationcostservice.middleware.dao.dynamo.PaymentInfoDao
 import it.pagopa.pn.notificationcostservice.middleware.dao.dynamo.entity.paymentinfo.PaymentInfoEntity;
 import it.pagopa.pn.notificationcostservice.middleware.dao.dynamo.mapper.paymentinfo.DtoToEntityPaymentInfoMapper;
 import it.pagopa.pn.notificationcostservice.model.paymentinfo.PaymentInfo;
+import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentMatchers;
+import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import reactor.core.publisher.Flux;
@@ -24,9 +26,14 @@ import software.amazon.awssdk.enhanced.dynamodb.model.Page;
 import software.amazon.awssdk.enhanced.dynamodb.model.PagePublisher;
 import software.amazon.awssdk.enhanced.dynamodb.model.QueryEnhancedRequest;
 import software.amazon.awssdk.enhanced.dynamodb.model.UpdateItemEnhancedRequest;
+import software.amazon.awssdk.services.dynamodb.DynamoDbAsyncClient;
+import software.amazon.awssdk.services.dynamodb.model.AttributeValue;
+import software.amazon.awssdk.services.dynamodb.model.UpdateItemRequest;
+import software.amazon.awssdk.services.dynamodb.model.UpdateItemResponse;
 
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 
 import static org.mockito.ArgumentMatchers.anyString;
@@ -36,6 +43,9 @@ import static org.mockito.Mockito.*;
 public class PaymentInfoDaoDynamoTest {
     @Mock
     private DynamoDbEnhancedAsyncClient dynamoDbEnhancedAsyncClient;
+
+    @Mock
+    private DynamoDbAsyncClient dynamoDbAsyncClient;
 
     @Mock
     private PnNotificationCostServiceConfigs configs;
@@ -59,84 +69,113 @@ public class PaymentInfoDaoDynamoTest {
         when(paymentInfoTable.getTableName()).thenReturn("PaymentInfo");
         when(configs.getPaymentInfoTable()).thenReturn(paymentInfoTable);
         when(dynamoDbEnhancedAsyncClient.table(
-                anyString(),
-                ArgumentMatchers.<TableSchema<PaymentInfoEntity>>any()
+                any(String.class),
+                org.mockito.ArgumentMatchers.<TableSchema<PaymentInfoEntity>>any()
         )).thenReturn(mockTable);
 
         dao = new PaymentInfoDaoDynamo(
                 dynamoDbEnhancedAsyncClient,
+                dynamoDbAsyncClient,
                 configs,
                 dtoToEntityPaymentInfoMapper
         );
     }
 
     @Test
-    void updateItem_nullList_returnsEmpty() {
-        Mono<Void> result = dao.updateItem(null);
-
-        StepVerifier.create(result)
+    void updateItemIfNotExistsOrMatch_nullList_returnsEmpty() {
+        StepVerifier.create(dao.updateItemIfNotExistsOrMatch(null))
                 .verifyComplete();
-
-        verifyNoInteractions(dtoToEntityPaymentInfoMapper, mockTable);
+        verifyNoInteractions(dtoToEntityPaymentInfoMapper, dynamoDbAsyncClient, mockTable);
     }
 
     @Test
-    void updateItem_emptyList_returnsEmpty() {
-        Mono<Void> result = dao.updateItem(Collections.emptyList());
-
-        StepVerifier.create(result)
+    void updateItemIfNotExistsOrMatch_emptyList_returnsEmpty() {
+        StepVerifier.create(dao.updateItemIfNotExistsOrMatch(Collections.emptyList()))
                 .verifyComplete();
-
-        verifyNoInteractions(dtoToEntityPaymentInfoMapper, mockTable);
+        verifyNoInteractions(dtoToEntityPaymentInfoMapper, dynamoDbAsyncClient, mockTable);
     }
 
+
     @Test
-    void updateItem_singlePayment_success() {
-        PaymentInfo paymentInfo = PaymentInfo.builder()
+    void updateItemIfNotExistsOrMatch_singlePayment_buildsConditionalUpdateRequest() {
+        PaymentInfo payment = PaymentInfo.builder()
                 .iuv("IUV-123")
                 .iun("IUN-123")
-                .recIndex(0)
+                .recIndex(2)
                 .applyCost(true)
                 .build();
 
-        PaymentInfoEntity entity = newPaymentInfoEntity("IUV-123", "IUN-123", 0);
+        PaymentInfoEntity entity = PaymentInfoEntity.builder()
+                .iuv("IUV-123")
+                .iun("IUN-123")
+                .recIndex(2)
+                .applyCost(true)
+                .build();
 
-        when(dtoToEntityPaymentInfoMapper.dtoToEntity(paymentInfo)).thenReturn(entity);
-        when(mockTable.updateItem(ArgumentMatchers.<UpdateItemEnhancedRequest<PaymentInfoEntity>>any()))
-                .thenReturn(CompletableFuture.completedFuture(entity));
+        when(dtoToEntityPaymentInfoMapper.dtoToEntity(payment)).thenReturn(entity);
 
-        Mono<Void> result = dao.updateItem(List.of(paymentInfo));
+        Map<String, AttributeValue> responseAttributes = Map.of(
+                PaymentInfoEntity.COL_PK, AttributeValue.builder().s("IUV-123").build(),
+                PaymentInfoEntity.COL_IUN, AttributeValue.builder().s("IUN-123").build(),
+                PaymentInfoEntity.COL_REC_INDEX, AttributeValue.builder().n("2").build(),
+                PaymentInfoEntity.COL_APPLY_COST, AttributeValue.builder().bool(true).build()
+        );
 
-        StepVerifier.create(result)
+        when(dynamoDbAsyncClient.updateItem(any(UpdateItemRequest.class)))
+                .thenReturn(CompletableFuture.completedFuture(
+                        UpdateItemResponse.builder()
+                                .attributes(responseAttributes)
+                                .build()
+                ));
+
+        StepVerifier.create(dao.updateItemIfNotExistsOrMatch(List.of(payment)))
                 .verifyComplete();
 
-        verify(dtoToEntityPaymentInfoMapper).dtoToEntity(paymentInfo);
-        verify(mockTable).updateItem(ArgumentMatchers.<UpdateItemEnhancedRequest<PaymentInfoEntity>>any());
+        ArgumentCaptor<UpdateItemRequest> captor = ArgumentCaptor.forClass(UpdateItemRequest.class);
+        verify(dynamoDbAsyncClient).updateItem(captor.capture());
+
+        UpdateItemRequest request = captor.getValue();
+        Assertions.assertEquals("PaymentInfo", request.tableName());
+        Assertions.assertEquals("IUV-123", request.key().get(PaymentInfoEntity.COL_PK).s());
+        Assertions.assertTrue(request.updateExpression().contains("#iun = :iun"));
+        Assertions.assertTrue(request.updateExpression().contains("#recIndex = :recIndex"));
+        Assertions.assertTrue(request.updateExpression().contains("#applyCost = :applyCost"));
+        Assertions.assertTrue(request.conditionExpression().contains("attribute_not_exists(#pk)"));
+        Assertions.assertEquals("IUN-123", request.expressionAttributeValues().get(":iun").s());
+        Assertions.assertEquals("2", request.expressionAttributeValues().get(":recIndex").n());
+        Assertions.assertTrue(request.expressionAttributeValues().get(":applyCost").bool());
     }
 
     @Test
-    void updateItem_multiplePayments_success() {
-        PaymentInfo p1 = PaymentInfo.builder().iuv("IUV-1").iun("IUN-1").recIndex(0).build();
-        PaymentInfo p2 = PaymentInfo.builder().iuv("IUV-2").iun("IUN-2").recIndex(1).build();
+    void updateItemIfNotExistsOrMatch_propagatesDynamoError() {
+        PaymentInfo payment = PaymentInfo.builder()
+                .iuv("IUV-ERR")
+                .iun("IUN-ERR")
+                .recIndex(1)
+                .applyCost(false)
+                .build();
 
-        PaymentInfoEntity e1 = newPaymentInfoEntity("IUV-1", "IUN-1", 0);
-        PaymentInfoEntity e2 = newPaymentInfoEntity("IUV-2", "IUN-2", 1);
+        PaymentInfoEntity entity = PaymentInfoEntity.builder()
+                .iuv("IUV-ERR")
+                .iun("IUN-ERR")
+                .recIndex(1)
+                .applyCost(false)
+                .build();
 
-        when(dtoToEntityPaymentInfoMapper.dtoToEntity(p1)).thenReturn(e1);
-        when(dtoToEntityPaymentInfoMapper.dtoToEntity(p2)).thenReturn(e2);
-        when(mockTable.updateItem(ArgumentMatchers.<UpdateItemEnhancedRequest<PaymentInfoEntity>>any()))
-                .thenReturn(CompletableFuture.completedFuture(e1))
-                .thenReturn(CompletableFuture.completedFuture(e2));
+        when(dtoToEntityPaymentInfoMapper.dtoToEntity(payment)).thenReturn(entity);
 
-        Mono<Void> result = dao.updateItem(List.of(p1, p2));
+        CompletableFuture<UpdateItemResponse> failedFuture = new CompletableFuture<>();
+        failedFuture.completeExceptionally(new RuntimeException("conditional update failed"));
 
-        StepVerifier.create(result)
-                .verifyComplete();
+        when(dynamoDbAsyncClient.updateItem(any(UpdateItemRequest.class)))
+                .thenReturn(failedFuture);
 
-        verify(mockTable, times(2))
-                .updateItem(ArgumentMatchers.<UpdateItemEnhancedRequest<PaymentInfoEntity>>any());
+        StepVerifier.create(dao.updateItemIfNotExistsOrMatch(List.of(payment)))
+                .expectError(RuntimeException.class)
+                .verify();
+
+        verify(dynamoDbAsyncClient).updateItem(any(UpdateItemRequest.class));
     }
-
     @Test
     void deleteItemsByIun_success_deletesAllItemsReturnedByGsiQuery() {
         String iun = "IUN-DELETE";

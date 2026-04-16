@@ -34,7 +34,9 @@ public class NotificationCostUpdaterServiceImpl implements NotificationCostUpdat
                 .flatMap(entityToUpdate -> {
                     PnAuditLogEvent auditEntity = buildLogAudit(CostUpdatePhaseInt.VALIDATION, entityToUpdate);
                     auditEntity.log();
-                    return executeUpdate(entityToUpdate, auditEntity);
+                    return notificationDeliveryCostDao.updateBaseCostIfNotExistsOrMatch(entityToUpdate)
+                            .doOnNext(entity -> auditEntity.generateSuccess("Updated entity successfully, entity={}", entity))
+                            .doOnError(error -> auditEntity.generateFailure("Entity update failed, error={}", error));
                 })
                 .then();
     }
