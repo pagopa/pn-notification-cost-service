@@ -33,7 +33,6 @@ public class UpdateNotificationCostEventHandler {
         log.info("Handling UpdateNotificationCostEvent for iun={}", payload.getIun());
 
         return validateUpdateNotificationCostEvent(payload)
-                .flatMap(this::handlePaymentInfoDeletionIfNeeded)
                 .flatMapMany(this::checkForRefusedOrCancelled)
                 .flatMap(notificationCostUpdaterService::updateCostByPhase)
                 .then()
@@ -76,24 +75,40 @@ public class UpdateNotificationCostEventHandler {
     private Flux<NotificationCostUpdate> checkForRefusedOrCancelled(UpdateNotificationCostEvent.Payload payload) {
         CostUpdatePhaseInt phase = payload.getCostUpdatePhase();
 
-        if (phase == CostUpdatePhaseInt.NOTIFICATION_CANCELLED || phase == CostUpdatePhaseInt.REQUEST_REFUSED) {
-            return notificationDeliveryCostDao.getAllByIun(payload.getIun())
-                    .switchIfEmpty(Mono.error(new PnInternalException("Entities not found for iun = " + payload.getIun(),
-                            ERROR_CODE_NOTIFICATIONDELIVERYCOST_NOTFOUND)))
-                    .map(entity -> this.mapToDeletedNotificationDeliveryCost(entity, phase));
+        if (isRefusedOrCancelled(phase)) {
+            return processPaymentDeletionAndMapping(payload, phase);
         }
 
         return createNotificationCostUpdateList(payload, phase);
     }
 
-    private Mono<UpdateNotificationCostEvent.Payload> handlePaymentInfoDeletionIfNeeded(UpdateNotificationCostEvent.Payload payload) {
-        CostUpdatePhaseInt phase = payload.getCostUpdatePhase();
-        if (phase == CostUpdatePhaseInt.NOTIFICATION_CANCELLED || phase == CostUpdatePhaseInt.REQUEST_REFUSED) {
-            return paymentInfoDao.deleteItemsByIun(payload.getIun())
-                    .doOnSuccess(ignored -> log.info("Deleted payment info for iun={}", payload.getIun()))
-                    .thenReturn(payload);
+    private boolean isRefusedOrCancelled(CostUpdatePhaseInt phase) {
+        return phase == CostUpdatePhaseInt.NOTIFICATION_CANCELLED ||
+                phase == CostUpdatePhaseInt.REQUEST_REFUSED;
+    }
+
+    private Flux<NotificationCostUpdate> processPaymentDeletionAndMapping(UpdateNotificationCostEvent.Payload payload, CostUpdatePhaseInt phase) {
+        return handlePaymentInfoDeletion(payload)
+                .doOnNext(v -> log.info("Handled paymentInfo deletion for iun={}", v.getIun()))
+                .flatMapMany(v -> notificationDeliveryCostDao.getAllByIun(v.getIun())
+                        .switchIfEmpty(handleEmptyCosts(v.getIun(), phase))
+                        .map(entity -> this.mapToDeletedNotificationDeliveryCost(entity, phase))
+                );
+    }
+
+    private Mono<UpdateNotificationCostEvent.Payload> handlePaymentInfoDeletion(UpdateNotificationCostEvent.Payload payload) {
+        return paymentInfoDao.deleteItemsByIun(payload.getIun())
+                .thenReturn(payload);
+    }
+
+    private <T> Flux<T> handleEmptyCosts(String iun, CostUpdatePhaseInt phase) {
+        if (phase == CostUpdatePhaseInt.NOTIFICATION_CANCELLED) {
+            return Flux.error(new PnInternalException(
+                    "Entities not found for iun = " + iun,
+                    ERROR_CODE_NOTIFICATIONDELIVERYCOST_NOTFOUND));
         }
-        return Mono.just(payload);
+        log.debug("No notification delivery cost entities found for iun = {}, no updates will be performed", iun);
+        return Flux.empty();
     }
 
     private Flux<NotificationCostUpdate> createNotificationCostUpdateList(UpdateNotificationCostEvent.Payload payload, CostUpdatePhaseInt phase) {

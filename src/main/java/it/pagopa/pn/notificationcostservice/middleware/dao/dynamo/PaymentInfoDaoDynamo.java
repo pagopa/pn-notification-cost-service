@@ -59,6 +59,8 @@ public class PaymentInfoDaoDynamo extends BaseDao implements PaymentInfoDao {
     @Override
     public Mono<Void> deleteItemsByIun(String iun) {
         return getAllByIun(iun)
+                .switchIfEmpty(Flux.<PaymentInfoEntity>empty()
+                        .doOnSubscribe(s -> log.debug("No items found for IUN: {}", iun)))
                 .flatMap(paymentInfoEntity ->
                                 deleteItemByIuv(paymentInfoEntity.getIuv()),
                         DELETE_ITEMS_BY_IUN_MAX_CONCURRENCY)
