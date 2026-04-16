@@ -29,8 +29,28 @@ aws --profile $PROFILE --region $REGION --endpoint-url=$ENDPOINT \
     --table-name pn-PaymentInfo \
     --attribute-definitions \
         AttributeName=pk,AttributeType=S \
+        AttributeName=iun,AttributeType=S \
     --key-schema \
         AttributeName=pk,KeyType=HASH \
+    --global-secondary-indexes \
+        '[
+          {
+            "IndexName": "iun_gsi",
+            "KeySchema": [
+              {
+                "AttributeName": "iun",
+                "KeyType": "HASH"
+              }
+            ],
+            "Projection": {
+              "ProjectionType": "ALL"
+            },
+            "ProvisionedThroughput": {
+              "ReadCapacityUnits": 10,
+              "WriteCapacityUnits": 5
+            }
+          }
+        ]' \
     --provisioned-throughput \
         ReadCapacityUnits=10,WriteCapacityUnits=5
 
@@ -55,31 +75,27 @@ aws --profile $PROFILE --region $REGION --endpoint-url=$ENDPOINT \
 
 echo "Tables created. Inserting test cases..."
 
-IUN1="IUN-STANDARD-MIX"
-aws --endpoint-url=$ENDPOINT dynamodb put-item --table-name pn-Notifications --item "{\"iun\": {\"S\": \"$IUN1\"}, \"paFee\": {\"N\": \"100\"}, \"vat\": {\"N\": \"22\"}, \"senderPaId\": {\"S\": \"PA-001\"}, \"notificationFeePolicy\": {\"S\": \"FLAT_RATE\"}, \"pagoPaIntMode\": {\"S\": \"NONE\"}, \"recipients\": {\"L\": [{\"M\": {\"recipientId\": {\"S\": \"REC-0\"}}}, {\"M\": {\"recipientId\": {\"S\": \"REC-1\"}}}, {\"M\": {\"recipientId\": {\"S\": \"REC-2\"}}}]}}"
+IUN1="STDM-MIXD-CASE-100001-A-1"
+aws --endpoint-url=$ENDPOINT dynamodb put-item --table-name pn-Notifications --item "{\"iun\": {\"S\": \"$IUN1\"}, \"paFee\": {\"N\": \"100\"}, \"vat\": {\"N\": \"22\"}, \"senderPaId\": {\"S\": \"PA-001\"}, \"senderTaxId\": {\"S\": \"TAXID-001\"}, \"notificationFeePolicy\": {\"S\": \"FLAT_RATE\"}, \"pagoPaIntMode\": {\"S\": \"NONE\"}, \"recipients\": {\"L\": [{\"M\": {\"recipientId\": {\"S\": \"REC-0\"}}}, {\"M\": {\"recipientId\": {\"S\": \"REC-1\"}}}, {\"M\": {\"recipientId\": {\"S\": \"REC-2\"}}}]}}"
 
 aws --endpoint-url=$ENDPOINT dynamodb put-item --table-name pn-Timelines --item "{\"iun\": {\"S\": \"$IUN1\"}, \"timelineElementId\": {\"S\": \"SEND_ANALOG_DOMICILE.$IUN1.RECINDEX_0.ATTEMPT_0\"}, \"category\": {\"S\": \"SEND_ANALOG_DOMICILE\"}, \"details\": {\"M\": {\"recIndex\": {\"N\": \"0\"}, \"sentAttemptMade\": {\"N\": \"0\"}, \"analogCost\": {\"N\": \"310\"}, \"productType\": {\"S\": \"AR\"}}}}"
 
 aws --endpoint-url=$ENDPOINT dynamodb put-item --table-name pn-Timelines --item "{\"iun\": {\"S\": \"$IUN1\"}, \"timelineElementId\": {\"S\": \"SEND_ANALOG_DOMICILE.$IUN1.RECINDEX_1.ATTEMPT_1\"}, \"category\": {\"S\": \"SEND_ANALOG_DOMICILE\"}, \"details\": {\"M\": {\"recIndex\": {\"N\": \"1\"}, \"sentAttemptMade\": {\"N\": \"1\"}, \"analogCost\": {\"N\": \"550\"}, \"productType\": {\"S\": \"AR\"}}}}"
 
-
-
-IUN2="IUN-SIMPLE-LETTER"
-aws --endpoint-url=$ENDPOINT dynamodb put-item --table-name pn-Notifications --item "{\"iun\": {\"S\": \"$IUN2\"}, \"paFee\": {\"N\": \"100\"}, \"vat\": {\"N\": \"22\"}, \"senderPaId\": {\"S\": \"PA-002\"}, \"notificationFeePolicy\": {\"S\": \"FLAT_RATE\"}, \"pagoPaIntMode\": {\"S\": \"NONE\"}, \"recipients\": {\"L\": [{\"M\": {\"recipientId\": {\"S\": \"REC-SINGLE\"}}}]}}"
+IUN2="SMPL-LETT-CASE-100002-B-1"
+aws --endpoint-url=$ENDPOINT dynamodb put-item --table-name pn-Notifications --item "{\"iun\": {\"S\": \"$IUN2\"}, \"paFee\": {\"N\": \"100\"}, \"vat\": {\"N\": \"22\"}, \"senderPaId\": {\"S\": \"PA-002\"}, \"senderTaxId\": {\"S\": \"TAXID-002\"}, \"notificationFeePolicy\": {\"S\": \"FLAT_RATE\"}, \"pagoPaIntMode\": {\"S\": \"NONE\"}, \"recipients\": {\"L\": [{\"M\": {\"recipientId\": {\"S\": \"REC-SINGLE\"}}}]}}"
 
 aws --endpoint-url=$ENDPOINT dynamodb put-item --table-name pn-Timelines --item "{\"iun\": {\"S\": \"$IUN2\"}, \"timelineElementId\": {\"S\": \"SEND_SIMPLE.$IUN2.RECINDEX_0\"}, \"category\": {\"S\": \"SEND_SIMPLE_REGISTERED_LETTER\"}, \"details\": {\"M\": {\"recIndex\": {\"N\": \"0\"}, \"analogCost\": {\"N\": \"120\"}, \"productType\": {\"S\": \"896\"}}}}"
 
-
-IUN3="IUN-REFUSED"
-aws --endpoint-url=$ENDPOINT dynamodb put-item --table-name pn-Notifications --item "{\"iun\": {\"S\": \"$IUN3\"}, \"notificationStatus\": {\"S\": \"REQUEST_REFUSED\"}, \"paFee\": {\"N\": \"100\"}, \"vat\": {\"N\": \"22\"}, \"senderPaId\": {\"S\": \"PA-003\"}, \"notificationFeePolicy\": {\"S\": \"FLAT_RATE\"}, \"pagoPaIntMode\": {\"S\": \"NONE\"}, \"recipients\": {\"L\": [{\"M\": {\"recipientId\": {\"S\": \"REC-REFUSED\"}}}]}}"
+IUN3="RQST-REFU-CASE-100003-C-1"
+aws --endpoint-url=$ENDPOINT dynamodb put-item --table-name pn-Notifications --item "{\"iun\": {\"S\": \"$IUN3\"}, \"notificationStatus\": {\"S\": \"REQUEST_REFUSED\"}, \"paFee\": {\"N\": \"100\"}, \"vat\": {\"N\": \"22\"}, \"senderPaId\": {\"S\": \"PA-003\"}, \"senderTaxId\": {\"S\": \"TAXID-003\"}, \"notificationFeePolicy\": {\"S\": \"FLAT_RATE\"}, \"pagoPaIntMode\": {\"S\": \"NONE\"}, \"recipients\": {\"L\": [{\"M\": {\"recipientId\": {\"S\": \"REC-REFUSED\"}}}]}}"
 
 aws --endpoint-url=$ENDPOINT dynamodb put-item --table-name pn-Timelines --item "{\"iun\": {\"S\": \"$IUN3\"}, \"timelineElementId\": {\"S\": \"REQUEST_REFUSED.$IUN3.RECINDEX_0\"}, \"category\": {\"S\": \"REQUEST_REFUSED\"}, \"details\": {\"M\": {\"recIndex\": {\"N\": \"0\"}, \"analogCost\": {\"N\": \"120\"}, \"productType\": {\"S\": \"896\"}}}}"
 
 aws --endpoint-url=$ENDPOINT dynamodb put-item --table-name pn-Timelines --item "{\"iun\": {\"S\": \"$IUN3\"}, \"timelineElementId\": {\"S\": \"REQUEST_REFUSED.$IUN3.RECINDEX_1\"}, \"category\": {\"S\": \"NOTIFICATION_CANCELLED\"}, \"details\": {\"M\": {\"recIndex\": {\"N\": \"1\"}, \"analogCost\": {\"N\": \"120\"}, \"productType\": {\"S\": \"896\"}}}}"
 
-
-IUN4="IUN-DOUBLE-ATTEMPT"
-aws --endpoint-url=$ENDPOINT dynamodb put-item --table-name pn-Notifications --item "{\"iun\": {\"S\": \"$IUN4\"}, \"paFee\": {\"N\": \"100\"}, \"vat\": {\"N\": \"22\"}, \"senderPaId\": {\"S\": \"PA-004\"}, \"notificationFeePolicy\": {\"S\": \"FLAT_RATE\"}, \"pagoPaIntMode\": {\"S\": \"NONE\"}, \"recipients\": {\"L\": [{\"M\": {\"recipientId\": {\"S\": \"REC-FULL\"}}}]}}"
+IUN4="DBLP-ATTM-CASE-100004-D-1"
+aws --endpoint-url=$ENDPOINT dynamodb put-item --table-name pn-Notifications --item "{\"iun\": {\"S\": \"$IUN4\"}, \"paFee\": {\"N\": \"100\"}, \"vat\": {\"N\": \"22\"}, \"senderPaId\": {\"S\": \"PA-004\"}, \"senderTaxId\": {\"S\": \"TAXID-004\"}, \"notificationFeePolicy\": {\"S\": \"FLAT_RATE\"}, \"pagoPaIntMode\": {\"S\": \"NONE\"}, \"recipients\": {\"L\": [{\"M\": {\"recipientId\": {\"S\": \"REC-FULL\"}}}]}}"
 
 aws --endpoint-url=$ENDPOINT dynamodb put-item --table-name pn-Timelines --item "{\"iun\": {\"S\": \"$IUN4\"}, \"timelineElementId\": {\"S\": \"ANALOG.$IUN4.RECINDEX_2.ATTEMPT_0\"}, \"category\": {\"S\": \"SEND_ANALOG_DOMICILE\"}, \"details\": {\"M\": {\"recIndex\": {\"N\": \"2\"}, \"sentAttemptMade\": {\"N\": \"0\"}, \"analogCost\": {\"N\": \"300\"}, \"productType\": {\"S\": \"AR\"}}}}"
 

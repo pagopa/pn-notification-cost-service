@@ -11,7 +11,11 @@ import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import software.amazon.awssdk.enhanced.dynamodb.DynamoDbAsyncTable;
 import software.amazon.awssdk.enhanced.dynamodb.DynamoDbEnhancedAsyncClient;
+import software.amazon.awssdk.enhanced.dynamodb.Key;
 import software.amazon.awssdk.enhanced.dynamodb.TableSchema;
+import software.amazon.awssdk.enhanced.dynamodb.model.Page;
+import software.amazon.awssdk.enhanced.dynamodb.model.QueryConditional;
+import software.amazon.awssdk.enhanced.dynamodb.model.QueryEnhancedRequest;
 import software.amazon.awssdk.services.dynamodb.DynamoDbAsyncClient;
 import software.amazon.awssdk.services.dynamodb.model.AttributeValue;
 
@@ -21,6 +25,8 @@ import java.util.Map;
 @Component
 @Slf4j
 public class PaymentInfoDaoDynamo extends BaseDao implements PaymentInfoDao {
+
+    private static final int DELETE_ITEMS_BY_IUN_MAX_CONCURRENCY = 10;
 
     DynamoDbEnhancedAsyncClient dynamoDbEnhancedAsyncClient;
     DynamoDbAsyncTable<PaymentInfoEntity> paymentInfoEntityDynamoTable;
@@ -45,6 +51,7 @@ public class PaymentInfoDaoDynamo extends BaseDao implements PaymentInfoDao {
      * @param payments lista di pagamenti
      * @return void
      */
+    @Override
     public Mono<Void> updateItemIfNotExistsOrMatch(List<PaymentInfo> payments) {
         if (payments == null || payments.isEmpty()) {
             return Mono.empty();
@@ -69,5 +76,31 @@ public class PaymentInfoDaoDynamo extends BaseDao implements PaymentInfoDao {
 
         return this.updateIfMatchOrNotExists(keyAttributes, flatAttributes, null)
                 .then();
+    }
+    @Override
+    public Mono<Void> deleteItemsByIun(String iun) {
+        return getAllByIun(iun)
+                .switchIfEmpty(Flux.<PaymentInfoEntity>empty()
+                        .doOnSubscribe(s -> log.debug("No items found for IUN: {}", iun)))
+                .flatMap(paymentInfoEntity ->
+                                deleteItemByIuv(paymentInfoEntity.getIuv()),
+                        DELETE_ITEMS_BY_IUN_MAX_CONCURRENCY)
+                .then();
+    }
+
+    private Flux<PaymentInfoEntity> getAllByIun(String iun) {
+        QueryEnhancedRequest queryEnhancedRequest = QueryEnhancedRequest.builder()
+                .queryConditional(QueryConditional.keyEqualTo(Key.builder().partitionValue(iun).build()))
+                .build();
+
+        return Flux.from(paymentInfoEntityDynamoTable.index(PaymentInfoEntity.IUN_GSI)
+                .query(queryEnhancedRequest)
+                .flatMapIterable(Page::items));
+    }
+
+    private Mono<Void> deleteItemByIuv(String iuv) {
+        return Mono.fromFuture(paymentInfoEntityDynamoTable.deleteItem(Key.builder().partitionValue(iuv).build()))
+                .then()
+                .doOnError(e -> log.error("Error deleting item with IUV: {}", iuv, e));
     }
 }

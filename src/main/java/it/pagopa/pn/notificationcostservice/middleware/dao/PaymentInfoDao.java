@@ -7,4 +7,5 @@ import java.util.List;
 
 public interface PaymentInfoDao {
     Mono<Void> updateItemIfNotExistsOrMatch(List<PaymentInfo> payments);
+    Mono<Void> deleteItemsByIun(String iun);
 }
