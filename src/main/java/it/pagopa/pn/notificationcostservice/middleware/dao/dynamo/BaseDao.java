@@ -32,7 +32,8 @@ public class BaseDao {
     protected Mono<Map<String, AttributeValue>> updateIfMatchOrNotExists(
             Map<String, AttributeValue> keyAttributes,
             Map<String, AttributeValue> flatAttributes,
-            Map<String, Map<String, AttributeValue>> mapAttributes) {
+            Map<String, Map<String, AttributeValue>> mapAttributes,
+            Map<String, AttributeValue> setOnlyFlatAttributes) {
 
         Map<String, AttributeValue> expressionValues = new HashMap<>();
         Map<String, String> expressionNames          = new HashMap<>();
@@ -41,7 +42,7 @@ public class BaseDao {
         // Handle null maps
         Map<String, AttributeValue> flatAttrs = flatAttributes != null ? flatAttributes : Collections.emptyMap();
         Map<String, Map<String, AttributeValue>> mapAttrs = mapAttributes != null ? mapAttributes : Collections.emptyMap();
-
+        Map<String, AttributeValue> setOnlyFlatAttrs = setOnlyFlatAttributes != null ? setOnlyFlatAttributes : Collections.emptyMap();
 
         // Flat attributes
         for (Map.Entry<String, AttributeValue> entry : flatAttrs.entrySet()) {
@@ -55,7 +56,18 @@ public class BaseDao {
             conditionParts.add(namePh + " = " + ph);
         }
 
-        // Map attributes
+        // Set-only flat attributes: only SET
+        for (Map.Entry<String, AttributeValue> entry : setOnlyFlatAttrs.entrySet()) {
+            String attr = entry.getKey();
+            String ph = ":" + attr;
+            String namePh = "#" + attr;
+
+            expressionValues.put(ph, entry.getValue());
+            expressionNames.put(namePh, attr);
+            setParts.add(namePh + " = " + ph);
+        }
+
+        // Map attributes: SET + CONDITION
         for (Map.Entry<String, Map<String, AttributeValue>> mapEntry : mapAttrs.entrySet()) {
             String mapName = mapEntry.getKey();
             expressionNames.put("#" + mapName, mapName);
@@ -101,4 +113,5 @@ public class BaseDao {
         return Mono.fromFuture(dynamoDbAsyncClient.updateItem(request))
                 .map(UpdateItemResponse::attributes);
     }
+
 }

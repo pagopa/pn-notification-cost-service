@@ -24,6 +24,7 @@ import java.util.List;
 import java.util.Map;
 
 import static software.amazon.awssdk.enhanced.dynamodb.mapper.StaticAttributeTags.primaryPartitionKey;
+import static software.amazon.awssdk.enhanced.dynamodb.mapper.StaticAttributeTags.secondaryPartitionKey;
 @Component
 @Slf4j
 public class PaymentInfoDaoDynamo extends BaseDao implements PaymentInfoDao {
@@ -75,7 +76,7 @@ public class PaymentInfoDaoDynamo extends BaseDao implements PaymentInfoDao {
                 PaymentInfoEntity.COL_APPLY_COST, AttributeValue.builder().bool(entity.getApplyCost()).build()
         );
 
-        return this.updateIfMatchOrNotExists(keyAttributes, flatAttributes, null)
+        return this.updateIfMatchOrNotExists(keyAttributes, flatAttributes, null,null)
                 .then();
     }
     @Override
@@ -121,7 +122,8 @@ public class PaymentInfoDaoDynamo extends BaseDao implements PaymentInfoDao {
                         .setter(PaymentInfoEntity::setApplyCost))
                 .addAttribute(String.class, a -> a.name(PaymentInfoEntity.COL_IUN)
                         .getter(PaymentInfoEntity::getIun)
-                        .setter(PaymentInfoEntity::setIun))
+                        .setter(PaymentInfoEntity::setIun)
+                        .tags(secondaryPartitionKey(PaymentInfoEntity.IUN_GSI)))
                 .build();
 
         return dynamoDbEnhancedAsyncClient.table(tableName, schemaTable);
