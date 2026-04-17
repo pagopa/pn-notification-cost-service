@@ -68,8 +68,9 @@ public class NotificationDeliveryCost {
     }
 
     private void validateAnalogCosts(FirstAnalogCost firstAnalogCost, SimpleRegisteredLetterCost simpleRegisteredLetterCost, List<String> violations) {
-        if(Objects.nonNull(firstAnalogCost) && Objects.nonNull(simpleRegisteredLetterCost)) {
-            violations.add("Only one between firstAnalogCost and simpleRegisteredLetterCost can be set");
+        if (Objects.nonNull(firstAnalogCost) && Objects.nonNull(simpleRegisteredLetterCost)
+                && (firstAnalogCost.getCost() != 0 || simpleRegisteredLetterCost.getCost() != 0)) {
+            violations.add("firstAnalogCost and simpleRegisteredLetterCost can both be set only when both costs are 0");
         }
     }
 
