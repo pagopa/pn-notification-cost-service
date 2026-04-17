@@ -356,6 +356,8 @@ Resources:
         Statement:
           - Effect: Allow
             Action:
+              - "dynamodb:Query"
+              - 'dynamodb:DeleteItem'
               - 'dynamodb:GetItem'
               - 'dynamodb:PutItem'
               - 'dynamodb:UpdateItem'
