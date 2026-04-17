@@ -3,6 +3,7 @@ package it.pagopa.pn.notificationcostservice.middleware.dao.dynamo.entity.notifi
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import lombok.ToString;
 import lombok.experimental.SuperBuilder;
 import software.amazon.awssdk.enhanced.dynamodb.mapper.annotations.DynamoDbBean;
 
@@ -10,6 +11,7 @@ import software.amazon.awssdk.enhanced.dynamodb.mapper.annotations.DynamoDbBean;
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
+@ToString
 @SuperBuilder(toBuilder = true)
 public class AnalogCostEntity {
 

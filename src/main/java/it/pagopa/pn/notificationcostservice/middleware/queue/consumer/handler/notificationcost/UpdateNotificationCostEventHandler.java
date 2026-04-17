@@ -61,7 +61,7 @@ public class UpdateNotificationCostEventHandler {
 
         switch (phase) {
             case SEND_SIMPLE_REGISTERED_LETTER, SEND_ANALOG_DOMICILE_ATTEMPT_0, SEND_ANALOG_DOMICILE_ATTEMPT_1 -> {
-                log.info("Mapping notification delivery cost for phase: SEND_SIMPLE_REGISTERED_LETTER");
+                log.info("Mapping notification delivery cost for phase: {} ", phase);
                 if(Objects.isNull(payload.getCost()) || Objects.isNull(payload.getProductType()) || Objects.isNull(payload.getRecIndex())) {
                     return Mono.error(new PnInternalException(String.format("Missing required field for iun = %s, cost = %s, productType = %s, recIndex = %s", payload.getIun(), payload.getCost(), payload.getProductType(), payload.getRecIndex()),
                             ERROR_CODE_NOTIFICATIONCOSTSERVICE_INTERNAL_SERVER_ERROR));

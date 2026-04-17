@@ -67,7 +67,7 @@ public class NotificationCostUpdaterServiceImpl implements NotificationCostUpdat
 
     private Mono<Void> executeUpdate(NotificationDeliveryCostEntity entityToUpdate, PnAuditLogEvent audit) {
         return notificationDeliveryCostDao.updateNotificationDeliveryCostNotNull(entityToUpdate)
-                .doOnNext(entity -> audit.generateSuccess("Updated entity successfully, entity={}", entity))
+                .doOnNext(entity -> audit.generateSuccess("Updated entity successfully, entity={}", entity).log())
                 .doOnError(error -> audit.generateFailure("Entity update failed, error={}", error))
                 .then();
     }
