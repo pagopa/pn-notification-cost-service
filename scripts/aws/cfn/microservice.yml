@@ -283,6 +283,7 @@ Resources:
       Parameters:
         MicroServiceUniqueName: !Sub '${ProjectName}-notification-cost-service'
         CpuValue: !Ref CpuValue
+        CpuArchitecture: ARM
         MemoryAmount: !Ref MemoryAmount
         HealthCheckTimeout: !Ref HealthCheckTimeout
         HealthCheckInterval: !Ref HealthCheckInterval
