@@ -130,7 +130,7 @@ class NotificationDeliveryCostTest {
     }
 
     @Test
-    void throwsExceptionWhenBothFirstAnalogCostAndSimpleRegisteredLetterCostAreSet() {
+    void throwsExceptionWhenBothFirstAnalogCostAndSimpleRegisteredLetterCostAreSetWithNonZeroCost() {
         BaseCost baseCost = BaseCost.builder().paFee(100).sendFee(50).build();
         FirstAnalogCost firstAnalogCost = FirstAnalogCost.builder().cost(200).productType("AR").build();
         SimpleRegisteredLetterCost simpleRegisteredLetterCost = SimpleRegisteredLetterCost.builder().cost(150).productType("RS").build();
@@ -145,10 +145,37 @@ class NotificationDeliveryCostTest {
                         .notificationFeePolicy(NotificationFeePolicy.DELIVERY_MODE)
                         .pagoPaIntMode(PagoPaIntMode.ASYNC)
                         .vat(22)
+                        .senderPaId("paId")
+                        .senderTaxId("taxId")
                         .build()
         );
 
-        assertTrue(exception.getMessage().contains("Only one between firstAnalogCost and simpleRegisteredLetterCost can be set"));
+        assertTrue(exception.getMessage().contains("can both be set only when both costs are 0"));
+    }
+
+    @Test
+    void buildsSuccessfullyWhenBothFirstAnalogCostAndSimpleRegisteredLetterCostAreSetWithZeroCost() {
+        BaseCost baseCost = BaseCost.builder().paFee(100).sendFee(50).build();
+        FirstAnalogCost firstAnalogCost = FirstAnalogCost.builder().cost(0).productType("AR").build();
+        SimpleRegisteredLetterCost simpleRegisteredLetterCost = SimpleRegisteredLetterCost.builder().cost(0).productType("RS").build();
+
+        NotificationDeliveryCost dto = NotificationDeliveryCost.builder()
+                .iun("IUN-TEST-123")
+                .recIndex(0)
+                .baseCost(baseCost)
+                .firstAnalogCost(firstAnalogCost)
+                .simpleRegisteredLetterCost(simpleRegisteredLetterCost)
+                .notificationFeePolicy(NotificationFeePolicy.DELIVERY_MODE)
+                .pagoPaIntMode(PagoPaIntMode.ASYNC)
+                .vat(22)
+                .lastUpdate(Instant.now())
+                .senderPaId("paId")
+                .senderTaxId("taxId")
+                .build();
+
+        assertNotNull(dto);
+        assertEquals(firstAnalogCost, dto.getFirstAnalogCost());
+        assertEquals(simpleRegisteredLetterCost, dto.getSimpleRegisteredLetterCost());
     }
 
     @Test
