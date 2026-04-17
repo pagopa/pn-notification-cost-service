@@ -27,14 +27,12 @@ public class BaseDao {
      * @param keyAttributes chiave primaria dell'item
      * @param flatAttributes attributi semplici da aggiornare e verificare
      * @param mapAttributes attributi annidati da aggiornare e verificare
-     * @param setOnlyFlatAttributes attributi volatili da aggiornare
      * @return un {@link Mono} con gli attributi aggiornati restituiti da DynamoDB
      */
     protected Mono<Map<String, AttributeValue>> updateIfMatchOrNotExists(
             Map<String, AttributeValue> keyAttributes,
             Map<String, AttributeValue> flatAttributes,
-            Map<String, Map<String, AttributeValue>> mapAttributes,
-            Map<String, AttributeValue> setOnlyFlatAttributes) {
+            Map<String, Map<String, AttributeValue>> mapAttributes) {
 
         Map<String, AttributeValue> expressionValues = new HashMap<>();
         Map<String, String> expressionNames          = new HashMap<>();
@@ -43,7 +41,7 @@ public class BaseDao {
         // Handle null maps
         Map<String, AttributeValue> flatAttrs = flatAttributes != null ? flatAttributes : Collections.emptyMap();
         Map<String, Map<String, AttributeValue>> mapAttrs = mapAttributes != null ? mapAttributes : Collections.emptyMap();
-        Map<String, AttributeValue> setOnlyFlatAttrs = setOnlyFlatAttributes != null ? setOnlyFlatAttributes : Collections.emptyMap();
+
 
         // Flat attributes
         for (Map.Entry<String, AttributeValue> entry : flatAttrs.entrySet()) {
@@ -57,18 +55,7 @@ public class BaseDao {
             conditionParts.add(namePh + " = " + ph);
         }
 
-        // Set-only flat attributes: only SET
-        for (Map.Entry<String, AttributeValue> entry : setOnlyFlatAttrs.entrySet()) {
-            String attr = entry.getKey();
-            String ph = ":" + attr;
-            String namePh = "#" + attr;
-
-            expressionValues.put(ph, entry.getValue());
-            expressionNames.put(namePh, attr);
-            setParts.add(namePh + " = " + ph);
-        }
-
-        // Map attributes: SET + CONDITION
+        // Map attributes
         for (Map.Entry<String, Map<String, AttributeValue>> mapEntry : mapAttrs.entrySet()) {
             String mapName = mapEntry.getKey();
             expressionNames.put("#" + mapName, mapName);
