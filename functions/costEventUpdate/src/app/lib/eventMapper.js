@@ -157,6 +157,5 @@ function buildResultElement(filteredEvent, resultElementBody, messageAttributes)
       MessageAttributes: messageAttributes,
     };
 
-    console.log("Mapped message for the queue: %j", JSON.stringify(resultElement));
     return resultElement;
 }
