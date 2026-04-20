@@ -19,7 +19,7 @@ const extractAttempt = (elementId) => {
 /**
  * Mappa i campi dalla tabella NotificationDeliveryCost
  */
-const mapToDeliveryCost = (notif, currentIndex, recipientEvents, isDeletedField, ttlValue) => {
+const mapToDeliveryCost = (notif, currentIndex, recipientEvents, isDeletedField) => {
   const recipientId = (notif.recipients && notif.recipients[currentIndex])
     ? notif.recipients[currentIndex].recipientId : null;
 
@@ -35,9 +35,9 @@ const mapToDeliveryCost = (notif, currentIndex, recipientEvents, isDeletedField,
         paFee: notif.paFee
       },
       vat: toSafeNumber(notif.vat),
-      ttl: ttlValue,
       notificationFeePolicy: notif.notificationFeePolicy,
-      senderInternalId: notif.senderPaId,
+      senderPaId: notif.senderPaId,
+      senderTaxId: notif.senderTaxId,
       recipientInternalId: recipientId,
       isDeleted: isDeletedField,
       lastUpdate: new Date().toISOString(),

@@ -2,6 +2,7 @@ package it.pagopa.pn.notificationcostservice.model.notificationdeliverycost.anal
 
 import it.pagopa.pn.notificationcostservice.exception.PnDomainObjectValidationException;
 import lombok.Data;
+import lombok.NoArgsConstructor;
 import lombok.ToString;
 
 import java.util.ArrayList;
@@ -11,6 +12,7 @@ import static it.pagopa.pn.notificationcostservice.utils.DomainValidationUtils.v
 
 @ToString
 @Data
+@NoArgsConstructor
 public class AnalogCost {
     private int cost;
     private String productType;

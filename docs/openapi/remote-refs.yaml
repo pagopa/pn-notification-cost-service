@@ -1,8 +1,16 @@
 components:
 
-  parameters:
+  parameters: {}
   schemas:
-  
+    IUN:
+      $ref: 'https://raw.githubusercontent.com/pagopa/pn-delivery/7f0d49a256685ef80dc0478ab78fecf5d5a7579e/docs/openapi/schemas-pn-notification.yaml#/components/schemas/IUN'
+
+    paTaxId:
+      $ref: 'https://raw.githubusercontent.com/pagopa/pn-delivery/7f0d49a256685ef80dc0478ab78fecf5d5a7579e/docs/openapi/schemas-pn-notification.yaml#/components/schemas/paTaxId'
+
+    noticeCode:
+        $ref: 'https://raw.githubusercontent.com/pagopa/pn-delivery/7f0d49a256685ef80dc0478ab78fecf5d5a7579e/docs/openapi/schemas-pn-notification.yaml#/components/schemas/noticeCode'
+
     ############################################################################################
     ###                          STRUTTURE DATI DI PN-ERROR                                  ###
     ############################################################################################

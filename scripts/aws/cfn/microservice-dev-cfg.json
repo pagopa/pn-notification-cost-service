@@ -6,7 +6,9 @@
     "CpuValue": "2048",
     "MemoryAmount": "4GB",
     "MinTasksNumber": "2",
-    "MaxTasksNumber": "4",
-    "AutoscalingThreshold": "2500"
+    "MaxTasksNumber": "6",
+    "AutoscalingThreshold": "2500",
+    "ConsumedQueueMessagePerMinute": "3000",
+    "CostEventUpdateLambdaEventCategories": "SEND_ANALOG_DOMICILE,SEND_SIMPLE_REGISTERED_LETTER,NOTIFICATION_CANCELLED,REQUEST_REFUSED"
   }
 }

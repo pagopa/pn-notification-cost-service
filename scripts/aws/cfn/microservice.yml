@@ -10,10 +10,6 @@ Parameters:
   AlarmSNSTopicArn:
     Type: String
     Description: ARN of alarm topic
-
-  WebApiDnsName:
-    Type: String
-    Description: 'The DNS name used for WEB rest API.'
   
   CorsAllowedDomains:
     Type: String
@@ -51,18 +47,6 @@ Parameters:
     Type: String
     Description: 'Load balancer listener where HTTP endpoints is going to be registered'
 
-  ApplicationLoadBalancerDomain:
-    Type: String
-    Description: 'Base URL of the load balancer where the service is going to be reachable'
-
-  NetworkLoadBalancerLink:
-    Type: String
-    Description: 'network load balancer link for API-GW'
-  
-  LogsKinesisSourceStreamArn:
-    Type: String
-    Description: 'Kinesis stream that receive logs'
-  
   # Instance parameters
   # 256 (.25 vCPU) - Available memory values: 0.5GB, 1GB, 2GB
   # 512 (.5 vCPU) - Available memory values: 1GB, 2GB, 3GB, 4GB
@@ -93,7 +77,7 @@ Parameters:
   
   AutoscalingThreshold:
     Default: 70
-    Type: String
+    Type: Number
   
   AlbSecurityGroup:
     Type: String
@@ -105,7 +89,7 @@ Parameters:
     Description: 'Applicative environment variable file checksum'
   
   MinTasksNumber:
-    Default: 1
+    Default: 2
     Type: Number
     Description: minimum autoscaling number of tasks (task)
   
@@ -123,7 +107,16 @@ Parameters:
     Default: 1
     Type: Number
     Description: activate when N datapoint on M (task)
-  
+
+  ApplicationLoadBalancerMetricsDimensionName:
+    Type: String
+    Description: Application load balancer dimension name
+
+    # --- SQS Queues ---
+  ConsumedQueueMessagePerMinute:
+    Type: Number
+    Description: Weight to assign to queue number of visible messages metric (Workflow task)
+
   Version:
     Type: String
     Description: 'keep track of used projects commitIds'
@@ -149,7 +142,7 @@ Parameters:
   
   MountEfs:
     Type: String
-    Default: false
+    Default: "false"
     AllowedValues:
       - "true"
       - "false"
@@ -196,6 +189,91 @@ Parameters:
     Type: String
     Description: 'ARN of dynamodb table containing cost of notification delivery '
 
+  PaymentInfoTableName:
+    Type: String
+    Description: 'Name of dynamodb table containing info about payments'
+
+  PaymentInfoTableArn:
+    Type: String
+    Description: 'ARN of dynamodb table containing info about payments'
+
+  # --- Sqs ---
+  PnNotificationCostToUpdateQueueName:
+    Type: String
+    Description: 'The name of the SQS queue used to communicate with pn-notification-cost-service module.'
+
+  PnNotificationCostToUpdateQueueARN:
+    Type: String
+    Description: 'Identify the resource that the policy applies to.'
+
+  PnNotificationCostToUpdateQueueAlarmARN:
+    Type: String
+    Description: 'Identify the resource that the policy applies to.'
+
+  PnNotificationCostToUpdateQueueURL:
+    Type: String
+    Description: 'Notification cost to update queue URL'
+
+  MicroserviceBucketBaseKey:
+    Type: String
+    Default: ''
+    Description: 'Base key of the microservice in the s3 bucket'
+
+  CostEventUpdateLambdaBatchSize:
+    Type: Number
+    Default: 60
+    Description: 'BatchSize event source mapping'
+
+  ESMKinesisFailureNotificationsBucketName:
+    Type: String
+    Description: "S3 bucket name for ESM Kinesis failure notifications"
+
+  # OpenApi Bucket params
+  MicroserviceBucketName:
+    Type: String
+    Default: ''
+    Description: 'Name of the bucket where the microservice files are copied during deploy'
+
+  CostEventUpdateLambdaMaximumBatchingWindowInSeconds:
+    Type: Number
+    Default: 20
+    Description: 'MaximumBatchingWindow asseveration event source mapping'
+
+  CostEventUpdateLambdaMaximumRecordAge:
+    Type: Number
+    Description: "Maximum record age in seconds for CostEventUpdateLambdaKinesisSource"
+    Default: 604800 # 7 days
+
+  CostEventUpdateLambdaMaximumRetryAttempts:
+    Type: Number
+    Description: "Maximum retry attempts for CostEventUpdateLambdaKinesisSource"
+    Default: 5
+
+  CostEventUpdateLambdaEventCategories:
+    Type: CommaDelimitedList
+    Description: "Comma-separated list of timeline categories accepted by CostEventUpdateLambdaKinesisSource filter"
+    Default: SEND_ANALOG_DOMICILE,SEND_SIMPLE_REGISTERED_LETTER,NOTIFICATION_CANCELLED,REQUEST_REFUSED
+
+  CdcKinesisSourceStreamArn:
+    Type: String
+    Description: 'ARN for pn-cdc-stream kinesis stream'
+
+  CdcKinesisSourceStreamKeyArn:
+    Type: String
+    Description: 'KMS Key ARN for the CDC Kinesis stream'
+
+  CdcKinesisSourceStreamName:
+    Type: String
+    Description: 'Name of the kinesis stream where CDC are sent'
+
+  UpdateCostFeatureDate:
+    Type: String
+    Description: 'Feature date from which activate the feature flag'
+
+  CostEventUpdateLambdaName:
+    Type: String
+    Description: 'Name of the cost event update lambda'
+
 Resources:
   # PN-Notification-Cost-Service microservice
   NotificationCostServiceMicroservice:
@@ -205,12 +283,13 @@ Resources:
       Parameters:
         MicroServiceUniqueName: !Sub '${ProjectName}-notification-cost-service'
         CpuValue: !Ref CpuValue
+        CpuArchitecture: ARM
         MemoryAmount: !Ref MemoryAmount
         HealthCheckTimeout: !Ref HealthCheckTimeout
         HealthCheckInterval: !Ref HealthCheckInterval
         HealthyThresholdCount: !Ref HealthyThresholdCount
         UnhealthyThresholdCount: !Ref UnhealthyThresholdCount
-        AutoscalingStrategy: REST-API
+        AutoscalingStrategy: CUSTOM
         AutoscalingThreshold: !Ref AutoscalingThreshold
         AutoscalingCheckPeriod: !Ref AutoscalingCheckPeriod
         MinTasksNumber: !Ref MinTasksNumber
@@ -227,6 +306,11 @@ Resources:
         ContainerEnvEntry3: !Sub 'WIRE_TAP_LOG=${WireTapLogActivation}'
         ContainerEnvEntry4: !Sub 'CORS_ALLOWED_DOMAINS=${CorsAllowedDomains}'
         ContainerEnvEntry5: !Sub 'PN_NOTIFICATIONCOSTSERVICE_NOTIFICATIONDELIVERYCOSTTABLE_TABLENAME=${NotificationDeliveryCostTableName}'
+        ContainerEnvEntry6: !Sub 'PN_NOTIFICATIONCOSTSERVICE_PAYMENTINFOTABLE_TABLENAME=${PaymentInfoTableName}'
+        ContainerEnvEntry7: !Sub 'PN_NOTIFICATIONCOSTSERVICE_TOPICS_PNNOTIFICATIONCOSTTOUPDATE=${PnNotificationCostToUpdateQueueName}'
+        ContainerEnvEntry8: !Sub 'PN_NOTIFICATIONCOSTSERVICE_EVENTBUS_NAME=arn:aws:events:${AWS::Region}:${AWS::AccountId}:event-bus/${ProjectName}-CoreEventBus'
+        ContainerEnvEntry9: 'PN_NOTIFICATIONCOSTSERVICE_EVENTBUS_SOURCE=pn-notification-cost-service'
+        ContainerEnvEntry10: 'PN_NOTIFICATIONCOSTSERVICE_EVENTBUS_OUTCOMEEVENTDETAILTYPE=NotificationCostServiceOutcomeEvent'
         ApplicativeEnvFileChecksum: !Ref ApplicativeEnvFileChecksum
         JavaToolOptions: '-Dreactor.netty.ioWorkerCount=50'
         MappedPaths: '/notification-cost-private/*'
@@ -247,9 +331,21 @@ Resources:
       TemplateURL: !Sub "${TemplateBucketBaseUrl}/fragments/microservice-cloudwatch-dashboard.yaml"
       Parameters:
         DashboardName: !Sub "${ProjectName}-notification-cost-service"
-        DynamoDBTableNames: !Ref NotificationDeliveryCostTableName
-        AlarmArns: !GetAtt NotificationCostServiceMicroservice.Outputs.FatalLogsMetricAlarmArn
-        LogGroupsNames: !Sub '/aws/ecs/${ProjectName}-notification-cost-service'
+        DynamoDBTableNames: !Join
+          - ','
+          - - !Ref NotificationDeliveryCostTableName
+            - !Ref PaymentInfoTableName
+        AlarmArns: !Join
+          - ','
+          - - !GetAtt NotificationCostServiceMicroservice.Outputs.FatalLogsMetricAlarmArn
+            - !Ref PnNotificationCostToUpdateQueueAlarmARN
+            - !GetAtt CostEventUpdateLambdaAlarms.Outputs.LambdaInvocationErrorLogsMetricAlarm
+        LambdaArns: !GetAtt CostEventUpdateLambda.Arn
+        QueueArns: !Ref PnNotificationCostToUpdateQueueARN
+        LogGroupsNames: !Join
+          - ','
+          - - !Sub '/aws/ecs/${ProjectName}-notification-cost-service'
+            - !Sub '/aws/lambda/${CostEventUpdateLambdaName}'
 
   # Grant operational rights to Pn-NotificationCostService microservice
   NotificationCostServiceMicroserviceTaskManagedPolicy:
@@ -260,8 +356,232 @@ Resources:
         Statement:
           - Effect: Allow
             Action:
+              - "dynamodb:Query"
+              - 'dynamodb:DeleteItem'
               - 'dynamodb:GetItem'
               - 'dynamodb:PutItem'
               - 'dynamodb:UpdateItem'
             Resource:
               - !Sub "${NotificationDeliveryCostTableArn}"
+              - !Sub "${NotificationDeliveryCostTableArn}/*"
+              - !Sub "${PaymentInfoTableArn}"
+              - !Sub "${PaymentInfoTableArn}/*"
+          - Effect: Allow
+            Action:
+              - sqs:SendMessage
+              - sqs:GetQueueUrl
+              - sqs:ChangeMessageVisibility
+              - sqs:DeleteMessage
+              - sqs:GetQueueAttributes
+              - sqs:ReceiveMessage
+            Resource:
+              - !Ref PnNotificationCostToUpdateQueueARN
+          - Effect: Allow
+            Action:
+              - events:PutEvents
+            Resource:
+              - !Sub arn:aws:events:${AWS::Region}:${AWS::AccountId}:event-bus/${ProjectName}-CoreEventBus
+
+  #########################################################
+  ###               CostEventUpdateLambda               ###
+  #########################################################
+
+  # Lambda function
+  CostEventUpdateLambda:
+    Type: AWS::Lambda::Function
+    Properties:
+      FunctionName: !Ref CostEventUpdateLambdaName
+      Runtime: nodejs22.x
+      Handler: "index.handler"
+      Code:
+        S3Bucket: !Ref MicroserviceBucketName
+        S3Key: !Sub "${MicroserviceBucketBaseKey}/functions_zip/costEventUpdate.zip"
+      Role: !GetAtt CostEventUpdateLambdaRole.Arn
+      Environment:
+        Variables:
+          REGION: !Sub ${AWS::Region}
+          FEATURE_DATE: "{{resolve:ssm:/config/notification-cost-service/notification-processing-start-date}}"
+          QUEUE_URL: !Ref PnNotificationCostToUpdateQueueURL
+      TracingConfig:
+        Mode: Active
+      Layers:
+        - !Sub "arn:aws:lambda:${AWS::Region}:339249233099:layer:LambdaInsightsExtension:13"
+      Timeout: 10
+
+  # Lambda function role
+  CostEventUpdateLambdaRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: !Sub ${ProjectName}-CostEventUpdateLambdaRole
+      AssumeRolePolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service:
+                - lambda.amazonaws.com
+            Action:
+              - sts:AssumeRole
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole
+
+  # Lambda function IAM policy
+  CostEventUpdateLambdaPolicy:
+    Type: AWS::IAM::Policy
+    Properties:
+      PolicyName: !Sub ${ProjectName}-CostEventUpdateLambdaPolicy
+      Roles:
+        - !Ref CostEventUpdateLambdaRole
+      PolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          - Effect: Allow
+            Action:
+              - kinesis:DescribeStream
+              - kinesis:DescribeStreamSummary
+              - kinesis:GetShardIterator
+              - kinesis:GetRecords
+              - kinesis:ListShards
+              - kinesis:ListStreams
+              - kinesis:SubscribeToShard
+            Resource: !Ref CdcKinesisSourceStreamArn
+          - Action: kms:Decrypt
+            Effect: Allow
+            Resource: !Ref CdcKinesisSourceStreamKeyArn
+          - Effect: Allow
+            Action:
+              - sqs:ChangeMessageVisibility
+              - sqs:GetQueueAttributes
+              - sqs:GetQueueUrl
+              - sqs:SendMessage
+            Resource:
+              !Ref PnNotificationCostToUpdateQueueARN
+          - Effect: Allow
+            Action:
+              - s3:ListBucket
+              - s3:GetBucketLocation
+            Resource: !Sub arn:aws:s3:::${ESMKinesisFailureNotificationsBucketName}
+          - Effect: Allow
+            Action:
+              - s3:PutObject
+            Resource: !Sub arn:aws:s3:::${ESMKinesisFailureNotificationsBucketName}/*
+
+    # CDC to Cost Event Update
+  CostEventUpdateLambdaKinesisSource:
+    Type: AWS::Lambda::EventSourceMapping
+    DependsOn: CostEventUpdateLambdaPolicy
+    Properties:
+      BatchSize: !Ref CostEventUpdateLambdaBatchSize
+      BisectBatchOnFunctionError: true
+      EventSourceArn: !Ref CdcKinesisSourceStreamArn
+      FunctionName: !Ref CostEventUpdateLambda
+      FunctionResponseTypes:
+        - ReportBatchItemFailures
+      FilterCriteria:
+        Filters:
+          - Pattern: !Join
+              - ''
+              - - '{ "data": { "tableName": ["pn-Timelines"], "eventName": ["INSERT"], "dynamodb": { "NewImage": { "category": { "S": ["'
+                - !Join [ '","', !Ref CostEventUpdateLambdaEventCategories ]
+                - '"] } } } } }'
+      MaximumBatchingWindowInSeconds: !Ref CostEventUpdateLambdaMaximumBatchingWindowInSeconds
+      MaximumRecordAgeInSeconds: !Ref CostEventUpdateLambdaMaximumRecordAge
+      MaximumRetryAttempts: !Ref CostEventUpdateLambdaMaximumRetryAttempts
+      StartingPosition: TRIM_HORIZON
+      DestinationConfig:
+        OnFailure:
+          Destination: !Sub arn:aws:s3:::${ESMKinesisFailureNotificationsBucketName}
+
+  CostEventUpdateKinesisFailuresAlarm:
+    Type: AWS::CloudWatch::Alarm
+    Properties:
+      AlarmName: !Sub "${ProjectName}-CostEventUpdate-ESM-Alarm"
+      AlarmDescription: "CloudWatch alarm for when CostEventUpdateLambda has Kinesis stream read failures, which can indicate problems with the function processing or with the stream itself."
+      TreatMissingData: notBreaching
+      AlarmActions:
+        - !Ref AlarmSNSTopicArn
+      OKActions:
+        - !Ref AlarmSNSTopicArn
+      Dimensions:
+        - Value: !Ref CostEventUpdateLambda
+          Name: FunctionName
+        - Value: !Ref CdcKinesisSourceStreamName
+          Name: StreamName
+      DatapointsToAlarm: 1
+      ComparisonOperator: GreaterThanOrEqualToThreshold
+      EvaluationPeriods: 6
+      Period: 600
+      Namespace: ESM/Kinesis
+      MetricName: ProcessingFailures
+      Statistic: Maximum
+      Threshold: 1
+
+  CostEventUpdateLambdaAlarms:
+    Type: AWS::CloudFormation::Stack
+    Properties:
+      TemplateURL: !Sub "${TemplateBucketBaseUrl}/fragments/lambda-alarms.yaml"
+      Parameters:
+        FunctionName: !Ref CostEventUpdateLambda
+        AlarmSNSTopicArn: !Ref AlarmSNSTopicArn
+
+  #### Alarm for custom metric Autoscaling
+  AlarmCustomAutoscaling:
+    Type: "AWS::CloudWatch::Alarm"
+    Properties:
+      AlarmName: !Sub "${ProjectName}-notification-cost-service-autoscaling-custom"
+      AlarmDescription: "Trigger scaling based on custom metric"
+      DatapointsToAlarm: !Ref AutoscalingDataPointN
+      ComparisonOperator: "GreaterThanOrEqualToThreshold"
+      Metrics:
+        - Id: m1
+          MetricStat:
+            Metric:
+              Dimensions:
+                - Name: QueueName
+                  Value: !Ref "PnNotificationCostToUpdateQueueName"
+              Namespace: "AWS/SQS"
+              MetricName: "ApproximateNumberOfMessagesVisible"
+            Period: !Ref AutoscalingCheckPeriod
+            Stat: Average
+          ReturnData: False
+        - Id: m2
+          MetricStat:
+            Metric:
+              Dimensions:
+                - Name: TargetGroup
+                  Value: !GetAtt NotificationCostServiceMicroservice.Outputs.TargetGroupName
+              Namespace: "AWS/ApplicationELB"
+              MetricName: "RequestCountPerTarget"
+            Period: !Ref AutoscalingCheckPeriod
+            Stat: Sum
+          ReturnData: False
+        - Id: m3
+          MetricStat:
+            Metric:
+              Dimensions:
+                - Name: TargetGroup
+                  Value: !GetAtt NotificationCostServiceMicroservice.Outputs.TargetGroupName
+                - Name: LoadBalancer
+                  Value: !Ref ApplicationLoadBalancerMetricsDimensionName
+              Namespace: "AWS/ApplicationELB"
+              MetricName: "HealthyHostCount"
+            Period: !Ref AutoscalingCheckPeriod
+            Stat: Average
+          ReturnData: False
+        - Id: code
+          Expression: !Sub "IF(m3==0, 101, (100*(m1)) / (${ConsumedQueueMessagePerMinute} * m3) )"
+          Label: !Sub "${ProjectName}-notification-cost-service-queue-custom-metric"
+          ReturnData: False
+        - Id: http
+          Expression: !Sub "(100 * m2) / ${AutoscalingThreshold}"
+          Label: !Sub "${ProjectName}-notification-cost-service-http-custom-metric"
+          ReturnData: False
+        - Id: e1
+          Expression: "IF( code<http, http, code )"
+          Label: !Sub "${ProjectName}-notification-cost-service-autoscale-custom-metric"
+      EvaluationPeriods: !Ref AutoscalingDataPointM
+      Threshold: 60
+      AlarmActions:
+        - !GetAtt NotificationCostServiceMicroservice.Outputs.ScaleUpPolicy
+      OKActions:
+        - !GetAtt NotificationCostServiceMicroservice.Outputs.ScaleDownPolicy

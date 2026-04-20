@@ -1,9 +1,14 @@
 package it.pagopa.pn.notificationcostservice.service.mapper;
 
 import it.pagopa.pn.notification_cost_service.generated.openapi.server.v1.dto.*;
+import it.pagopa.pn.notificationcostservice.config.PnNotificationCostServiceConfigs;
 import it.pagopa.pn.notificationcostservice.model.cost.CalculatedCosts;
+import it.pagopa.pn.notificationcostservice.model.notificationdeliverycost.BaseCost;
 import it.pagopa.pn.notificationcostservice.model.notificationdeliverycost.NotificationDeliveryCost;
+import it.pagopa.pn.notificationcostservice.model.notificationdeliverycost.NotificationFeePolicy;
+import it.pagopa.pn.notificationcostservice.model.notificationdeliverycost.PagoPaIntMode;
 import it.pagopa.pn.notificationcostservice.model.notificationdeliverycost.analogcost.AnalogCost;
+import lombok.AllArgsConstructor;
 import org.springframework.stereotype.Component;
 
 import java.util.ArrayList;
@@ -11,15 +16,53 @@ import java.util.List;
 import java.util.Optional;
 
 @Component
+@AllArgsConstructor
 public class NotificationDeliveryCostMapper {
+    private final PnNotificationCostServiceConfigs configs;
 
-    public NotificationCostRecipientResponseDto mapDtoToResponse(NotificationDeliveryCost dto, CalculatedCosts calculatedCosts) {
+    public List<NotificationDeliveryCost> mapDtoToNotificationDeliveryCost(String iun, NewNotificationCostRequestDto dto) {
+        return dto.getCostRecipients().stream()
+                .map(recipient -> mapRecipientToNotificationDeliveryCost(iun, dto, recipient))
+                .toList();
+    }
+
+    private NotificationDeliveryCost mapRecipientToNotificationDeliveryCost(
+            String iun,
+            NewNotificationCostRequestDto dto,
+            RecipientCostDataDto recipient
+    ) {
+        return NotificationDeliveryCost.builder()
+                .iun(iun)
+                .recipientInternalId(recipient.getRecipientInternalId())
+                .senderPaId(dto.getSenderPaId())
+                .senderTaxId(dto.getSenderTaxId())
+                .recIndex(recipient.getRecIndex())
+                .vat(dto.getVat())
+                .pagoPaIntMode(PagoPaIntMode.valueOf(dto.getPagoPaIntMode().name()))
+                .notificationFeePolicy(NotificationFeePolicy.valueOf(dto.getNotificationFeePolicy().name()))
+                .baseCost(BaseCost.builder()
+                        .sendFee(configs.getSendFee())
+                        .paFee(dto.getPaFee())
+                        .build())
+                .build();
+    }
+    public NotificationCostRecipientResponseDto mapToNotificationCostRecipientResponse(NotificationDeliveryCost dto, CalculatedCosts calculatedCosts) {
         return new NotificationCostRecipientResponseDto()
                 .lastUpdate(dto.getLastUpdate())
                 .pagoPaIntMode(PagoPaIntModeDto.fromValue(dto.getPagoPaIntMode().name()))
                 .totalCost(new TotalCostDto()
                         .costWithVat(calculatedCosts.getTotalCostWithVat())
                         .details(mapTotalCostDetails(dto, calculatedCosts)));
+    }
+
+    public NotificationCostPaymentResponseDto mapToNotificationCostPaymentResponse(NotificationDeliveryCost dto, CalculatedCosts calculatedCosts) {
+        return new NotificationCostPaymentResponseDto()
+                .lastUpdate(dto.getLastUpdate())
+                .pagoPaIntMode(PagoPaIntModeDto.fromValue(dto.getPagoPaIntMode().name()))
+                .totalCost(new TotalCostDto()
+                        .costWithVat(calculatedCosts.getTotalCostWithVat())
+                        .details(mapTotalCostDetails(dto, calculatedCosts)))
+                .partialCost(mapPartialCost(dto, calculatedCosts));
     }
 
     private TotalCostDetailsDto mapTotalCostDetails(NotificationDeliveryCost dto, CalculatedCosts calculatedCosts) {
@@ -42,6 +85,7 @@ public class NotificationDeliveryCostMapper {
         return new AnalogCostDetailDto()
                 .costWithVat(calculatedCosts.getAnalogCostWithVat())
                 .vat(dto.getVat())
+                .cost(calculatedCosts.getAnalogCost())
                 .analogCostComponents(components);
     }
 
@@ -67,5 +111,17 @@ public class NotificationDeliveryCostMapper {
                 .cost(dto.getCost())
                 .costName(costName)
                 .productType(dto.getProductType());
+    }
+
+    private PartialCostDto mapPartialCost(NotificationDeliveryCost dto, CalculatedCosts calculatedCosts) {
+        return new PartialCostDto()
+                .cost(calculatedCosts.getPartialCost())
+                .details(new PartialCostDetailsDto()
+                        .analogCostDetail(mapAnalogCostDetail(dto, calculatedCosts))
+                        .baseCostDetail(new BaseCostDetailDto()
+                                .cost(dto.getBaseCost().getSendFee())
+                                .baseCostComponents(List.of(
+                                        new BaseCostComponentDto().costName(BaseCostNameDto.SEND_FEE).cost(dto.getBaseCost().getSendFee())
+                                ))));
     }
 }

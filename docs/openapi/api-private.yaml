@@ -9,20 +9,14 @@ info:
 paths:
   "/notification-cost-private/cost/{iun}/recipient/{recIndex}":
     get:
-      operationId: NotificationCostRecipient
-      summary: Retrieve notification cost for recipient
+      operationId: getNotificationCost
+      summary: Recupera il costo della notifica per un destinatario
       description: >-
         Servizio che restituisce il costo di notificazione per il singolo destinatario
       tags:
         - NotificationCostRecipient
       parameters:
-        - name: iun
-          in: path
-          required: true
-          description: Identificativo Univoco Notifica (IUN)
-          schema:
-            type: string
-          example: '00000000-0000-0000-0000-000000000000'
+        - $ref: '#/components/parameters/pathIun'
         - name: recIndex
           in: path
           required: true
@@ -57,8 +51,165 @@ paths:
               schema:
                 $ref: '#/components/schemas/Problem'
 
+  "/notification-cost-private/cost/payment/{creditorTaxId}/{noticeCode}":
+    get:
+      operationId: getNotificationCostByPayment
+      summary: Recupera il costo della notifica per un pagamento
+      description: >-
+        Servizio che restituisce il costo di notificazione per il singolo pagamento identificato dall'IUV
+      tags:
+        - NotificationCostRecipient
+      parameters:
+        - $ref: '#/components/parameters/pathCreditorTaxId'
+        - $ref: '#/components/parameters/pathNoticeCode'
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/NotificationCostPaymentResponse'
+        '400':
+          description: Bad Request
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+        '404':
+          description: Not Found
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+        '500':
+          description: Internal Server Error
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+
+  "/notification-cost-private/cost/initialize/{iun}":
+    post:
+      operationId: initializeNotificationCost
+      summary: "Initialize notification cost for all recipients"
+      description: " Servizio che inizializza il costo di notificazione per lo IUN indicato per tutti i destinatari della notifica."
+      tags:
+        - NotificationCostRecipient
+      parameters:
+        - $ref: '#/components/parameters/pathIun'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/NewNotificationCostRequest'
+      responses:
+        '202':
+          description: ACK - Richiesta elaborata correttamente
+          content:
+            text/plain:
+              schema:
+                type: string
+        '400':
+          description: Invalid input
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+        '500':
+          description: Internal Server Error
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
 components:
+  parameters:
+    pathIun:
+      name: iun
+      in: path
+      required: true
+      schema:
+        $ref: './remote-refs.yaml#/components/schemas/IUN'
+
+    pathCreditorTaxId:
+      name: creditorTaxId
+      in: path
+      required: true
+      schema:
+        $ref: './remote-refs.yaml#/components/schemas/paTaxId'
+
+    pathNoticeCode:
+       name: noticeCode
+       in: path
+       required: true
+       schema:
+         $ref: './remote-refs.yaml#/components/schemas/noticeCode'
+
   schemas:
+    NewNotificationCostRequest:
+      type: object
+      required:
+        - costRecipients
+        - paFee
+        - notificationFeePolicy
+        - pagoPaIntMode
+        - vat
+        - senderPaId
+        - senderTaxId
+      properties:
+        paFee:
+          type: integer
+          format: int32
+          minimum: 0
+          description: Costo base dell'ente per notificazione (in eurocent)
+        notificationFeePolicy:
+          $ref: '#/components/schemas/NotificationFeePolicy'
+        pagoPaIntMode:
+          $ref: '#/components/schemas/PagoPaIntMode'
+        vat:
+          $ref: '#/components/schemas/Vat'
+        senderPaId:
+          type: string
+          description: Identificativo (non IPA) della PA mittente che ha eseguito l'onboarding su SelfCare.
+        senderTaxId:
+          type: string
+          description: Codice Fiscale identificativo dell’ente
+        costRecipients:
+          type: array
+          minItems: 1
+          maxItems: 100
+          items:
+            $ref: '#/components/schemas/RecipientCostData'
+
+    RecipientCostData:
+      type: object
+      required:
+        - recIndex
+        - recipientInternalId
+      properties:
+        recIndex:
+          type: integer
+          format: int32
+          description: Indice identificativo del destinatario
+        recipientInternalId:
+          type: string
+          description: ID anonimizzato del destinatario
+        payments:
+          type: array
+          items:
+            $ref: '#/components/schemas/PaymentData'
+
+    PaymentData:
+      type: object
+      required:
+        - iuv
+        - applyCost
+      properties:
+        iuv:
+          $ref: '#/components/schemas/IUV'
+        applyCost:
+          type: boolean
+          description: Indica se applicare o meno i costi di notificazione
     NotificationCostRecipientResponse:
       title: Notification cost Response for recipient
       description: >-
@@ -100,9 +251,53 @@ components:
           $ref: '#/components/schemas/NotificationFeePolicy'
         baseCostDetail:
           description: Dettaglio del costo base di notificazione
+          allOf:
+            - $ref: '#/components/schemas/BaseCostDetail'
+        analogCostDetail:
+          description: Dettaglio del costo analogico di notificazione
+          allOf:
+            - $ref: '#/components/schemas/AnalogCostDetail'
+
+    IUV:
+      type: string
+      description: >
+        Identificativo univoco assegnato a ogni pagamento, formato da creditorTaxId##noticeCode
+      example: '77777777777##362981250372662822'
+      pattern: '^[0-9]{11}##[0-9]{18}$'
+
+    NotificationCostPaymentResponse:
+      allOf:
+        - $ref: '#/components/schemas/NotificationCostRecipientResponse'
+      type: object
+      required: [ partialCost ]
+      properties:
+        partialCost:
+          $ref: '#/components/schemas/PartialCost'
+
+    PartialCost:
+      title: Costo parziale di notificazione
+      description: Dettaglio del costo parziale e delle sue componenti
+      type: object
+      required: [ cost, details ]
+      properties:
+        cost:
+          description: Costo parziale in eurocent (somma algebrica dei dettagli) esclusivo di IVA
+          type: integer
+          format: int32
+        details:
+          $ref: '#/components/schemas/PartialCostDetails'
+
+    PartialCostDetails:
+      title: Dettaglio componente costo parziale
+      description: Dettaglio di una singola componente del costo parziale
+      type: object
+      required: [ baseCostDetail ]
+      properties:
+        baseCostDetail:
+          description: Dettaglio del costo base di notificazione
           $ref: '#/components/schemas/BaseCostDetail'
         analogCostDetail:
-          description: Dettaglio del costo anlogico di notificazione
+          description: Dettaglio del costo analogico di notificazione
           $ref: '#/components/schemas/AnalogCostDetail'
 
     PagoPaIntMode:
@@ -116,6 +311,13 @@ components:
         - NONE
         - SYNC
         - ASYNC
+
+    Vat:
+      description: IVA applicata ai costi cartacei (es. 22)
+      type: integer
+      format: int32
+      minimum: 0
+      maximum: 100
 
     NotificationFeePolicy:
       type: string
@@ -174,19 +376,18 @@ components:
 
     AnalogCostDetail:
       type: object
-      required: [ costWithVat, vat, analogCostComponents ]
+      required: [ costWithVat, vat, cost, analogCostComponents ]
       properties:
         costWithVat:
           description: Costo totale in eurocent (somma algebrica delle componenti) comprensivo di IVA
           type: integer
           format: int32
         vat:
+          $ref: '#/components/schemas/Vat'
+        cost:
+          description: Costo totale in eurocent (somma algebrica delle componenti) escluso IVA
           type: integer
-          description: >-
-            Aliquota IVA applicata (espressa come intero, es. 22). Calcolata solo sui costi aventi includedInVatBase = true.
           format: int32
-          minimum: 0
-          maximum: 100
         analogCostComponents:
           description: Elenco delle componenti di costo analogiche che concorrono a formare il costo totale
           type: array

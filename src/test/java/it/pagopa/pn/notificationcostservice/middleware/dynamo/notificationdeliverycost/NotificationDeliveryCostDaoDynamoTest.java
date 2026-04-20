@@ -1,0 +1,425 @@
+package it.pagopa.pn.notificationcostservice.middleware.dynamo.notificationdeliverycost;
+
+import it.pagopa.pn.notificationcostservice.config.PnNotificationCostServiceConfigs;
+import it.pagopa.pn.notificationcostservice.exception.PnNotFoundException;
+import it.pagopa.pn.notificationcostservice.middleware.dao.dynamo.NotificationDeliveryCostDaoDynamo;
+import it.pagopa.pn.notificationcostservice.middleware.dao.dynamo.entity.notificationdeliverycost.BaseCostEntity;
+import it.pagopa.pn.notificationcostservice.middleware.dao.dynamo.entity.notificationdeliverycost.NotificationDeliveryCostEntity;
+import it.pagopa.pn.notificationcostservice.middleware.dao.dynamo.entity.notificationdeliverycost.analogcost.FirstAnalogCostEntity;
+import it.pagopa.pn.notificationcostservice.middleware.dao.dynamo.entity.notificationdeliverycost.analogcost.SecondAnalogCostEntity;
+import it.pagopa.pn.notificationcostservice.middleware.dao.dynamo.mapper.notificationdeliverycost.EntityToDtoNotificationDeliveryCostMapper;
+import it.pagopa.pn.notificationcostservice.model.notificationdeliverycost.BaseCost;
+import it.pagopa.pn.notificationcostservice.model.notificationdeliverycost.NotificationDeliveryCost;
+import it.pagopa.pn.notificationcostservice.model.notificationdeliverycost.NotificationFeePolicy;
+import it.pagopa.pn.notificationcostservice.model.notificationdeliverycost.PagoPaIntMode;
+import it.pagopa.pn.notificationcostservice.model.notificationdeliverycost.analogcost.FirstAnalogCost;
+import it.pagopa.pn.notificationcostservice.model.notificationdeliverycost.analogcost.SecondAnalogCost;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.ArgumentCaptor;
+import org.mockito.ArgumentMatchers;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
+import reactor.core.publisher.Flux;
+import reactor.core.publisher.Mono;
+import reactor.test.StepVerifier;
+import software.amazon.awssdk.core.async.SdkPublisher;
+import software.amazon.awssdk.enhanced.dynamodb.DynamoDbAsyncTable;
+import software.amazon.awssdk.enhanced.dynamodb.DynamoDbEnhancedAsyncClient;
+import software.amazon.awssdk.enhanced.dynamodb.TableSchema;
+import software.amazon.awssdk.enhanced.dynamodb.model.GetItemEnhancedRequest;
+import software.amazon.awssdk.enhanced.dynamodb.model.Page;
+import software.amazon.awssdk.enhanced.dynamodb.model.PagePublisher;
+import software.amazon.awssdk.enhanced.dynamodb.model.QueryEnhancedRequest;
+import software.amazon.awssdk.enhanced.dynamodb.model.UpdateItemEnhancedRequest;
+import software.amazon.awssdk.services.dynamodb.DynamoDbAsyncClient;
+import software.amazon.awssdk.services.dynamodb.model.AttributeValue;
+import software.amazon.awssdk.services.dynamodb.model.UpdateItemRequest;
+import software.amazon.awssdk.services.dynamodb.model.UpdateItemResponse;
+
+import java.time.Instant;
+import java.util.List;
+import java.util.Map;
+import java.util.concurrent.CompletableFuture;
+
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.Mockito.*;
+
+@ExtendWith(MockitoExtension.class)
+class NotificationDeliveryCostDaoDynamoTest {
+
+    @Mock
+    private DynamoDbEnhancedAsyncClient dynamoDbEnhancedAsyncClient;
+
+    @Mock
+    private PnNotificationCostServiceConfigs configs;
+
+    @Mock
+    private PnNotificationCostServiceConfigs.NotificationDeliveryCostTable notificationDeliveryCostDao;
+
+    @Mock
+    private DynamoDbAsyncTable<NotificationDeliveryCostEntity> mockTable;
+
+    @Mock
+    private EntityToDtoNotificationDeliveryCostMapper entityToDtoMapper;
+
+    @Mock
+    private DynamoDbAsyncClient dynamoDbAsyncClient;
+
+    private NotificationDeliveryCostDaoDynamo dao;
+
+    @BeforeEach
+    void setup() {
+        when(notificationDeliveryCostDao.getTableName()).thenReturn("NotificationDeliveryCost");
+        when(configs.getNotificationDeliveryCostTable()).thenReturn(notificationDeliveryCostDao);
+        when(dynamoDbEnhancedAsyncClient.table(
+                anyString(),
+                ArgumentMatchers.<TableSchema<NotificationDeliveryCostEntity>>any()
+        )).thenReturn(mockTable);
+
+        dao = new NotificationDeliveryCostDaoDynamo(
+                dynamoDbEnhancedAsyncClient,
+                dynamoDbAsyncClient,
+                configs,
+                entityToDtoMapper
+        );
+    }
+
+    @Test
+    void testGetNotificationDeliveryCostItem_Success() {
+        String iun = "test-iun-123";
+        Integer recIndex = 0;
+
+        BaseCost baseCost = BaseCost.builder()
+                .paFee(2)
+                .sendFee(10)
+                .build();
+
+        NotificationDeliveryCostEntity entity = newNotificationDeliveryCostEntity(iun, recIndex);
+        NotificationDeliveryCost expectedDto = NotificationDeliveryCost.builder()
+                .iun(iun)
+                .recIndex(recIndex)
+                .baseCost(baseCost)
+                .vat(0)
+                .notificationFeePolicy(NotificationFeePolicy.DELIVERY_MODE)
+                .pagoPaIntMode(PagoPaIntMode.ASYNC)
+                .isDeleted(false)
+                .firstAnalogCost(FirstAnalogCost.builder()
+                        .cost(50)
+                        .productType("AR")
+                        .build())
+                .secondAnalogCost(SecondAnalogCost.builder()
+                        .cost(30)
+                        .productType("890")
+                        .build())
+                .simpleRegisteredLetterCost(null)
+                .recipientInternalId("recipientInternalId")
+                .lastUpdate(entity.getLastUpdate())
+                .lastUpdate(Instant.now())
+                .senderPaId("paId")
+                .senderTaxId("taxId")
+                .build();
+
+        when(mockTable.getItem(any(GetItemEnhancedRequest.class)))
+                .thenReturn(CompletableFuture.completedFuture(entity));
+        when(entityToDtoMapper.entity2Dto(entity)).thenReturn(expectedDto);
+
+        // Act
+        Mono<NotificationDeliveryCost> result = dao.getNotificationDeliveryCostItem(iun, recIndex);
+
+        // Assert
+        StepVerifier.create(result)
+                .expectNext(expectedDto)
+                .verifyComplete();
+
+        verify(mockTable, times(1)).getItem(any(GetItemEnhancedRequest.class));
+        verify(entityToDtoMapper, times(1)).entity2Dto(entity);
+    }
+
+    @Test
+    void testGetNotificationDeliveryCostItem_NotFound() {
+        // Arrange
+        String iun = "non-existent-iun";
+        Integer recIndex = 0;
+
+        when(mockTable.getItem(any(GetItemEnhancedRequest.class)))
+                .thenReturn(CompletableFuture.completedFuture(null));
+
+        // Act
+        Mono<NotificationDeliveryCost> result = dao.getNotificationDeliveryCostItem(iun, recIndex);
+
+        // Assert
+        StepVerifier.create(result)
+                .expectError(PnNotFoundException.class)
+                .verify();
+
+        verify(mockTable, times(1)).getItem(any(GetItemEnhancedRequest.class));
+        verify(entityToDtoMapper, never()).entity2Dto(any());
+    }
+
+    @Test
+    void testGetNotificationDeliveryCostItem_DynamoDbError() {
+        // Arrange
+        String iun = "test-iun-123";
+        Integer recIndex = 0;
+
+        CompletableFuture<NotificationDeliveryCostEntity> failedFuture = new CompletableFuture<>();
+        failedFuture.completeExceptionally(new RuntimeException("DynamoDB error"));
+
+        when(mockTable.getItem(any(GetItemEnhancedRequest.class)))
+                .thenReturn(failedFuture);
+
+        // Act
+        Mono<NotificationDeliveryCost> result = dao.getNotificationDeliveryCostItem(iun, recIndex);
+
+        // Assert
+        StepVerifier.create(result)
+                .expectError(RuntimeException.class)
+                .verify();
+
+        verify(mockTable, times(1)).getItem(any(GetItemEnhancedRequest.class));
+    }
+
+    @Test
+    void updateNotificationDeliveryCostNotNull_dynamoDbError() {
+        NotificationDeliveryCostEntity entity = newNotificationDeliveryCostEntity("test-iun-123", 0);
+
+        CompletableFuture<NotificationDeliveryCostEntity> failedFuture = new CompletableFuture<>();
+        failedFuture.completeExceptionally(new RuntimeException("DynamoDB update error"));
+
+        when(mockTable.updateItem(
+                ArgumentMatchers.<UpdateItemEnhancedRequest<NotificationDeliveryCostEntity>>any()
+        )).thenReturn(failedFuture);
+
+        StepVerifier.create(dao.updateNotificationDeliveryCostNotNull(entity))
+                .expectError(RuntimeException.class)
+                .verify();
+
+        verify(mockTable, times(1)).updateItem(
+                ArgumentMatchers.<UpdateItemEnhancedRequest<NotificationDeliveryCostEntity>>any()
+        );
+    }
+
+    @Test
+    void updateNotificationDeliveryCostNotNull_success() {
+        String iun = "test-iun-123";
+        int recIndex = 0;
+
+        NotificationDeliveryCostEntity entity = newNotificationDeliveryCostEntity(iun, recIndex);
+
+        when(mockTable.updateItem(
+                ArgumentMatchers.<UpdateItemEnhancedRequest<NotificationDeliveryCostEntity>>any()
+        )).thenReturn(CompletableFuture.completedFuture(entity));
+
+        StepVerifier.create(dao.updateNotificationDeliveryCostNotNull(entity))
+                .expectNext(entity)
+                .verifyComplete();
+
+        verify(mockTable, times(1)).updateItem(
+                ArgumentMatchers.<UpdateItemEnhancedRequest<NotificationDeliveryCostEntity>>argThat(
+                        request -> request != null && entity.equals(request.item())
+                )
+        );
+    }
+
+    @Test
+    void updateBaseCostIfNotExistsOrMatch_success_buildsConditionalRequestAndMapsResponse() {
+        NotificationDeliveryCostEntity entity = newNotificationDeliveryCostEntity("iun-base-123", 7);
+
+        Map<String, AttributeValue> responseAttributes = Map.of(
+                NotificationDeliveryCostEntity.COL_PK, AttributeValue.builder().s("iun-base-123").build(),
+                NotificationDeliveryCostEntity.COL_SK, AttributeValue.builder().n("7").build(),
+                NotificationDeliveryCostEntity.COL_VAT, AttributeValue.builder().n("0").build(),
+                NotificationDeliveryCostEntity.COL_NOTIFICATION_FEE_POLICY,
+                AttributeValue.builder().s(NotificationFeePolicy.DELIVERY_MODE.name()).build(),
+                NotificationDeliveryCostEntity.COL_PAGO_PA_INT_MODE,
+                AttributeValue.builder().s(PagoPaIntMode.ASYNC.name()).build(),
+                NotificationDeliveryCostEntity.COL_SENDER_PA_ID,
+                AttributeValue.builder().s("paId").build(),
+                NotificationDeliveryCostEntity.COL_SENDER_TAX_ID,
+                AttributeValue.builder().s("taxId").build(),
+                NotificationDeliveryCostEntity.COL_RECIPIENT_INTERNAL_ID,
+                AttributeValue.builder().s("recipientInternalId").build(),
+                NotificationDeliveryCostEntity.COL_LAST_UPDATE,
+                AttributeValue.builder().s(Instant.now().toString()).build(),
+                NotificationDeliveryCostEntity.COL_BASE_COST,
+                AttributeValue.builder().m(Map.of(
+                        BaseCostEntity.COL_SEND_FEE, AttributeValue.builder().n("10").build(),
+                        BaseCostEntity.COL_PA_FEE, AttributeValue.builder().n("2").build()
+                )).build()
+        );
+
+
+        when(dynamoDbAsyncClient.updateItem(any(UpdateItemRequest.class)))
+                .thenReturn(CompletableFuture.completedFuture(
+                        UpdateItemResponse.builder()
+                                .attributes(responseAttributes)
+                                .build()
+                ));
+
+        StepVerifier.create(dao.updateBaseCostIfNotExistsOrMatch(entity))
+                .assertNext(updated -> {
+                    Assertions.assertEquals("iun-base-123", updated.getIun());
+                    Assertions.assertEquals(7, updated.getRecIndex());
+                    Assertions.assertEquals(0, updated.getVat());
+                    Assertions.assertEquals(NotificationFeePolicy.DELIVERY_MODE, updated.getNotificationFeePolicy());
+                    Assertions.assertEquals(PagoPaIntMode.ASYNC, updated.getPagoPaIntMode());
+                    Assertions.assertEquals("paId", updated.getSenderPaId());
+                    Assertions.assertEquals("taxId", updated.getSenderTaxId());
+                    Assertions.assertEquals("recipientInternalId", updated.getRecipientInternalId());
+                    Assertions.assertNotNull(updated.getBaseCost());
+                    Assertions.assertEquals(10, updated.getBaseCost().getSendFee());
+                    Assertions.assertEquals(2, updated.getBaseCost().getPaFee());
+                })
+                .verifyComplete();
+
+        ArgumentCaptor<UpdateItemRequest> captor = ArgumentCaptor.forClass(UpdateItemRequest.class);
+        verify(dynamoDbAsyncClient).updateItem(captor.capture());
+
+        UpdateItemRequest request = captor.getValue();
+        Assertions.assertEquals("NotificationDeliveryCost", request.tableName());
+        Assertions.assertEquals("iun-base-123", request.key().get(NotificationDeliveryCostEntity.COL_PK).s());
+        Assertions.assertEquals("7", request.key().get(NotificationDeliveryCostEntity.COL_SK).n());
+        Assertions.assertTrue(request.updateExpression().contains("#baseCost = :baseCost"));
+        Assertions.assertTrue(request.conditionExpression().contains("attribute_not_exists(#pk)"));
+        Assertions.assertTrue(request.conditionExpression().contains("attribute_not_exists(#sk)"));
+    }
+
+    @Test
+    void updateBaseCostIfNotExistsOrMatch_propagatesDynamoError() {
+        NotificationDeliveryCostEntity entity = newNotificationDeliveryCostEntity("iun-base-err", 3);
+
+        CompletableFuture<UpdateItemResponse> failedFuture = new CompletableFuture<>();
+        failedFuture.completeExceptionally(new RuntimeException("conditional base cost update failed"));
+
+        when(dynamoDbAsyncClient.updateItem(any(UpdateItemRequest.class)))
+                .thenReturn(failedFuture);
+
+        StepVerifier.create(dao.updateBaseCostIfNotExistsOrMatch(entity))
+                .expectError(RuntimeException.class)
+                .verify();
+
+        verify(dynamoDbAsyncClient).updateItem(any(UpdateItemRequest.class));
+    }
+
+
+    @Test
+    void updateNotificationDeliveryCostNotNull_multipleNotifications_success() {
+        NotificationDeliveryCostEntity e1 = newNotificationDeliveryCostEntity("iun-1", 0);
+        NotificationDeliveryCostEntity e2 = newNotificationDeliveryCostEntity("iun-2", 1);
+
+        when(mockTable.updateItem(
+                ArgumentMatchers.<UpdateItemEnhancedRequest<NotificationDeliveryCostEntity>>any()
+        ))
+                .thenReturn(CompletableFuture.completedFuture(e1))
+                .thenReturn(CompletableFuture.completedFuture(e2));
+
+        StepVerifier.create(Flux.concat(
+                        dao.updateNotificationDeliveryCostNotNull(e1),
+                        dao.updateNotificationDeliveryCostNotNull(e2)
+                ))
+                .expectNext(e1)
+                .expectNext(e2)
+                .verifyComplete();
+
+        verify(mockTable, times(2)).updateItem(
+                ArgumentMatchers.<UpdateItemEnhancedRequest<NotificationDeliveryCostEntity>>any()
+        );
+    }
+
+    @Test
+    void getAllByIun_successAggregatesAllQueryPages() {
+        String iun = "iun-aggregate";
+        NotificationDeliveryCostEntity e1 = newNotificationDeliveryCostEntity(iun, 0);
+        NotificationDeliveryCostEntity e2 = newNotificationDeliveryCostEntity(iun, 1);
+        NotificationDeliveryCostEntity e3 = newNotificationDeliveryCostEntity(iun, 2);
+
+        SdkPublisher<Page<NotificationDeliveryCostEntity>> sdkPublisher = subscriber -> Flux.just(
+                Page.create(List.of(e1, e2)),
+                Page.create(List.of(e3))
+        ).subscribe(subscriber);
+        PagePublisher<NotificationDeliveryCostEntity> pagePublisher = PagePublisher.create(sdkPublisher);
+        when(mockTable.query(ArgumentMatchers.<QueryEnhancedRequest>any()))
+                .thenReturn(pagePublisher);
+
+        StepVerifier.create(dao.getAllByIun(iun))
+                .expectNextMatches(item -> iun.equals(item.getIun()) && item.getRecIndex() == 0)
+                .expectNextMatches(item -> iun.equals(item.getIun()) && item.getRecIndex() == 1)
+                .expectNextMatches(item -> iun.equals(item.getIun()) && item.getRecIndex() == 2)
+                .verifyComplete();
+
+        ArgumentCaptor<QueryEnhancedRequest> requestCaptor = ArgumentCaptor.forClass(QueryEnhancedRequest.class);
+        verify(mockTable).query(requestCaptor.capture());
+        org.junit.jupiter.api.Assertions.assertNotNull(requestCaptor.getValue());
+        org.junit.jupiter.api.Assertions.assertNotNull(requestCaptor.getValue().queryConditional());
+    }
+
+    @Test
+    void getAllByIun_returnsEmptyPageWhenNoItemsFound() {
+        SdkPublisher<Page<NotificationDeliveryCostEntity>> sdkPublisher = subscriber -> Flux
+                .<Page<NotificationDeliveryCostEntity>>empty()
+                .subscribe(subscriber);
+        PagePublisher<NotificationDeliveryCostEntity> pagePublisher = PagePublisher.create(sdkPublisher);
+        when(mockTable.query(ArgumentMatchers.<QueryEnhancedRequest>any()))
+                .thenReturn(pagePublisher);
+
+        StepVerifier.create(dao.getAllByIun("iun-empty"))
+                .expectNextCount(0)
+                .verifyComplete();
+
+        verify(mockTable).query(ArgumentMatchers.<QueryEnhancedRequest>any());
+    }
+
+    @Test
+    void getAllByIun_propagatesErrorWhenQueryFails() {
+        RuntimeException expectedException = new RuntimeException("query failed");
+
+        SdkPublisher<Page<NotificationDeliveryCostEntity>> sdkPublisher = subscriber -> Flux
+                .<Page<NotificationDeliveryCostEntity>>error(expectedException)
+                .subscribe(subscriber);
+        PagePublisher<NotificationDeliveryCostEntity> pagePublisher = PagePublisher.create(sdkPublisher);
+        when(mockTable.query(ArgumentMatchers.<QueryEnhancedRequest>any()))
+                .thenReturn(pagePublisher);
+
+        StepVerifier.create(dao.getAllByIun("iun-error"))
+                .expectErrorMatches(ex -> ex instanceof RuntimeException && "query failed".equals(ex.getMessage()))
+                .verify();
+
+        verify(mockTable).query(ArgumentMatchers.<QueryEnhancedRequest>any());
+    }
+
+    private static NotificationDeliveryCostEntity newNotificationDeliveryCostEntity(String iun, Integer recIndex) {
+        return NotificationDeliveryCostEntity.builder()
+                .iun(iun)
+                .recIndex(recIndex)
+                .pagoPaIntMode(PagoPaIntMode.ASYNC)
+                .baseCost(newBaseCost())
+                .vat(0)
+                .notificationFeePolicy(NotificationFeePolicy.DELIVERY_MODE)
+                .isDeleted(false)
+                .lastUpdate(Instant.now())
+                .firstAnalogCost(FirstAnalogCostEntity.builder()
+                        .cost(50)
+                        .productType("AR")
+                        .build())
+                .secondAnalogCost(SecondAnalogCostEntity.builder()
+                        .cost(30)
+                        .productType("890")
+                        .build())
+                .simpleRegisteredLetterCost(null)
+                .recipientInternalId("recipientInternalId")
+                .lastUpdate(Instant.now())
+                .senderPaId("paId")
+                .senderTaxId("taxId")
+                .build();
+    }
+
+    private static BaseCostEntity newBaseCost() {
+        return BaseCostEntity.builder()
+                .paFee(2)
+                .sendFee(10)
+                .build();
+    }
+}
