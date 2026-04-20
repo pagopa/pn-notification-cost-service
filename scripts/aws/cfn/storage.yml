@@ -37,6 +37,14 @@ Parameters:
     Type: String
     Description: 'Where to send CDC'
 
+  NotificationCostToUpdateOnCallQueueOldestAgeLimit:
+    Type: Number
+    Description: 'Oldest age limit for pn-Notification-Cost-To-Update SQS on-call queue'
+
+  NotificationCostToUpdateQueueOldestAgeLimit:
+    Type: Number
+    Description: 'Oldest age limit for pn-Notification-Cost-To-Update SQS queue'
+
 Resources:
   #DynamoDB tables
   NotificationDeliveryCostTable:
@@ -95,6 +103,8 @@ Resources:
         HasDLQ: "true"
         AlarmSNSTopicName: !Ref AlarmSNSTopicName
         VisibilityTimeout: 60
+        OncallQueueOldestAgeLimit: !Ref NotificationCostToUpdateOnCallQueueOldestAgeLimit
+        QueueOldestAgeLimit: !Ref NotificationCostToUpdateQueueOldestAgeLimit
   #Log Group
   PnNotificationCostServiceLogGroup:
     Type: AWS::CloudFormation::Stack
