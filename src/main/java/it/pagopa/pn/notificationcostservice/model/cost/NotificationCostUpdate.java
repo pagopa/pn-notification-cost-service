@@ -2,6 +2,8 @@ package it.pagopa.pn.notificationcostservice.model.cost;
 
 import lombok.*;
 
+import java.time.Instant;
+
 @NoArgsConstructor
 @AllArgsConstructor
 @Getter
@@ -14,4 +16,5 @@ public class NotificationCostUpdate {
     private Integer cost;
     private String productType;
     private CostUpdatePhaseInt costUpdatePhase;
+    private Instant elementTimestamp;
 }

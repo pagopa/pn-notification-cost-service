@@ -213,6 +213,7 @@ class NotificationCostUpdaterServiceImplTest {
                 .vat(22)
                 .notificationFeePolicy(NotificationFeePolicy.DELIVERY_MODE)
                 .pagoPaIntMode(PagoPaIntMode.SYNC)
+                .lastUpdate(Instant.now())
                 .build();
     }
 
@@ -223,6 +224,7 @@ class NotificationCostUpdaterServiceImplTest {
                 .cost(COST)
                 .productType(PRODUCT_TYPE)
                 .costUpdatePhase(costUpdatePhase)
+                .elementTimestamp(Instant.now())
                 .build();
     }
 }

@@ -88,7 +88,8 @@ function mapSingleEvent(filteredEvent) {
 
   const resultElementBody = {
     iun: timelineObj.iun,
-    eventType: EVENT_TYPE
+    eventType: EVENT_TYPE,
+    elementTimestamp: timelineObj.timestamp,
   };
 
   let messageAttributes = {

@@ -7,6 +7,8 @@ import it.pagopa.pn.notificationcostservice.middleware.queue.consumer.event.Inte
 import it.pagopa.pn.notificationcostservice.model.cost.CostUpdatePhaseInt;
 import lombok.*;
 
+import java.time.Instant;
+
 @NoArgsConstructor
 @AllArgsConstructor
 @Getter
@@ -28,5 +30,6 @@ public class UpdateNotificationCostEvent implements GenericEvent<GenericEventHea
         private Integer cost;
         private String productType;
         private CostUpdatePhaseInt costUpdatePhase;
+        private Instant elementTimestamp;
     }
 }
