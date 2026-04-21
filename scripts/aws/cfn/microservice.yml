@@ -266,10 +266,6 @@ Parameters:
     Type: String
     Description: 'Name of the kinesis stream where CDC are sent'
 
-  UpdateCostFeatureDate:
-    Type: String
-    Description: 'Feature date from which activate the feature flag'
-
   CostEventUpdateLambdaName:
     Type: String
     Description: 'Name of the cost event update lambda'
