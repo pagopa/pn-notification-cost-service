@@ -86,8 +86,8 @@ public class NotificationCostUpdaterServiceImpl implements NotificationCostUpdat
                 MetricUtils.MetricUnit.MILLISECONDS
         );
 
-        String logMsg = String.format("Generated metric for cost update propagation delay: iun=%s, recIndex=%d, ageInMillis=%d",
-                entity.getIun(), entity.getRecIndex(), ageInMillis);
+        String logMsg = String.format("Generated metric for cost update propagation delay: iun=%s, recIndex=%d, ageInMillis=%d, costUpdatePhase=%s",
+                entity.getIun(), entity.getRecIndex(), ageInMillis, notificationCostUpdate.getCostUpdatePhase());
         log.logMetric(List.of(metric), logMsg);
     }
 }
