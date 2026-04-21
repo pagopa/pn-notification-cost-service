@@ -8,7 +8,7 @@ function updateCostPhaseForSendAnalogDomicile(timelineObj) {
     timelineObj.details?.sentAttemptMade === undefined ||
     timelineObj.details?.sentAttemptMade === null
   ) {
-    throw new Error("timelineObject does not have sentAttemptMade");
+    throw new Error(`Timeline element with iun ${timelineObj.iun} and timelineElementId: ${timelineObj.timelineElementId} does not have sentAttemptMade`);
   }
 
   return "SEND_ANALOG_DOMICILE_ATTEMPT_" + timelineObj.details.sentAttemptMade;
@@ -27,7 +27,7 @@ function validateAnalogTimelineObj(category, timelineObj) {
 
   if (missingFields.length > 0) {
     throw new Error(
-      `Missing required fields for ${category}: ${missingFields.join(", ")}`
+      `Timeline element with iun ${timelineObj.iun} and timelineElementId: ${timelineObj.timelineElementId} validation error: missing required fields for ${category}: ${missingFields.join(", ")}`
     );
   }
 }
