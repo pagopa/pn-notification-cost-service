@@ -103,6 +103,7 @@ Resources:
         HasDLQ: "true"
         AlarmSNSTopicName: !Ref AlarmSNSTopicName
         VisibilityTimeout: 60
+        DelaySeconds: 1
         OncallQueueOldestAgeLimit: !Ref NotificationCostToUpdateOnCallQueueOldestAgeLimit
         QueueOldestAgeLimit: !Ref NotificationCostToUpdateQueueOldestAgeLimit
   #Log Group

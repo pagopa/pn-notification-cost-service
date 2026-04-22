@@ -57,13 +57,14 @@ describe("event mapper tests", function () {
 
     // Check MessageBody fields
     let body = JSON.parse(processedItems[0].MessageBody);
-    expect(body).to.have.all.keys("iun", "eventType", "recIndex", "cost", "productType", "costUpdatePhase");
+    expect(body).to.have.all.keys("iun", "eventType", "recIndex", "cost", "productType", "costUpdatePhase", "elementTimestamp");
     expect(body.iun).equal(iun);
     expect(body.eventType).equal(EVENT_TYPE);
     expect(body.recIndex).equal("0");
     expect(body.costUpdatePhase).equal("SEND_ANALOG_DOMICILE_ATTEMPT_0");
     expect(body.cost).equal("926");
     expect(body.productType).equal("AR_REGISTERED_LETTER");
+    expect(body.elementTimestamp).equal("2023-08-09T01:23:56.803455499Z");
 
     // Check message attributes
     expect(processedItems[0]).to.have.all.keys('Id', 'MessageBody', 'MessageAttributes');
@@ -89,13 +90,14 @@ describe("event mapper tests", function () {
     expect(processedItems).to.have.length(1);
 
     let body = JSON.parse(processedItems[0].MessageBody);
-    expect(body).to.have.all.keys("iun", "eventType", "recIndex", "cost", "productType", "costUpdatePhase");
+    expect(body).to.have.all.keys("iun", "eventType", "recIndex", "cost", "productType", "costUpdatePhase", "elementTimestamp");
     expect(body.iun).equal(iun);
     expect(body.eventType).equal(EVENT_TYPE);
     expect(body.recIndex).equal("1");
     expect(body.costUpdatePhase).equal("SEND_ANALOG_DOMICILE_ATTEMPT_1");
     expect(body.cost).equal("926");
     expect(body.productType).equal("AR_REGISTERED_LETTER");
+    expect(body.elementTimestamp).equal("2023-08-09T01:23:56.803455499Z");
 
     // Check message attributes
     expect(processedItems[0]).to.have.all.keys('Id', 'MessageBody', 'MessageAttributes');
@@ -119,13 +121,14 @@ describe("event mapper tests", function () {
     expect(processedItems).to.have.length(1);
 
     let body = JSON.parse(processedItems[0].MessageBody);
-    expect(body).to.have.all.keys("iun", "eventType", "recIndex", "cost", "productType", "costUpdatePhase");
+    expect(body).to.have.all.keys("iun", "eventType", "recIndex", "cost", "productType", "costUpdatePhase", "elementTimestamp");
     expect(body.iun).equal(iun);
     expect(body.eventType).equal(EVENT_TYPE);
     expect(body.recIndex).equal("0");
     expect(body.costUpdatePhase).equal("SEND_SIMPLE_REGISTERED_LETTER");
     expect(body.cost).equal("926");
     expect(body.productType).equal("AR_REGISTERED_LETTER");
+    expect(body.elementTimestamp).equal("2023-08-09T01:23:56.803455499Z");
 
     // Check message attributes
     expect(processedItems[0]).to.have.all.keys('Id', 'MessageBody', 'MessageAttributes');
@@ -149,11 +152,12 @@ describe("event mapper tests", function () {
     expect(processedItems).to.have.length(1);
     // Check MessageBody fields - NOTE: no recIndex for NOTIFICATION_CANCELLED
     let body = JSON.parse(processedItems[0].MessageBody);
-    expect(body).to.have.all.keys("iun", "eventType", "isCancelled", "costUpdatePhase");
+    expect(body).to.have.all.keys("iun", "eventType", "isCancelled", "costUpdatePhase", "elementTimestamp");
     expect(body.iun).equal(iun);
     expect(body.eventType).equal(EVENT_TYPE);
     expect(body.isCancelled).equal(true);
     expect(body.costUpdatePhase).equal("NOTIFICATION_CANCELLED");
+    expect(body.elementTimestamp).equal("2023-08-09T01:23:56.803455499Z");
 
     // Check message attributes
     expect(processedItems[0]).to.have.all.keys('Id', 'MessageBody', 'MessageAttributes');
@@ -177,11 +181,12 @@ describe("event mapper tests", function () {
     expect(processedItems).to.have.length(1);
     // Check MessageBody fields - NOTE: no recIndex for REQUEST_REFUSED
     let body = JSON.parse(processedItems[0].MessageBody);
-    expect(body).to.have.all.keys("iun", "eventType", "isRefused", "costUpdatePhase");
+    expect(body).to.have.all.keys("iun", "eventType", "isRefused", "costUpdatePhase", "elementTimestamp");
     expect(body.iun).equal(iun);
     expect(body.eventType).equal(EVENT_TYPE);
     expect(body.isRefused).equal(true);
     expect(body.costUpdatePhase).equal("REQUEST_REFUSED");
+    expect(body.elementTimestamp).equal("2023-08-09T01:23:56.803455499Z");
 
     // Check message attributes
     expect(processedItems[0]).to.have.all.keys('Id', 'MessageBody', 'MessageAttributes');

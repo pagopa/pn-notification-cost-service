@@ -266,13 +266,14 @@ Parameters:
     Type: String
     Description: 'Name of the kinesis stream where CDC are sent'
 
-  UpdateCostFeatureDate:
-    Type: String
-    Description: 'Feature date from which activate the feature flag'
-
   CostEventUpdateLambdaName:
     Type: String
     Description: 'Name of the cost event update lambda'
+
+  MetricFormatType:
+    Type: String
+    Description: "Metric format type"
+    Default: 'EMF'
 
 Resources:
   # PN-Notification-Cost-Service microservice
@@ -311,6 +312,7 @@ Resources:
         ContainerEnvEntry8: !Sub 'PN_NOTIFICATIONCOSTSERVICE_EVENTBUS_NAME=arn:aws:events:${AWS::Region}:${AWS::AccountId}:event-bus/${ProjectName}-CoreEventBus'
         ContainerEnvEntry9: 'PN_NOTIFICATIONCOSTSERVICE_EVENTBUS_SOURCE=pn-notification-cost-service'
         ContainerEnvEntry10: 'PN_NOTIFICATIONCOSTSERVICE_EVENTBUS_OUTCOMEEVENTDETAILTYPE=NotificationCostServiceOutcomeEvent'
+        ContainerEnvEntry11: !Sub "METRIC_FORMAT_TYPE=${MetricFormatType}"
         ApplicativeEnvFileChecksum: !Ref ApplicativeEnvFileChecksum
         JavaToolOptions: '-Dreactor.netty.ioWorkerCount=50'
         MappedPaths: '/notification-cost-private/*'

@@ -92,7 +92,7 @@ public class UpdateNotificationCostEventHandler {
                 .doOnNext(v -> log.info("Handled paymentInfo deletion for iun={}", v.getIun()))
                 .flatMapMany(v -> notificationDeliveryCostDao.getAllByIun(v.getIun())
                         .switchIfEmpty(handleEmptyCosts(v.getIun(), phase))
-                        .map(entity -> this.mapToDeletedNotificationDeliveryCost(entity, phase))
+                        .map(entity -> this.mapToDeletedNotificationDeliveryCost(entity, phase, payload))
                 );
     }
 
@@ -118,14 +118,16 @@ public class UpdateNotificationCostEventHandler {
                 .cost(payload.getCost())
                 .productType(payload.getProductType())
                 .costUpdatePhase(phase)
+                .elementTimestamp(payload.getElementTimestamp())
                 .build()));
     }
 
-    private NotificationCostUpdate mapToDeletedNotificationDeliveryCost(NotificationDeliveryCostEntity entity, CostUpdatePhaseInt phase) {
+    private NotificationCostUpdate mapToDeletedNotificationDeliveryCost(NotificationDeliveryCostEntity entity, CostUpdatePhaseInt phase, UpdateNotificationCostEvent.Payload payload) {
         return NotificationCostUpdate.builder()
                 .iun(entity.getIun())
                 .recIndex(entity.getRecIndex())
                 .costUpdatePhase(phase)
+                .elementTimestamp(payload.getElementTimestamp())
                 .build();
     }
 
