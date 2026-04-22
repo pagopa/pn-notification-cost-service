@@ -39,8 +39,8 @@ public class NotificationCostUpdaterServiceImpl implements NotificationCostUpdat
                     PnAuditLogEvent auditEntity = buildLogAudit(CostUpdatePhaseInt.VALIDATION, entityToUpdate);
                     auditEntity.log();
                     return notificationDeliveryCostDao.updateBaseCostIfNotExistsOrMatch(entityToUpdate)
-                            .doOnNext(entity -> auditEntity.generateSuccess("Updated entity successfully, entity={}", entity))
-                            .doOnError(error -> auditEntity.generateFailure("Entity update failed, error={}", error));
+                            .doOnNext(entity -> auditEntity.generateSuccess("Updated entity successfully, entity={}", entity).log())
+                            .doOnError(error -> auditEntity.generateFailure("Entity update failed, error={}", error).log());
                 })
                 .then();
     }
@@ -73,7 +73,7 @@ public class NotificationCostUpdaterServiceImpl implements NotificationCostUpdat
         return notificationDeliveryCostDao.updateNotificationDeliveryCostNotNull(entityToUpdate)
                 .doOnNext(entity -> audit.generateSuccess("Updated entity successfully, entity={}", entity).log())
                 .doOnNext(entity -> generateRecordUpdateLatencyMetric(entity, notificationCostUpdate))
-                .doOnError(error -> audit.generateFailure("Entity update failed, error={}", error))
+                .doOnError(error -> audit.generateFailure("Entity update failed, error={}", error).log())
                 .then();
     }
 
