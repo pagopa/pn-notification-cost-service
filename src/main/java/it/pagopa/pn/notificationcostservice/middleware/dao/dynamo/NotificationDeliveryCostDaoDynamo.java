@@ -136,7 +136,10 @@ public class NotificationDeliveryCostDaoDynamo extends BaseDao implements Notifi
         Map<String, Map<String, AttributeValue>> mapAttrs = new LinkedHashMap<>();
         mapAttrs.put(COL_BASE_COST, baseCostFields);
 
-        return this.updateIfMatchOrNotExists(keyAttributes, flatAttributes, mapAttrs)
+        Map<String, AttributeValue> setOnlyFlatAttributes = Map.of(
+                COL_LAST_UPDATE, AttributeValue.builder().s(Instant.now().toString()).build()
+        );
+        return this.updateIfMatchOrNotExists(keyAttributes, flatAttributes, mapAttrs, setOnlyFlatAttributes)
                 .map(this::mapFromAttributeValue);
     }
 

@@ -74,7 +74,7 @@ public class PaymentInfoDaoDynamo extends BaseDao implements PaymentInfoDao {
                 PaymentInfoEntity.COL_APPLY_COST, AttributeValue.builder().bool(entity.isApplyCost()).build()
         );
 
-        return this.updateIfMatchOrNotExists(keyAttributes, flatAttributes, null)
+        return this.updateIfMatchOrNotExists(keyAttributes, flatAttributes, null,null)
                 .then();
     }
     @Override
