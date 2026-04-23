@@ -39,7 +39,7 @@ public class NotificationCostUpdaterServiceImpl implements NotificationCostUpdat
                     PnAuditLogEvent auditEntity = buildLogAudit(CostUpdatePhaseInt.VALIDATION, entityToUpdate);
                     auditEntity.log();
                     return notificationDeliveryCostDao.updateBaseCostIfNotExistsOrMatch(entityToUpdate)
-                            .doOnNext(entity -> auditEntity.generateSuccess("Updated base costs successfully, on NotificationDeliveryCostEntity with iun={}, recIndex={}", entity.getIun(), entity.getRecIndex()).log())
+                            .doOnNext(entity -> auditEntity.generateSuccess("Updated base costs successfully, on NotificationDeliveryCostEntity with iun={}, recIndex={}, baseCost={}", entity.getIun(), entity.getRecIndex(), entity.getBaseCost()).log())
                             .doOnError(error -> auditEntity.generateFailure("NotificationDeliveryCostEntity update failed, iun={}, recIndex={}", notificationDeliveryCost.getIun(), notificationDeliveryCost.getRecIndex(), error).log());
                 })
                 .then();
