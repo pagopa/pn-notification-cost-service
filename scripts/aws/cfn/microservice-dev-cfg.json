@@ -9,6 +9,7 @@
     "MaxTasksNumber": "6",
     "AutoscalingThreshold": "2500",
     "ConsumedQueueMessagePerMinute": "3000",
-    "CostEventUpdateLambdaEventCategories": "SEND_ANALOG_DOMICILE,SEND_SIMPLE_REGISTERED_LETTER,NOTIFICATION_CANCELLED,REQUEST_REFUSED"
+    "CostEventUpdateLambdaEventCategories": "SEND_ANALOG_DOMICILE,SEND_SIMPLE_REGISTERED_LETTER,NOTIFICATION_CANCELLED,REQUEST_REFUSED",
+    "MetricFormatType": ""
   }
 }
