@@ -39,8 +39,8 @@ public class NotificationCostUpdaterServiceImpl implements NotificationCostUpdat
                     PnAuditLogEvent auditEntity = buildLogAudit(CostUpdatePhaseInt.VALIDATION, entityToUpdate);
                     auditEntity.log();
                     return notificationDeliveryCostDao.updateBaseCostIfNotExistsOrMatch(entityToUpdate)
-                            .doOnNext(entity -> auditEntity.generateSuccess("Updated entity successfully, entity={}", entity).log())
-                            .doOnError(error -> auditEntity.generateFailure("Entity update failed, error={}", error).log());
+                            .doOnNext(entity -> auditEntity.generateSuccess("Updated base costs successfully, on NotificationDeliveryCostEntity with iun={}, recIndex={}, baseCost={}", entity.getIun(), entity.getRecIndex(), entity.getBaseCost()).log())
+                            .doOnError(error -> auditEntity.generateFailure("NotificationDeliveryCostEntity update failed, iun={}, recIndex={}", notificationDeliveryCost.getIun(), notificationDeliveryCost.getRecIndex(), error).log());
                 })
                 .then();
     }
@@ -71,9 +71,9 @@ public class NotificationCostUpdaterServiceImpl implements NotificationCostUpdat
 
     private Mono<Void> executeUpdate(NotificationDeliveryCostEntity entityToUpdate, PnAuditLogEvent audit, NotificationCostUpdate notificationCostUpdate) {
         return notificationDeliveryCostDao.updateNotificationDeliveryCostNotNull(entityToUpdate)
-                .doOnNext(entity -> audit.generateSuccess("Updated entity successfully, entity={}", entity).log())
+                .doOnNext(entity -> audit.generateSuccess("Updated NotificationDeliveryCostEntity successfully, entity={}", entity).log())
                 .doOnNext(entity -> generateRecordUpdateLatencyMetric(entity, notificationCostUpdate))
-                .doOnError(error -> audit.generateFailure("Entity update failed, error={}", error).log())
+                .doOnError(error -> audit.generateFailure("NotificationDeliveryCostEntity update failed, iun={}, recIndex={}", entityToUpdate.getIun(), entityToUpdate.getRecIndex(), error).log())
                 .then();
     }
 

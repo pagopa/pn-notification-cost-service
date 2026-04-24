@@ -1,6 +1,7 @@
 package it.pagopa.pn.notificationcostservice.middleware.queue.consumer;
 
 import io.awspring.cloud.sqs.annotation.SqsListener;
+import it.pagopa.pn.commons.utils.MDCUtils;
 import it.pagopa.pn.notificationcostservice.middleware.queue.consumer.event.InternalEvent;
 import it.pagopa.pn.notificationcostservice.middleware.queue.consumer.handler.utils.HandleEventUtils;
 import it.pagopa.pn.notificationcostservice.middleware.queue.consumer.router.InternalEventsRouter;
@@ -27,7 +28,7 @@ public class InternalQueueConsumer {
             message.getPayload();
             log.info("Handle pnNotificationDeliveryCostEventConsumer, messageId={}",
                     message.getHeaders().getId());
-            router.handleEvent(message).block();
+            MDCUtils.addMDCToContextAndExecute(router.handleEvent(message)).block();
             log.logEndingProcess(processName);
 
         } catch (Exception ex) {
