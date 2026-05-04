@@ -18,14 +18,14 @@ Parameters:
     Description: Name of the Glue Database
     Type: String
 
-  NotificationDeliveryCostDynamoTableName:
+  NotificationDeliveryCostTableName:
     Type: String
     Description: |
       DynamoDb table name for NotificationDeliveryCost, valorized by the related output
       in the storage.yaml template, used also for identifying the S3 bucket
       directory where related CDC files are stored.
 
-  PaymentInfoDynamoTableName:
+  PaymentInfoTableName:
     Type: String
     Description: |
       DynamoDb table name for PaymentInfo, valorized by the related output
@@ -52,15 +52,16 @@ Resources:
     Properties:
       TemplateURL: !Sub ${TemplateBucketBaseUrl}/fragments/cdc-glue.yaml
       Parameters:
-        DynamoTableName: !Ref NotificationDeliveryCostDynamoTableName
+        DynamoTableName: !Ref NotificationDeliveryCostTableName
         GlueTableName: !Ref NotificationDeliveryCostGlueTableName
         GlueServiceRoleArn: !Ref GlueServiceRoleArn
         LogsBucketName: !Ref LogsBucketName
         GlueDatabaseName: !Ref GlueDatabaseName
-        DynamoDBKeysStructure: |
-          struct<pk:struct<S:string>,sk:struct<N:string>>
+        # Mapping Logico:
         # pk = iun
         # sk = recIndex
+        DynamoDBKeysStructure: |
+          struct<pk:struct<S:string>,sk:struct<N:string>>
         DynamoDBNewImageStructure: |
           struct<
             pk:struct<S:string>,
@@ -96,14 +97,15 @@ Resources:
     Properties:
       TemplateURL: !Sub ${TemplateBucketBaseUrl}/fragments/cdc-glue.yaml
       Parameters:
-        DynamoTableName: !Ref PaymentInfoDynamoTableName
+        DynamoTableName: !Ref PaymentInfoTableName
         GlueTableName: !Ref PaymentInfoGlueTableName
         GlueServiceRoleArn: !Ref GlueServiceRoleArn
         LogsBucketName: !Ref LogsBucketName
         GlueDatabaseName: !Ref GlueDatabaseName
+        # Mapping Logico:  
+        # pk = creditorTaxId##noticeCode
         DynamoDBKeysStructure: |
           struct<pk:struct<S:string>>
-        # pk = creditorTaxId##noticeCode
         DynamoDBNewImageStructure: |
           struct<
             pk:struct<S:string>,
