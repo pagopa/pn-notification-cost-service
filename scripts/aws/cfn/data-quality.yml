@@ -1,0 +1,115 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: Data quality template, creates nested stacks for Glue Table and Crawler
+
+Parameters:
+  TemplateBucketBaseUrl:
+    Type: String
+    Description: The S3 bucket from which to fetch the templates used by this stack.
+
+  GlueServiceRoleArn:
+    Type: String
+    Description: Service role for the Glue Crawler.
+
+  LogsBucketName:
+    Type: String
+    Description: Logs bucket name
+
+  GlueDatabaseName:
+    Description: Name of the Glue Database
+    Type: String
+
+  NotificationDeliveryCostTableName:
+    Type: String
+    Description: |
+      DynamoDb table name for NotificationDeliveryCost, valorized by the related output
+      in the storage.yaml template, used also for identifying the S3 bucket
+      directory where related CDC files are stored.
+
+  PaymentInfoTableName:
+    Type: String
+    Description: |
+      DynamoDb table name for PaymentInfo, valorized by the related output
+      in the storage.yaml template, used also for identifying the S3 bucket
+      directory where related CDC files are stored.
+
+  NotificationDeliveryCostGlueTableName:
+    Type: String
+    AllowedPattern: '^[a-z_]+$'
+    ConstraintDescription: |
+      Glue table name for NotificationDeliveryCost, accept only lowercase values and underscores.
+    Default: pn_notification_delivery_cost
+
+  PaymentInfoGlueTableName:
+    Type: String
+    AllowedPattern: '^[a-z_]+$'
+    ConstraintDescription: |
+      Glue table name for PaymentInfo, accept only lowercase values and underscores.
+    Default: pn_payment_info
+
+Resources:
+  PnNotificationDeliveryCostDataQualityStack:
+    Type: AWS::CloudFormation::Stack
+    Properties:
+      TemplateURL: !Sub ${TemplateBucketBaseUrl}/fragments/cdc-glue.yaml
+      Parameters:
+        DynamoTableName: !Ref NotificationDeliveryCostTableName
+        GlueTableName: !Ref NotificationDeliveryCostGlueTableName
+        GlueServiceRoleArn: !Ref GlueServiceRoleArn
+        LogsBucketName: !Ref LogsBucketName
+        GlueDatabaseName: !Ref GlueDatabaseName
+        # Mapping Logico:
+        # pk = iun
+        # sk = recIndex
+        DynamoDBKeysStructure: |
+          struct<pk:struct<S:string>,sk:struct<N:string>>
+        DynamoDBNewImageStructure: |
+          struct<
+            pk:struct<S:string>,
+            sk:struct<N:string>,
+            baseCost:struct<M:struct<
+              paFee:struct<N:string>,
+              sendFee:struct<N:string>
+            >>,
+            firstAnalogCost:struct<M:struct<
+              cost:struct<N:string>,
+              productType:struct<NULL:boolean,S:string>
+            >>,
+            secondAnalogCost:struct<M:struct<
+              cost:struct<N:string>,
+              productType:struct<NULL:boolean,S:string>
+            >>,
+            simpleRegisteredLetterCost:struct<M:struct<
+              cost:struct<N:string>,
+              productType:struct<NULL:boolean,S:string>
+            >>,
+            isDeleted:struct<BOOL:boolean>,
+            lastUpdate:struct<S:string>,
+            notificationFeePolicy:struct<S:string>,
+            pagoPaIntMode:struct<S:string>,
+            recipientInternalId:struct<S:string>,
+            senderPaId:struct<S:string>,
+            senderTaxId:struct<S:string>,
+            vat:struct<N:string>
+          >
+
+  PnPaymentInfoDataQualityStack:
+    Type: AWS::CloudFormation::Stack
+    Properties:
+      TemplateURL: !Sub ${TemplateBucketBaseUrl}/fragments/cdc-glue.yaml
+      Parameters:
+        DynamoTableName: !Ref PaymentInfoTableName
+        GlueTableName: !Ref PaymentInfoGlueTableName
+        GlueServiceRoleArn: !Ref GlueServiceRoleArn
+        LogsBucketName: !Ref LogsBucketName
+        GlueDatabaseName: !Ref GlueDatabaseName
+        # Mapping Logico:  
+        # pk = creditorTaxId##noticeCode
+        DynamoDBKeysStructure: |
+          struct<pk:struct<S:string>>
+        DynamoDBNewImageStructure: |
+          struct<
+            pk:struct<S:string>,
+            applyCost:struct<BOOL:boolean>,
+            iun:struct<S:string>,
+            recIndex:struct<N:string>
+          >
