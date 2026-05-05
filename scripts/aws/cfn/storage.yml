@@ -66,6 +66,10 @@ Resources:
       BillingMode: "PAY_PER_REQUEST"
       PointInTimeRecoverySpecification:
         PointInTimeRecoveryEnabled: true
+      KinesisStreamSpecification:
+        StreamArn: !Ref CdcKinesisSourceStreamArn
+      StreamSpecification:
+        StreamViewType: NEW_IMAGE
 
   PaymentInfoTable:
     Type: AWS::DynamoDB::Table
@@ -91,6 +95,10 @@ Resources:
       BillingMode: "PAY_PER_REQUEST"
       PointInTimeRecoverySpecification:
         PointInTimeRecoveryEnabled: true
+      KinesisStreamSpecification:
+        StreamArn: !Ref CdcKinesisSourceStreamArn
+      StreamSpecification:
+        StreamViewType: NEW_IMAGE
   #Sqs queues
   PnNotificationCostToUpdateQueue:
     Type: AWS::CloudFormation::Stack
