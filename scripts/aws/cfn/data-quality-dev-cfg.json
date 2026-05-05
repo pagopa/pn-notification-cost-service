@@ -1,0 +1,6 @@
+{
+  "Parameters" : {
+    "NotificationDeliveryCostGlueTableName": "pn_notification_delivery_cost",
+    "PaymentInfoGlueTableName": "pn_payment_info"
+  }
+}
