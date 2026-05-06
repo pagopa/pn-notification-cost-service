@@ -122,6 +122,50 @@ paths:
             application/problem+json:
               schema:
                 $ref: '#/components/schemas/Problem'
+
+  "/notification-cost-private/cost/{iun}":
+    put:
+      operationId: updateNotificationCost
+      summary: "Update notification cost for a specific phase"
+      description: "Servizio sincrono che aggiorna il costo di notificazione per lo IUN indicato,
+        in base alla fase di aggiornamento specificata.
+        In caso siano presenti, può effettuare aggiornamenti delle posizioni debitorie su GPD."
+      tags:
+        - NotificationCostRecipient
+      parameters:
+        - $ref: '#/components/parameters/pathIun'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateNotificationCostRequest'
+      responses:
+        '200':
+          description: Esito aggiornamento
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UpdateNotificationCostResponse'
+        '400':
+          description: Invalid input
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+        '404':
+          description: Notifica non trovata
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+        '500':
+          description: Internal Server Error
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+
 components:
   parameters:
     pathIun:
@@ -418,6 +462,84 @@ components:
          $ref: '#/components/schemas/AnalogCostName'
        productType:
          $ref: '#/components/schemas/ProductType'
+
+    UpdateNotificationCostRequest:
+      type: object
+      required:
+        - notificationStepCost
+        - eventTimestamp
+        - eventStorageTimestamp
+        - notificationSentAt
+        - updateCostPhase
+      properties:
+        notificationStepCost:
+          type: integer
+          format: int32
+          description: Costo del singolo step di notificazione (in eurocent).
+          example: 100
+        eventTimestamp:
+          type: string
+          format: date-time
+          description: Timestamp dell'evento di dominio che ha scatenato l'attualizzazione del costo.
+          example: '2024-01-15T10:30:00Z'
+        eventStorageTimestamp:
+          type: string
+          format: date-time
+          description: Timestamp in cui l'evento è stato persistito nello storage interno.
+          example: '2024-01-15T10:30:05Z'
+        notificationSentAt:
+          type: string
+          format: date-time
+          description: Timestamp di invio richiesta notifica
+          example: '2024-01-15T10:30:05Z'
+        updateCostPhase:
+          $ref: '#/components/schemas/UpdateCostPhase'
+
+    UpdateNotificationCostResponse:
+      type: object
+      additionalProperties: false
+      required:
+        - updateResults
+      properties:
+        updateResults:
+          type: array
+          description: Lista degli esiti di attualizzazione per i pagamenti sul sistema GPD.
+          items:
+            $ref: '#/components/schemas/UpdateNotificationCostResult'
+
+    UpdateNotificationCostResult:
+      type: object
+      required:
+        - iuv
+        - recIndex
+        - result
+      properties:
+        iuv:
+          $ref: '#/components/schemas/IUV'
+        recIndex:
+          type: integer
+          description: Indice identificativo del destinatario
+          format: int32
+        result:
+          $ref: '#/components/schemas/ResultEnum'
+
+    UpdateCostPhase:
+      type: string
+      description: Fase del ciclo di vita della notifica che ha scatenato l'aggiornamento del costo.
+      enum:
+        - REFUSED
+        - CANCELLED
+      example: 'REFUSED'
+
+    ResultEnum:
+      type: string
+      description: >-
+        Esito semantico dell'operazione su GPD derivato dallo status HTTP restituito
+      enum:
+        - OK
+        - KO
+        - RETRY
+      example: 'OK'
 
     Problem:
       $ref: './remote-refs.yaml#/components/schemas/Problem'
