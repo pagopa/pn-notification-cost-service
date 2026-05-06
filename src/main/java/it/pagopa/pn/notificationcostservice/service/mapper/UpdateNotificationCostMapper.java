@@ -1,6 +1,7 @@
 package it.pagopa.pn.notificationcostservice.service.mapper;
 
 import it.pagopa.pn.notification_cost_service.generated.openapi.server.v1.dto.*;
+import it.pagopa.pn.notificationcostservice.model.cost.CostUpdatePhaseInt;
 import it.pagopa.pn.notificationcostservice.model.updatenotification.*;
 import lombok.AllArgsConstructor;
 import org.springframework.stereotype.Component;
@@ -25,10 +26,16 @@ public class UpdateNotificationCostMapper {
                 .build();
     }
 
-    private UpdateCostPhaseInt mapUpdateCostPhase(UpdateCostPhaseDto dto) {
+    private CostUpdatePhaseInt mapUpdateCostPhase(UpdateCostPhaseDto dto) {
+        Objects.requireNonNull(dto,"updateCostPhase must not be null");
+
         return switch (dto) {
-            case REFUSED -> UpdateCostPhaseInt.REFUSED;
-            case CANCELLED -> UpdateCostPhaseInt.CANCELLED;
+            case VALIDATION -> CostUpdatePhaseInt.VALIDATION;
+            case SEND_ANALOG_DOMICILE_ATTEMPT_0 -> CostUpdatePhaseInt.SEND_ANALOG_DOMICILE_ATTEMPT_0;
+            case SEND_ANALOG_DOMICILE_ATTEMPT_1 -> CostUpdatePhaseInt.SEND_ANALOG_DOMICILE_ATTEMPT_1;
+            case SEND_SIMPLE_REGISTERED_LETTER -> CostUpdatePhaseInt.SEND_SIMPLE_REGISTERED_LETTER;
+            case REQUEST_REFUSED -> CostUpdatePhaseInt.REQUEST_REFUSED;
+            case NOTIFICATION_CANCELLED -> CostUpdatePhaseInt.NOTIFICATION_CANCELLED;
         };
     }
 

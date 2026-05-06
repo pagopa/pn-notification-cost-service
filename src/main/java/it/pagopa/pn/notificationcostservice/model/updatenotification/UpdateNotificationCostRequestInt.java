@@ -1,5 +1,6 @@
 package it.pagopa.pn.notificationcostservice.model.updatenotification;
 
+import it.pagopa.pn.notificationcostservice.model.cost.CostUpdatePhaseInt;
 import lombok.*;
 
 import java.time.Instant;
@@ -15,5 +16,5 @@ public class UpdateNotificationCostRequestInt {
     private Instant eventTimestamp;
     private Instant eventStorageTimestamp;
     private Instant notificationSentAt;
-    private UpdateCostPhaseInt updateCostPhase;
+    private CostUpdatePhaseInt updateCostPhase;
 }
