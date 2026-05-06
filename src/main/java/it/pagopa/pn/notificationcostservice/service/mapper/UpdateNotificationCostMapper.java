@@ -6,6 +6,7 @@ import lombok.AllArgsConstructor;
 import org.springframework.stereotype.Component;
 
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 
 @Component
@@ -13,19 +14,18 @@ import java.util.Optional;
 public class UpdateNotificationCostMapper {
 
     public UpdateNotificationCostRequestInt fromRequestDtoToInt(UpdateNotificationCostRequestDto dto) {
-        if (dto == null) return null;
+        Objects.requireNonNull(dto, "UpdateNotificationCostRequestDto must not be null");
 
         return UpdateNotificationCostRequestInt.builder()
-                .notificationStepCost(dto.getNotificationStepCost())
-                .eventTimestamp(dto.getEventTimestamp())
-                .eventStorageTimestamp(dto.getEventStorageTimestamp())
-                .notificationSentAt(dto.getNotificationSentAt())
-                .updateCostPhase(mapUpdateCostPhase(dto.getUpdateCostPhase()))
+                .notificationStepCost(Objects.requireNonNull(dto.getNotificationStepCost(), "notificationStepCost must not be null"))
+                .eventTimestamp(Objects.requireNonNull(dto.getEventTimestamp(), "eventTimestamp must not be null"))
+                .eventStorageTimestamp(Objects.requireNonNull(dto.getEventStorageTimestamp(), "eventStorageTimestamp must not be null"))
+                .notificationSentAt(Objects.requireNonNull(dto.getNotificationSentAt(), "notificationSentAt must not be null"))
+                .updateCostPhase(mapUpdateCostPhase(Objects.requireNonNull(dto.getUpdateCostPhase(), "updateCostPhase must not be null")))
                 .build();
     }
 
     private UpdateCostPhaseInt mapUpdateCostPhase(UpdateCostPhaseDto dto) {
-        if (dto == null) return null;
         return switch (dto) {
             case REFUSED -> UpdateCostPhaseInt.REFUSED;
             case CANCELLED -> UpdateCostPhaseInt.CANCELLED;
@@ -33,7 +33,7 @@ public class UpdateNotificationCostMapper {
     }
 
     public UpdateNotificationCostResponseDto fromIntToDtoResponse(UpdateNotificationCostResponseInt responseInt) {
-        if (responseInt == null) return null;
+        Objects.requireNonNull(responseInt, "UpdateNotificationCostResponseInt must not be null");
 
         List<UpdateNotificationCostResultDto> resultDtoList = Optional.ofNullable(responseInt.getUpdateNotificationCostResultIntList())
                 .orElse(List.of())
@@ -45,17 +45,19 @@ public class UpdateNotificationCostMapper {
     }
 
     private UpdateNotificationCostResultDto mapResultIntToDto(UpdateNotificationCostResultInt resultInt) {
-        if (resultInt == null) return null;
+        Objects.requireNonNull(resultInt, "UpdateNotificationCostResultInt must not be null");
+
+        String iuv = Objects.requireNonNull(resultInt.getIuv(), "iuv must not be null");
+        CommunicationResultGroupInt result = Objects.requireNonNull(resultInt.getResult(), "result must not be null");
 
         return new UpdateNotificationCostResultDto(
-                resultInt.getIuv(),
+                iuv,
                 resultInt.getRecIndex(),
-                mapCommunicationResultGroup(resultInt.getResult())
+                mapCommunicationResultGroup(result)
         );
     }
 
     private ResultEnumDto mapCommunicationResultGroup(CommunicationResultGroupInt result) {
-        if (result == null) return null;
         return switch (result) {
             case OK -> ResultEnumDto.OK;
             case KO -> ResultEnumDto.KO;

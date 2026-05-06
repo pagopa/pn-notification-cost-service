@@ -1,7 +1,15 @@
 package it.pagopa.pn.notificationcostservice.service.mapper;
 
-import it.pagopa.pn.notification_cost_service.generated.openapi.server.v1.dto.*;
-import it.pagopa.pn.notificationcostservice.model.updatenotification.*;
+import it.pagopa.pn.notification_cost_service.generated.openapi.server.v1.dto.ResultEnumDto;
+import it.pagopa.pn.notification_cost_service.generated.openapi.server.v1.dto.UpdateCostPhaseDto;
+import it.pagopa.pn.notification_cost_service.generated.openapi.server.v1.dto.UpdateNotificationCostRequestDto;
+import it.pagopa.pn.notification_cost_service.generated.openapi.server.v1.dto.UpdateNotificationCostResponseDto;
+import it.pagopa.pn.notification_cost_service.generated.openapi.server.v1.dto.UpdateNotificationCostResultDto;
+import it.pagopa.pn.notificationcostservice.model.updatenotification.CommunicationResultGroupInt;
+import it.pagopa.pn.notificationcostservice.model.updatenotification.UpdateCostPhaseInt;
+import it.pagopa.pn.notificationcostservice.model.updatenotification.UpdateNotificationCostRequestInt;
+import it.pagopa.pn.notificationcostservice.model.updatenotification.UpdateNotificationCostResponseInt;
+import it.pagopa.pn.notificationcostservice.model.updatenotification.UpdateNotificationCostResultInt;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
@@ -20,8 +28,8 @@ class UpdateNotificationCostMapperTest {
     }
 
     @Test
-    void fromRequestDtoToInt_nullInput_returnsNull() {
-        assertNull(mapper.fromRequestDtoToInt(null));
+    void fromRequestDtoToInt_nullInput_throwsNullPointerException() {
+        assertThrows(NullPointerException.class, () -> mapper.fromRequestDtoToInt(null));
     }
 
     @Test
@@ -60,21 +68,63 @@ class UpdateNotificationCostMapperTest {
     }
 
     @Test
-    void fromRequestDtoToInt_nullUpdateCostPhase_mapsNull() {
+    void fromRequestDtoToInt_nullUpdateCostPhase_throwsNullPointerException() {
         Instant now = Instant.now();
 
         UpdateNotificationCostRequestDto dto = new UpdateNotificationCostRequestDto(
                 50, now, now, now, null
         );
 
-        UpdateNotificationCostRequestInt result = mapper.fromRequestDtoToInt(dto);
-
-        assertNull(result.getUpdateCostPhase());
+        assertThrows(NullPointerException.class, () -> mapper.fromRequestDtoToInt(dto));
     }
 
     @Test
-    void fromIntToDtoResponse_nullInput_returnsNull() {
-        assertNull(mapper.fromIntToDtoResponse(null));
+    void fromRequestDtoToInt_nullNotificationStepCost_throwsNullPointerException() {
+        Instant now = Instant.now();
+
+        UpdateNotificationCostRequestDto dto = new UpdateNotificationCostRequestDto(
+                null, now, now, now, UpdateCostPhaseDto.REFUSED
+        );
+
+        assertThrows(NullPointerException.class, () -> mapper.fromRequestDtoToInt(dto));
+    }
+
+    @Test
+    void fromRequestDtoToInt_nullEventTimestamp_throwsNullPointerException() {
+        Instant now = Instant.now();
+
+        UpdateNotificationCostRequestDto dto = new UpdateNotificationCostRequestDto(
+                100, null, now, now, UpdateCostPhaseDto.REFUSED
+        );
+
+        assertThrows(NullPointerException.class, () -> mapper.fromRequestDtoToInt(dto));
+    }
+
+    @Test
+    void fromRequestDtoToInt_nullEventStorageTimestamp_throwsNullPointerException() {
+        Instant now = Instant.now();
+
+        UpdateNotificationCostRequestDto dto = new UpdateNotificationCostRequestDto(
+                100, now, null, now, UpdateCostPhaseDto.REFUSED
+        );
+
+        assertThrows(NullPointerException.class, () -> mapper.fromRequestDtoToInt(dto));
+    }
+
+    @Test
+    void fromRequestDtoToInt_nullNotificationSentAt_throwsNullPointerException() {
+        Instant now = Instant.now();
+
+        UpdateNotificationCostRequestDto dto = new UpdateNotificationCostRequestDto(
+                100, now, now, null, UpdateCostPhaseDto.REFUSED
+        );
+
+        assertThrows(NullPointerException.class, () -> mapper.fromRequestDtoToInt(dto));
+    }
+
+    @Test
+    void fromIntToDtoResponse_nullInput_throwsNullPointerException() {
+        assertThrows(NullPointerException.class, () -> mapper.fromIntToDtoResponse(null));
     }
 
     @Test
@@ -129,13 +179,13 @@ class UpdateNotificationCostMapperTest {
         UpdateNotificationCostResponseDto result = mapper.fromIntToDtoResponse(responseInt);
 
         assertEquals(3, result.getUpdateResults().size());
-        assertEquals(ResultEnumDto.OK,    result.getUpdateResults().get(0).getResult());
-        assertEquals(ResultEnumDto.KO,    result.getUpdateResults().get(1).getResult());
+        assertEquals(ResultEnumDto.OK, result.getUpdateResults().get(0).getResult());
+        assertEquals(ResultEnumDto.KO, result.getUpdateResults().get(1).getResult());
         assertEquals(ResultEnumDto.RETRY, result.getUpdateResults().get(2).getResult());
     }
 
     @Test
-    void fromIntToDtoResponse_resultIntWithNullResult_mapsNullResult() {
+    void fromIntToDtoResponse_resultIntWithNullResult_throwsNullPointerException() {
         UpdateNotificationCostResultInt resultInt = new UpdateNotificationCostResultInt();
         resultInt.setIuv("77777777777##362981250372662851");
         resultInt.setRecIndex(0);
@@ -143,8 +193,18 @@ class UpdateNotificationCostMapperTest {
 
         UpdateNotificationCostResponseInt responseInt = new UpdateNotificationCostResponseInt(List.of(resultInt));
 
-        UpdateNotificationCostResponseDto result = mapper.fromIntToDtoResponse(responseInt);
+        assertThrows(NullPointerException.class, () -> mapper.fromIntToDtoResponse(responseInt));
+    }
 
-        assertNull(result.getUpdateResults().getFirst().getResult());
+    @Test
+    void fromIntToDtoResponse_resultIntWithNullIuv_throwsNullPointerException() {
+        UpdateNotificationCostResultInt resultInt = new UpdateNotificationCostResultInt();
+        resultInt.setIuv(null);
+        resultInt.setRecIndex(0);
+        resultInt.setResult(CommunicationResultGroupInt.OK);
+
+        UpdateNotificationCostResponseInt responseInt = new UpdateNotificationCostResponseInt(List.of(resultInt));
+
+        assertThrows(NullPointerException.class, () -> mapper.fromIntToDtoResponse(responseInt));
     }
 }
