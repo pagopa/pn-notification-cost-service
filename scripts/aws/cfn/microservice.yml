@@ -313,6 +313,7 @@ Resources:
         ContainerEnvEntry9: 'PN_NOTIFICATIONCOSTSERVICE_EVENTBUS_SOURCE=pn-notification-cost-service'
         ContainerEnvEntry10: 'PN_NOTIFICATIONCOSTSERVICE_EVENTBUS_OUTCOMEEVENTDETAILTYPE=NotificationCostServiceOutcomeEvent'
         ContainerEnvEntry11: !Sub "METRIC_FORMAT_TYPE=${MetricFormatType}"
+        ContainerEnvEntry12: !Sub 'PN_NOTIFICATIONCOSTSERVICE_NEWACTUALIZATIONCOSTFORASYNC={{resolve:ssm:/config/notification-cost-service/new-actualization-cost-for-async}}'
         ApplicativeEnvFileChecksum: !Ref ApplicativeEnvFileChecksum
         JavaToolOptions: '-Dreactor.netty.ioWorkerCount=50'
         MappedPaths: '/notification-cost-private/*'

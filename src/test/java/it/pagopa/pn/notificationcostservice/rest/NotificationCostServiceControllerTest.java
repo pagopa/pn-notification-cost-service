@@ -40,6 +40,9 @@ class NotificationCostServiceControllerTest {
     @Mock
     private PaymentInfoMapper paymentInfoMapper;
 
+//    @Mock
+//    private UpdateNotificationCostMapper updateNotificationCostMapper;
+
     private static final String TEST_IUN = "TEST-IUN-123";
     private static final Integer TEST_REC_INDEX = 0;
 
