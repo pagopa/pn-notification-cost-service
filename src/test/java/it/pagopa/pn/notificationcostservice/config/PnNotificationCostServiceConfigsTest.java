@@ -21,7 +21,8 @@ class PnNotificationCostServiceConfigsTest {
                 .withProperty("pn.notification-cost-service.notification-delivery-cost-table.table-name", "pn-NotificationDeliveryCost")
                 .withProperty("pn.notification-cost-service.payment-info-table.table-name", "pn-PaymentInfo")
                 .withProperty("pn.notification-cost-service.topics.pn-notification-cost-to-update", "pn-notification-cost-to-update")
-                .withProperty("pn.notification-cost-service.send-fee", "100");
+                .withProperty("pn.notification-cost-service.send-fee", "100")
+                .withProperty("pn.notification-cost-service.new-actualization-cost-for-async","2026-05-30T00:00:00Z");
 
         PnNotificationCostServiceConfigs pnNotificationCostServiceConfigs = Binder.get(environment)
                 .bind("pn.notification-cost-service", Bindable.of(PnNotificationCostServiceConfigs.class))

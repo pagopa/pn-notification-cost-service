@@ -10,6 +10,8 @@ import org.springframework.validation.annotation.Validated;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Import;
 
+import java.time.Instant;
+
 @Configuration
 @ConfigurationProperties( prefix = "pn.notification-cost-service")
 @Validated
@@ -24,6 +26,7 @@ public class PnNotificationCostServiceConfigs {
     private EventBus eventBus;
     @NotNull
     private Integer sendFee;
+    private Instant newActualizationCostForAsync;
 
     @Data
     public static class NotificationDeliveryCostTable {
