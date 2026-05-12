@@ -1,16 +1,24 @@
 package it.pagopa.pn.notificationcostservice.rest;
 
+import it.pagopa.pn.notification_cost_service.generated.openapi.server.v1.dto.AnalogUpdateCostPhaseDto;
 import it.pagopa.pn.notification_cost_service.generated.openapi.server.v1.dto.NewNotificationCostRequestDto;
 import it.pagopa.pn.notification_cost_service.generated.openapi.server.v1.dto.NotificationCostRecipientResponseDto;
 import it.pagopa.pn.notification_cost_service.generated.openapi.server.v1.dto.NotificationCostPaymentResponseDto;
+import it.pagopa.pn.notification_cost_service.generated.openapi.server.v1.dto.PaperCostToInvalidateDto;
+import it.pagopa.pn.notificationcostservice.exception.PnNotFoundException;
+import it.pagopa.pn.notificationcostservice.middleware.dao.NotificationDeliveryCostDao;
+import it.pagopa.pn.notificationcostservice.model.cost.CostUpdatePhaseInt;
+import it.pagopa.pn.notificationcostservice.model.cost.NotificationCostUpdate;
 import it.pagopa.pn.notificationcostservice.model.ValidationStatus;
 import it.pagopa.pn.notificationcostservice.model.notificationdeliverycost.NotificationDeliveryCost;
 import it.pagopa.pn.notificationcostservice.model.paymentinfo.PaymentInfo;
 import it.pagopa.pn.notificationcostservice.service.NotificationCostService;
+import it.pagopa.pn.notificationcostservice.service.NotificationCostUpdaterService;
 import it.pagopa.pn.notificationcostservice.service.mapper.NotificationDeliveryCostMapper;
 import it.pagopa.pn.notificationcostservice.service.mapper.PaymentInfoMapper;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
@@ -23,13 +31,22 @@ import reactor.test.StepVerifier;
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertInstanceOf;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.*;
 @ExtendWith(MockitoExtension.class)
 class NotificationCostServiceControllerTest {
 
     @Mock
     private NotificationCostService notificationCostService;
+
+    @Mock
+    private NotificationCostUpdaterService notificationCostUpdaterService;
+
+    @Mock
+    private NotificationDeliveryCostDao notificationDeliveryCostDao;
 
     @InjectMocks
     private NotificationCostServiceController controller;
@@ -139,6 +156,91 @@ class NotificationCostServiceControllerTest {
                 .verifyComplete();
 
         verify(notificationCostService).getNotificationCostPaymentInfo(expectedIuv);
+    }
+
+    @Test
+    void invalidatePaperCost_shouldInvokeUpdaterForEachCostPhase() {
+        PaperCostToInvalidateDto requestDto = new PaperCostToInvalidateDto()
+                .recIndex("RECINDEX_3")
+                .costPhases(List.of(
+                        AnalogUpdateCostPhaseDto.SEND_ANALOG_DOMICILE_ATTEMPT_0,
+                        AnalogUpdateCostPhaseDto.SEND_ANALOG_DOMICILE_ATTEMPT_1
+                ));
+        ArgumentCaptor<NotificationCostUpdate> notificationCostUpdateCaptor = ArgumentCaptor.forClass(NotificationCostUpdate.class);
+
+        when(notificationDeliveryCostDao.getNotificationDeliveryCostItem(TEST_IUN, 3))
+                .thenReturn(Mono.just(mock(NotificationDeliveryCost.class)));
+        when(notificationCostUpdaterService.updateCostByPhase(any(NotificationCostUpdate.class)))
+                .thenReturn(Mono.empty());
+
+        StepVerifier.create(controller.invalidatePaperCost(TEST_IUN, Mono.just(requestDto), null))
+                .assertNext(response -> assertEquals(HttpStatus.NO_CONTENT, response.getStatusCode()))
+                .verifyComplete();
+
+        verify(notificationDeliveryCostDao, times(2)).getNotificationDeliveryCostItem(TEST_IUN, 3);
+        verify(notificationCostUpdaterService, times(2)).updateCostByPhase(notificationCostUpdateCaptor.capture());
+
+        List<NotificationCostUpdate> capturedUpdates = notificationCostUpdateCaptor.getAllValues();
+        assertEquals(2, capturedUpdates.size());
+
+        assertInvalidateNotificationCost(capturedUpdates.get(0), CostUpdatePhaseInt.SEND_ANALOG_DOMICILE_ATTEMPT_0);
+        assertInvalidateNotificationCost(capturedUpdates.get(1), CostUpdatePhaseInt.SEND_ANALOG_DOMICILE_ATTEMPT_1);
+        verifyNoMoreInteractions(notificationCostService, mapper, paymentInfoMapper, notificationDeliveryCostDao, notificationCostUpdaterService);
+    }
+
+    @Test
+    void invalidatePaperCost_shouldCompleteWhenCostPhasesIsEmpty() {
+        PaperCostToInvalidateDto requestDto = new PaperCostToInvalidateDto()
+                .recIndex("RECINDEX_5")
+                .costPhases(List.of());
+
+        StepVerifier.create(controller.invalidatePaperCost(TEST_IUN, Mono.just(requestDto), null))
+                .assertNext(response -> assertEquals(HttpStatus.NO_CONTENT, response.getStatusCode()))
+                .verifyComplete();
+
+        verifyNoInteractions(notificationDeliveryCostDao, notificationCostUpdaterService, notificationCostService, mapper, paymentInfoMapper);
+    }
+
+    @Test
+    void invalidatePaperCost_shouldPropagateErrorWhenEntityDoesNotExist() {
+        PaperCostToInvalidateDto requestDto = new PaperCostToInvalidateDto()
+                .recIndex("RECINDEX_3")
+                .costPhases(List.of(AnalogUpdateCostPhaseDto.SEND_ANALOG_DOMICILE_ATTEMPT_0));
+        PnNotFoundException expectedException = new PnNotFoundException(
+                "Not Found",
+                "No item found with iun: " + TEST_IUN + " and recIndex: 3",
+                "PN_NOTIFICATIONDELIVERYCOST_NOTFOUND"
+        );
+
+        when(notificationDeliveryCostDao.getNotificationDeliveryCostItem(TEST_IUN, 3))
+                .thenReturn(Mono.error(expectedException));
+
+        StepVerifier.create(controller.invalidatePaperCost(TEST_IUN, Mono.just(requestDto), null))
+                .expectErrorSatisfies(throwable -> {
+                    PnNotFoundException ex = assertInstanceOf(PnNotFoundException.class, throwable);
+                    assertEquals(HttpStatus.NOT_FOUND.value(), ex.getProblem().getStatus());
+                    String detail = ex.getProblem().getDetail();
+                    assertNotNull(detail);
+                    assertTrue(detail.contains(TEST_IUN));
+                    assertTrue(detail.contains("recIndex: 3"));
+                })
+                .verify();
+
+        verify(notificationDeliveryCostDao).getNotificationDeliveryCostItem(TEST_IUN, 3);
+        verify(notificationCostUpdaterService, never()).updateCostByPhase(any(NotificationCostUpdate.class));
+        verifyNoMoreInteractions(notificationDeliveryCostDao, notificationCostUpdaterService);
+        verifyNoInteractions(notificationCostService, mapper, paymentInfoMapper);
+    }
+
+    private void assertInvalidateNotificationCost(NotificationCostUpdate notificationCostUpdate,
+                                                  CostUpdatePhaseInt expectedPhase) {
+        assertEquals(TEST_IUN, notificationCostUpdate.getIun());
+        assertEquals(3, notificationCostUpdate.getRecIndex());
+        assertEquals(0, notificationCostUpdate.getCost());
+        assertNull(notificationCostUpdate.getProductType());
+        assertEquals(expectedPhase, notificationCostUpdate.getCostUpdatePhase());
+        assertNotNull(notificationCostUpdate.getElementTimestamp());
+        assertTrue(notificationCostUpdate.isInvalidationFlow());
     }
 }
 
