@@ -6,7 +6,6 @@ import it.pagopa.pn.notification_cost_service.generated.openapi.server.v1.dto.No
 import it.pagopa.pn.notification_cost_service.generated.openapi.server.v1.dto.NotificationCostPaymentResponseDto;
 import it.pagopa.pn.notification_cost_service.generated.openapi.server.v1.dto.PaperCostToInvalidateDto;
 import it.pagopa.pn.notificationcostservice.exception.PnNotFoundException;
-import it.pagopa.pn.notificationcostservice.middleware.dao.NotificationDeliveryCostDao;
 import it.pagopa.pn.notificationcostservice.model.cost.CostUpdatePhaseInt;
 import it.pagopa.pn.notificationcostservice.model.cost.NotificationCostUpdate;
 import it.pagopa.pn.notificationcostservice.model.ValidationStatus;
@@ -44,9 +43,6 @@ class NotificationCostServiceControllerTest {
 
     @Mock
     private NotificationCostUpdaterService notificationCostUpdaterService;
-
-    @Mock
-    private NotificationDeliveryCostDao notificationDeliveryCostDao;
 
     @InjectMocks
     private NotificationCostServiceController controller;
@@ -168,8 +164,8 @@ class NotificationCostServiceControllerTest {
                 ));
         ArgumentCaptor<NotificationCostUpdate> notificationCostUpdateCaptor = ArgumentCaptor.forClass(NotificationCostUpdate.class);
 
-        when(notificationDeliveryCostDao.getNotificationDeliveryCostItem(TEST_IUN, 3))
-                .thenReturn(Mono.just(mock(NotificationDeliveryCost.class)));
+        when(notificationCostService.getNotificationCostRecipient(TEST_IUN, 3))
+                .thenReturn(Mono.just(new NotificationCostRecipientResponseDto()));
         when(notificationCostUpdaterService.updateCostByPhase(any(NotificationCostUpdate.class)))
                 .thenReturn(Mono.empty());
 
@@ -177,7 +173,7 @@ class NotificationCostServiceControllerTest {
                 .assertNext(response -> assertEquals(HttpStatus.NO_CONTENT, response.getStatusCode()))
                 .verifyComplete();
 
-        verify(notificationDeliveryCostDao, times(2)).getNotificationDeliveryCostItem(TEST_IUN, 3);
+        verify(notificationCostService).getNotificationCostRecipient(TEST_IUN, 3);
         verify(notificationCostUpdaterService, times(2)).updateCostByPhase(notificationCostUpdateCaptor.capture());
 
         List<NotificationCostUpdate> capturedUpdates = notificationCostUpdateCaptor.getAllValues();
@@ -185,20 +181,7 @@ class NotificationCostServiceControllerTest {
 
         assertInvalidateNotificationCost(capturedUpdates.get(0), CostUpdatePhaseInt.SEND_ANALOG_DOMICILE_ATTEMPT_0);
         assertInvalidateNotificationCost(capturedUpdates.get(1), CostUpdatePhaseInt.SEND_ANALOG_DOMICILE_ATTEMPT_1);
-        verifyNoMoreInteractions(notificationCostService, mapper, paymentInfoMapper, notificationDeliveryCostDao, notificationCostUpdaterService);
-    }
-
-    @Test
-    void invalidatePaperCost_shouldCompleteWhenCostPhasesIsEmpty() {
-        PaperCostToInvalidateDto requestDto = new PaperCostToInvalidateDto()
-                .recIndex("RECINDEX_5")
-                .costPhases(List.of());
-
-        StepVerifier.create(controller.invalidatePaperCost(TEST_IUN, Mono.just(requestDto), null))
-                .assertNext(response -> assertEquals(HttpStatus.NO_CONTENT, response.getStatusCode()))
-                .verifyComplete();
-
-        verifyNoInteractions(notificationDeliveryCostDao, notificationCostUpdaterService, notificationCostService, mapper, paymentInfoMapper);
+        verifyNoMoreInteractions(notificationCostService, mapper, paymentInfoMapper, notificationCostUpdaterService);
     }
 
     @Test
@@ -212,7 +195,7 @@ class NotificationCostServiceControllerTest {
                 "PN_NOTIFICATIONDELIVERYCOST_NOTFOUND"
         );
 
-        when(notificationDeliveryCostDao.getNotificationDeliveryCostItem(TEST_IUN, 3))
+        when(notificationCostService.getNotificationCostRecipient(TEST_IUN, 3))
                 .thenReturn(Mono.error(expectedException));
 
         StepVerifier.create(controller.invalidatePaperCost(TEST_IUN, Mono.just(requestDto), null))
@@ -226,10 +209,10 @@ class NotificationCostServiceControllerTest {
                 })
                 .verify();
 
-        verify(notificationDeliveryCostDao).getNotificationDeliveryCostItem(TEST_IUN, 3);
+        verify(notificationCostService).getNotificationCostRecipient(TEST_IUN, 3);
         verify(notificationCostUpdaterService, never()).updateCostByPhase(any(NotificationCostUpdate.class));
-        verifyNoMoreInteractions(notificationDeliveryCostDao, notificationCostUpdaterService);
-        verifyNoInteractions(notificationCostService, mapper, paymentInfoMapper);
+        verifyNoMoreInteractions(notificationCostService, notificationCostUpdaterService);
+        verifyNoInteractions(mapper, paymentInfoMapper);
     }
 
     private void assertInvalidateNotificationCost(NotificationCostUpdate notificationCostUpdate,

@@ -1,16 +1,11 @@
 package it.pagopa.pn.notificationcostservice.rest;
 
-import it.pagopa.pn.notification_cost_service.generated.openapi.server.v1.api.PaperCostApi;
-import it.pagopa.pn.notification_cost_service.generated.openapi.server.v1.dto.AnalogUpdateCostPhaseDto;
 import it.pagopa.pn.notification_cost_service.generated.openapi.server.v1.api.NotificationCostRecipientApi;
-import it.pagopa.pn.notification_cost_service.generated.openapi.server.v1.dto.NewNotificationCostRequestDto;
-import it.pagopa.pn.notification_cost_service.generated.openapi.server.v1.dto.NotificationCostPaymentResponseDto;
-import it.pagopa.pn.notification_cost_service.generated.openapi.server.v1.dto.NotificationCostRecipientResponseDto;
-import it.pagopa.pn.notification_cost_service.generated.openapi.server.v1.dto.PaperCostToInvalidateDto;
-import it.pagopa.pn.notificationcostservice.middleware.dao.NotificationDeliveryCostDao;
+import it.pagopa.pn.notification_cost_service.generated.openapi.server.v1.api.PaperCostApi;
+import it.pagopa.pn.notification_cost_service.generated.openapi.server.v1.dto.*;
+import it.pagopa.pn.notificationcostservice.model.ValidationStatus;
 import it.pagopa.pn.notificationcostservice.model.cost.CostUpdatePhaseInt;
 import it.pagopa.pn.notificationcostservice.model.cost.NotificationCostUpdate;
-import it.pagopa.pn.notificationcostservice.model.ValidationStatus;
 import it.pagopa.pn.notificationcostservice.service.NotificationCostService;
 import it.pagopa.pn.notificationcostservice.service.NotificationCostUpdaterService;
 import it.pagopa.pn.notificationcostservice.service.mapper.NotificationDeliveryCostMapper;
@@ -38,7 +33,6 @@ public class NotificationCostServiceController implements NotificationCostRecipi
 
     private final NotificationCostService notificationCostService;
     private final NotificationCostUpdaterService notificationCostUpdaterService;
-    private final NotificationDeliveryCostDao notificationDeliveryCostDao;
     private final NotificationDeliveryCostMapper mapper;
     private final PaymentInfoMapper paymentInfoMapper;
 
@@ -76,31 +70,38 @@ public class NotificationCostServiceController implements NotificationCostRecipi
                         iun,
                         request.getRecIndex(),
                         request.getCostPhases()))
-                .flatMapMany(request -> Flux.fromIterable(getCostPhasesOrEmpty(request))
-                        .map(costPhase -> mapInvalidateRequestToNotificationCostUpdate(iun, request.getRecIndex(), costPhase))
-                        .concatMap(update -> checkNotificationDeliveryCostExists(update)
-                                .then(Mono.defer(() -> notificationCostUpdaterService.updateCostByPhase(update)))))
+                .flatMapMany(request -> {
+                    Integer parsedRecIndex = parseRecIndex(request.getRecIndex());
+
+                    return checkNotificationDeliveryCostExists(iun, parsedRecIndex)
+                            .thenMany(Flux.fromIterable(request.getCostPhases())
+                                    .map(costPhase -> mapInvalidateRequestToNotificationCostUpdate(iun, parsedRecIndex, costPhase))
+                                    .doOnNext(update -> log.debug("NotificationDeliveryCost already verified before invalidation update, iun={}, recIndex={}, phase={}",
+                                            update.getIun(),
+                                            update.getRecIndex(),
+                                            update.getCostUpdatePhase()))
+                                    .concatMap(update -> Mono.defer(() -> notificationCostUpdaterService.updateCostByPhase(update))));
+                })
                 .then(Mono.fromSupplier(() -> {
                     log.info("Completed paper cost invalidation for rework flow, iun={}", iun);
                     return ResponseEntity.noContent().build();
                 }));
     }
 
-    private Mono<Void> checkNotificationDeliveryCostExists(NotificationCostUpdate update) {
-        return notificationDeliveryCostDao.getNotificationDeliveryCostItem(update.getIun(), update.getRecIndex())
-                .doOnNext(cost -> log.debug("NotificationDeliveryCost found before invalidation update, iun={}, recIndex={}, phase={}",
-                        update.getIun(),
-                        update.getRecIndex(),
-                        update.getCostUpdatePhase()))
+    private Mono<Void> checkNotificationDeliveryCostExists(String iun, Integer recIndex) {
+        return notificationCostService.getNotificationCostRecipient(iun, recIndex)
+                .doOnNext(cost -> log.debug("NotificationDeliveryCost found before invalidation flow, iun={}, recIndex={}",
+                        iun,
+                        recIndex))
                 .then();
     }
 
     private NotificationCostUpdate mapInvalidateRequestToNotificationCostUpdate(String iun,
-                                                                                String recIndex,
+                                                                                Integer recIndex,
                                                                                 AnalogUpdateCostPhaseDto costPhase) {
         return NotificationCostUpdate.builder()
                 .iun(iun)
-                .recIndex(parseRecIndex(recIndex))
+                .recIndex(recIndex)
                 .cost(INVALIDATED_COST)
                 .productType(null)
                 .costUpdatePhase(CostUpdatePhaseInt.valueOf(costPhase.name()))
@@ -111,9 +112,5 @@ public class NotificationCostServiceController implements NotificationCostRecipi
 
     private Integer parseRecIndex(String recIndex) {
         return Integer.parseInt(recIndex.replace(REC_INDEX_PREFIX, ""));
-    }
-
-    private List<AnalogUpdateCostPhaseDto> getCostPhasesOrEmpty(PaperCostToInvalidateDto request) {
-        return request.getCostPhases() == null ? List.of() : request.getCostPhases();
     }
 }
