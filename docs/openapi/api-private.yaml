@@ -122,6 +122,42 @@ paths:
             application/problem+json:
               schema:
                 $ref: '#/components/schemas/Problem'
+
+  "/notification-cost-private/cost/{iun}/invalidate":
+    put:
+      operationId: invalidatePaperCost
+      description: Invalidate paper cost when notification rework occurs
+      tags:
+        - PaperCost
+      parameters:
+        - $ref: '#/components/parameters/pathIun'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PaperCostToInvalidate'
+      responses:
+        '204':
+          description: NO_CONTENT
+        '400':
+          description: Invalid input
+          content:
+            application/problem+json:
+              schema:
+                $ref: 'remote-refs.yaml#/components/schemas/Problem'
+        '404':
+          description: Not Found
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+        '500':
+          description: Internal Server Error
+          content:
+            application/problem+json:
+              schema:
+                $ref: 'remote-refs.yaml#/components/schemas/Problem'
 components:
   parameters:
     pathIun:
@@ -418,6 +454,28 @@ components:
          $ref: '#/components/schemas/AnalogCostName'
        productType:
          $ref: '#/components/schemas/ProductType'
+
+    PaperCostToInvalidate:
+      description: Contains info for cost invalidation
+      type: object
+      properties:
+        recIndex:
+          type: string
+          pattern: '^RECINDEX_([1-9][0-9]?|0)$'
+          example: 'RECINDEX_0'
+        costPhases:
+          type: array
+          items:
+            $ref: '#/components/schemas/AnalogUpdateCostPhase'
+      required:
+        - recIndex
+        - costPhases
+
+    AnalogUpdateCostPhase:
+      type: string
+      enum:
+        - SEND_ANALOG_DOMICILE_ATTEMPT_0
+        - SEND_ANALOG_DOMICILE_ATTEMPT_1
 
     Problem:
       $ref: './remote-refs.yaml#/components/schemas/Problem'
