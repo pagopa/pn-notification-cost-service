@@ -130,11 +130,7 @@ paths:
       tags:
         - PaperCost
       parameters:
-        - name: iun
-          in: path
-          required: true
-          schema:
-            type: string
+        - $ref: '#/components/parameters/pathIun'
       requestBody:
         required: true
         content:
@@ -152,6 +148,10 @@ paths:
                 $ref: 'remote-refs.yaml#/components/schemas/Problem'
         '404':
           description: Not Found
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
         '500':
           description: Internal Server Error
           content:
