@@ -17,4 +17,5 @@ public class NotificationCostUpdate {
     private String productType;
     private CostUpdatePhaseInt costUpdatePhase;
     private Instant elementTimestamp;
+    private boolean invalidationFlow;
 }

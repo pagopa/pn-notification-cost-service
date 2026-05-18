@@ -71,10 +71,18 @@ public class NotificationCostUpdaterServiceImpl implements NotificationCostUpdat
 
     private Mono<Void> executeUpdate(NotificationDeliveryCostEntity entityToUpdate, PnAuditLogEvent audit, NotificationCostUpdate notificationCostUpdate) {
         return notificationDeliveryCostDao.updateNotificationDeliveryCostNotNull(entityToUpdate)
-                .doOnNext(entity -> audit.generateSuccess("Updated NotificationDeliveryCostEntity successfully, entity={}", entity).log())
+                .doOnNext(entity -> audit.generateSuccess(buildUpdateSuccessMessage(notificationCostUpdate), entity).log())
                 .doOnNext(entity -> generateRecordUpdateLatencyMetric(entity, notificationCostUpdate))
                 .doOnError(error -> audit.generateFailure("NotificationDeliveryCostEntity update failed, iun={}, recIndex={}", entityToUpdate.getIun(), entityToUpdate.getRecIndex(), error).log())
                 .then();
+    }
+
+    private String buildUpdateSuccessMessage(NotificationCostUpdate notificationCostUpdate) {
+        if (notificationCostUpdate.isInvalidationFlow()) {
+            return "Updated NotificationDeliveryCostEntity successfully during invalidatePaperCost flow, entity={}";
+        }
+
+        return "Updated NotificationDeliveryCostEntity successfully, entity={}";
     }
 
     private void generateRecordUpdateLatencyMetric(NotificationDeliveryCostEntity entity, NotificationCostUpdate notificationCostUpdate) {
