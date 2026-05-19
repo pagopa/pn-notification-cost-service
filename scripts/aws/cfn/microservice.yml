@@ -484,8 +484,8 @@ Resources:
           - Pattern: !Join
               - ''
               - - '{ "data": { "tableName": ["pn-Timelines"], "eventName": ["INSERT"], "dynamodb": { "NewImage": { "category": { "S": ["'
-                - !Join [ '","', !Ref CostEventUpdateLambdaEventCategories ]
-                - '"] } } } } }'
+          - !Join [ '","', !Ref CostEventUpdateLambdaEventCategories ]
+          - '"] }, "communicationType": {"S": [{ "exists": false }]}  } } } }'
       MaximumBatchingWindowInSeconds: !Ref CostEventUpdateLambdaMaximumBatchingWindowInSeconds
       MaximumRecordAgeInSeconds: !Ref CostEventUpdateLambdaMaximumRecordAge
       MaximumRetryAttempts: !Ref CostEventUpdateLambdaMaximumRetryAttempts
