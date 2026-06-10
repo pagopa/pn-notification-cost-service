@@ -8,7 +8,7 @@
 		<relativePath />
 	</parent>
 	<artifactId>pn-notification-cost-service</artifactId>
-	<version>1.2.0-RC.1</version>
+	<version>1.2.0-RC.2</version>
 	<name>pn-notification-cost-service</name>
 	<description>Pn-Notification-Cost-Service Microservice</description>
 	<scm>
