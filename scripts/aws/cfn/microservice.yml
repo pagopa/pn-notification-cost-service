@@ -314,7 +314,7 @@ Resources:
         ContainerEnvEntry10: 'PN_NOTIFICATIONCOSTSERVICE_EVENTBUS_OUTCOMEEVENTDETAILTYPE=NotificationCostServiceOutcomeEvent'
         ContainerEnvEntry11: !Sub "METRIC_FORMAT_TYPE=${MetricFormatType}"
         ApplicativeEnvFileChecksum: !Ref ApplicativeEnvFileChecksum
-        JavaToolOptions: '-Dreactor.netty.ioWorkerCount=50'
+        JavaToolOptions: '-Dreactor.netty.ioWorkerCount=50 -XX:+HeapDumpOnOutOfMemoryError -XX:HeapDumpPath=/mnt/efs/dumps.hprof -Xmx32m' 
         MappedPaths: '/notification-cost-private/*'
         ECSClusterName: !Ref ECSClusterName
         Subnets: !Join [ ',', !Ref SubnetsIds ]

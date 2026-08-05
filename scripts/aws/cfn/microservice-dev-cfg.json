@@ -2,7 +2,7 @@
   "Parameters" : {
     "PnCronAnalyzer": "-",
     "WireTapLogActivation": "false",
-    "MountEfs": "false",
+    "MountEfs": "true",
     "CpuValue": "2048",
     "MemoryAmount": "4GB",
     "MinTasksNumber": "2",
