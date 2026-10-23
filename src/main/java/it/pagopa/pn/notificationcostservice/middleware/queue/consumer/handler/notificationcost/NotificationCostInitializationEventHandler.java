@@ -1,7 +1,6 @@
 package it.pagopa.pn.notificationcostservice.middleware.queue.consumer.handler.notificationcost;
 
 import it.pagopa.pn.api.dto.events.notificationcost.validation.PnNotificationCostValidationEvent;
-import it.pagopa.pn.commons.exceptions.PnInternalException;
 import it.pagopa.pn.notificationcostservice.middleware.dao.PaymentInfoDao;
 import it.pagopa.pn.notificationcostservice.middleware.eventbus.EventBridgeProducer;
 import it.pagopa.pn.notificationcostservice.middleware.queue.consumer.event.notificationcost.NotificationCostInitializationEvent;
@@ -16,7 +15,6 @@ import reactor.core.publisher.Mono;
 
 import java.util.List;
 
-import static it.pagopa.pn.notificationcostservice.exception.PnNotificationCostServiceExceptionCodes.ERROR_CODE_NOTIFICATIONCOSTSERVICE_INTERNAL_SERVER_ERROR;
 import static it.pagopa.pn.notificationcostservice.middleware.eventbus.utils.NotificationCostValidationEventBuilder.buildOkValidationEvent;
 
 @Component
@@ -34,14 +32,6 @@ public class NotificationCostInitializationEventHandler {
         List<NotificationDeliveryCost> notificationCosts = payload.getNotificationCosts();
         List<PaymentInfo> payments = payload.getPayments();
 
-        if (notificationCosts == null || notificationCosts.isEmpty()) {
-            log.error(
-                    "Skipping NotificationCostInitializationEvent for iun={} because notificationCosts are null/empty.",
-                    payload.getIun());
-            return Mono.error(new PnInternalException("Missing required data for iun:"+  payload.getIun(),
-                    ERROR_CODE_NOTIFICATIONCOSTSERVICE_INTERNAL_SERVER_ERROR));
-        }
-
         log.info(
                 "Start processing NotificationCostInitializationEvent for iun={}.",
                 payload.getIun()
@@ -56,6 +46,11 @@ public class NotificationCostInitializationEventHandler {
     }
 
     private Mono<Void> updateNotificationBaseCosts(List<NotificationDeliveryCost> notificationCosts) {
+        if (notificationCosts == null || notificationCosts.isEmpty()) {
+            log.info("No notificationCosts to update");
+            return Mono.empty();
+        }
+
         return Flux.fromIterable(notificationCosts)
                 .flatMap(notificationCostUpdaterService::updateBaseCost)
                 .then()

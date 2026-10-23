@@ -19,7 +19,6 @@ import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
 import java.time.Instant;
-import java.util.List;
 
 import static it.pagopa.pn.notificationcostservice.utils.PaymentUtils.composeIuv;
 
@@ -49,7 +48,20 @@ public class NotificationCostServiceController implements NotificationCostRecipi
                                                                    ServerWebExchange exchange) {
         return notificationCostRequestDto
                 .flatMap(request -> notificationCostService.saveNotificationCost(iun, mapper.mapDtoToNotificationDeliveryCost(iun, request)
-                        , paymentInfoMapper.mapDtoToPaymentInfo(iun, request)))
+                        , paymentInfoMapper.mapDtoToLegalPaymentInfo(iun, request)))
+                .thenReturn(ResponseEntity.accepted().body(
+                        ValidationStatus.OK.name())
+                );
+    }
+
+    @Override
+    public Mono<ResponseEntity<String>> initializeInformalNotificationCost(String iun, Mono<NewInformalNotificationCostRequestDto> newInformalNotificationCostRequestDto,  final ServerWebExchange exchange) {
+        return newInformalNotificationCostRequestDto
+                .flatMap(request -> notificationCostService.saveNotificationCost(
+                        iun,
+                        null,
+                        paymentInfoMapper.mapDtoToInformalPaymentInfo(iun, request)
+                ))
                 .thenReturn(ResponseEntity.accepted().body(
                         ValidationStatus.OK.name())
                 );

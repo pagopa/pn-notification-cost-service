@@ -20,6 +20,7 @@ import software.amazon.awssdk.enhanced.dynamodb.model.QueryEnhancedRequest;
 import software.amazon.awssdk.services.dynamodb.DynamoDbAsyncClient;
 import software.amazon.awssdk.services.dynamodb.model.AttributeValue;
 
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -68,15 +69,18 @@ public class PaymentInfoDaoDynamo extends BaseDao implements PaymentInfoDao {
                 PaymentInfoEntity.COL_PK, AttributeValue.builder().s(entity.getIuv()).build()
         );
 
-        Map<String, AttributeValue> flatAttributes = Map.of(
-                PaymentInfoEntity.COL_IUN, AttributeValue.builder().s(entity.getIun()).build(),
-                PaymentInfoEntity.COL_REC_INDEX, AttributeValue.builder().n(String.valueOf(entity.getRecIndex())).build(),
-                PaymentInfoEntity.COL_APPLY_COST, AttributeValue.builder().bool(entity.isApplyCost()).build()
-        );
+        Map<String, AttributeValue> flatAttributes = new HashMap<>();
+        flatAttributes.put(PaymentInfoEntity.COL_IUN, AttributeValue.builder().s(entity.getIun()).build());
+        flatAttributes.put(PaymentInfoEntity.COL_REC_INDEX, AttributeValue.builder().n(String.valueOf(entity.getRecIndex())).build());
+
+        if(entity.getApplyCost() != null) {
+            flatAttributes.put(PaymentInfoEntity.COL_APPLY_COST, AttributeValue.builder().bool(entity.getApplyCost()).build());
+        }
 
         return this.updateIfMatchOrNotExists(keyAttributes, flatAttributes, null,null)
                 .then();
     }
+
     @Override
     public Mono<Void> deleteItemsByIun(String iun) {
         return getAllByIun(iun)

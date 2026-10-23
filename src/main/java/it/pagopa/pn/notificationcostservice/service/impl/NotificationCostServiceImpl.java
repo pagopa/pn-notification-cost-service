@@ -82,7 +82,7 @@ public class NotificationCostServiceImpl implements NotificationCostService {
                     log.info("Payment info retrieved for iuv: {}, iun: {}, recIndex: {}", iuv, iun, recIndex);
                     return getNotificationDeliveryCost(iun, recIndex)
                             .map(dto -> {
-                                CalculatedCosts calculatedCosts = costCalculator.calculateCosts(dto, paymentInfo.isApplyCost());
+                                CalculatedCosts calculatedCosts = costCalculator.calculateCosts(dto, paymentInfo.getApplyCost());
                                 return notificationDeliveryCostMapper.mapToNotificationCostPaymentResponse(dto, calculatedCosts);
                             });
                 })

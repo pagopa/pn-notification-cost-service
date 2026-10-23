@@ -205,7 +205,7 @@ class NotificationCostServiceImplTest {
 
         when(paymentInfoDao.getPaymentInfoByIuv(iuv)).thenReturn(Mono.just(paymentInfo));
         when(notificationDeliveryCostDao.getNotificationDeliveryCostItem(IUN, REC_INDEX)).thenReturn(Mono.just(notificationDeliveryCost));
-        when(costCalculator.calculateCosts(notificationDeliveryCost, paymentInfo.isApplyCost())).thenReturn(calculatedCosts);
+        when(costCalculator.calculateCosts(notificationDeliveryCost, paymentInfo.getApplyCost())).thenReturn(calculatedCosts);
         when(notificationDeliveryCostMapper.mapToNotificationCostPaymentResponse(notificationDeliveryCost, calculatedCosts)).thenReturn(mappedResponse);
 
         StepVerifier.create(notificationCostService.getNotificationCostPaymentInfo(iuv))
@@ -214,7 +214,7 @@ class NotificationCostServiceImplTest {
 
         verify(paymentInfoDao).getPaymentInfoByIuv(iuv);
         verify(notificationDeliveryCostDao).getNotificationDeliveryCostItem(IUN, REC_INDEX);
-        verify(costCalculator).calculateCosts(notificationDeliveryCost, paymentInfo.isApplyCost());
+        verify(costCalculator).calculateCosts(notificationDeliveryCost, paymentInfo.getApplyCost());
         verify(notificationDeliveryCostMapper).mapToNotificationCostPaymentResponse(notificationDeliveryCost, calculatedCosts);
     }
 
