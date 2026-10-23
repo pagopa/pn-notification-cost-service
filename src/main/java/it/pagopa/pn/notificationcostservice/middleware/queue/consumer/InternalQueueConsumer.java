@@ -19,7 +19,7 @@ public class InternalQueueConsumer {
 
     private final InternalEventsRouter router;
 
-    @SqsListener(value = "${pn.notification-cost-service.topics.pn-notification-cost-to-update}")
+    @SqsListener(value = {"${pn.notification-cost-service.topics.pn-notification-cost-to-update}","${pn.notification-cost-service.topics.payments-to-verify}"})
     public void pnNotificationDeliveryCostEventConsumer(Message<InternalEvent> message) {
         final String processName = "NotificationDeliveryCostEventConsumer";
         log.logStartingProcess(processName);

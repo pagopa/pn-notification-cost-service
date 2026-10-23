@@ -1,5 +1,6 @@
 package it.pagopa.pn.notificationcostservice.model.paymentinfo;
 
+import it.pagopa.pn.api.dto.events.CommunicationType;
 import lombok.*;
 
 @Data
@@ -13,4 +14,5 @@ public class PaymentInfo {
     private String iun;
     private Integer recIndex;
     private boolean applyCost;
+    private CommunicationType communicationType;
 }
