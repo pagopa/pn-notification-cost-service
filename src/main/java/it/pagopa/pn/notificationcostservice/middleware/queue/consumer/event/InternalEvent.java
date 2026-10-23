@@ -2,6 +2,7 @@ package it.pagopa.pn.notificationcostservice.middleware.queue.consumer.event;
 
 import com.fasterxml.jackson.annotation.JsonSubTypes;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
+import it.pagopa.pn.api.dto.events.PnNoticePaymentEvent;
 import it.pagopa.pn.notificationcostservice.middleware.queue.consumer.event.notificationcost.NotificationCostInitializationEvent;
 import it.pagopa.pn.notificationcostservice.middleware.queue.consumer.event.notificationcost.UpdateNotificationCostEvent;
 
