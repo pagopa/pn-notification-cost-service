@@ -3,7 +3,9 @@ components:
   parameters: {}
   schemas:
     IUN:
-      $ref: 'https://raw.githubusercontent.com/pagopa/pn-delivery/7f0d49a256685ef80dc0478ab78fecf5d5a7579e/docs/openapi/schemas-pn-notification.yaml#/components/schemas/IUN'
+      $ref: 'https://raw.githubusercontent.com/pagopa/pn-delivery/917d64a6d95b851f0726dd30a544c7ffcbf77326/docs/openapi/schemas-pn-notification.yaml#/components/schemas/IUN'
+    InformalIUN:
+      $ref: 'https://raw.githubusercontent.com/pagopa/pn-delivery/917d64a6d95b851f0726dd30a544c7ffcbf77326/docs/openapi/schemas-pn-notification.yaml#/components/schemas/InformalIUN'
 
     paTaxId:
       $ref: 'https://raw.githubusercontent.com/pagopa/pn-delivery/7f0d49a256685ef80dc0478ab78fecf5d5a7579e/docs/openapi/schemas-pn-notification.yaml#/components/schemas/paTaxId'
