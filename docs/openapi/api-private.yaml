@@ -308,9 +308,13 @@ components:
       allOf:
         - $ref: '#/components/schemas/BaseRecipientCostData'
         - type: object
+          required:
+            - payments
           properties:
             payments:
               type: array
+              minItems: 1
+              maxItems: 100
               items:
                 $ref: '#/components/schemas/InformalPaymentData'
 
