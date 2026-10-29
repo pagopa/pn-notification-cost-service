@@ -4,6 +4,7 @@ import it.pagopa.pn.notificationcostservice.LocalStackTestConfig;
 import it.pagopa.pn.notificationcostservice.MockAWSObjectsTest;
 import it.pagopa.pn.notificationcostservice.middleware.dao.dynamo.PaymentInfoDaoDynamo;
 import it.pagopa.pn.notificationcostservice.middleware.dao.dynamo.entity.paymentinfo.PaymentInfoEntity;
+import it.pagopa.pn.notificationcostservice.model.CommunicationType;
 import it.pagopa.pn.notificationcostservice.model.paymentinfo.PaymentInfo;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
@@ -64,6 +65,7 @@ class PaymentInfoDaoDynamoTestIT {
             Assertions.assertEquals(payment.getIun(), persisted.getIun());
             Assertions.assertEquals(payment.getRecIndex(), persisted.getRecIndex());
             Assertions.assertEquals(payment.getApplyCost(), persisted.getApplyCost());
+            Assertions.assertEquals(payment.getCommunicationType(), persisted.getCommunicationType());
         } finally {
             deleteItem(iuv);
         }
@@ -89,6 +91,7 @@ class PaymentInfoDaoDynamoTestIT {
             Assertions.assertEquals(updated.getIun(), persisted.getIun());
             Assertions.assertEquals(updated.getRecIndex(), persisted.getRecIndex());
             Assertions.assertEquals(updated.getApplyCost(), persisted.getApplyCost());
+            Assertions.assertEquals(updated.getCommunicationType(), persisted.getCommunicationType());
         } finally {
             deleteItem(iuv);
         }
@@ -115,10 +118,12 @@ class PaymentInfoDaoDynamoTestIT {
             Assertions.assertEquals(payment1.getIun(), persisted1.getIun());
             Assertions.assertEquals(payment1.getRecIndex(), persisted1.getRecIndex());
             Assertions.assertEquals(payment1.getApplyCost(), persisted1.getApplyCost());
+            Assertions.assertEquals(payment1.getCommunicationType(), persisted1.getCommunicationType());
 
             Assertions.assertEquals(payment2.getIun(), persisted2.getIun());
             Assertions.assertEquals(payment2.getRecIndex(), persisted2.getRecIndex());
             Assertions.assertEquals(payment2.getApplyCost(), persisted2.getApplyCost());
+            Assertions.assertEquals(payment2.getCommunicationType(), persisted2.getCommunicationType());
         } finally {
             deleteItem(iuv1);
             deleteItem(iuv2);
@@ -142,7 +147,7 @@ class PaymentInfoDaoDynamoTestIT {
             Assertions.assertEquals(payment1.getIun(), persisted1.getIun());
             Assertions.assertEquals(payment1.getRecIndex(), persisted1.getRecIndex());
             Assertions.assertNull(persisted1.getApplyCost());
-
+            Assertions.assertEquals(payment1.getCommunicationType(), persisted1.getCommunicationType());
         } finally {
             deleteItem(iuv1);
         }
@@ -179,6 +184,7 @@ class PaymentInfoDaoDynamoTestIT {
                 .iun(iun)
                 .recIndex(recIndex)
                 .applyCost(applyCost)
+                .communicationType(CommunicationType.LEGAL)
                 .build();
     }
 

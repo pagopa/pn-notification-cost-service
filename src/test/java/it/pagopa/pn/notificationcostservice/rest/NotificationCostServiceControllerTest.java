@@ -2,6 +2,7 @@ package it.pagopa.pn.notificationcostservice.rest;
 
 import it.pagopa.pn.notification_cost_service.generated.openapi.server.v1.dto.*;
 import it.pagopa.pn.notificationcostservice.exception.PnNotFoundException;
+import it.pagopa.pn.notificationcostservice.model.CommunicationType;
 import it.pagopa.pn.notificationcostservice.model.cost.CostUpdatePhaseInt;
 import it.pagopa.pn.notificationcostservice.model.cost.NotificationCostUpdate;
 import it.pagopa.pn.notificationcostservice.model.ValidationStatus;
@@ -85,7 +86,7 @@ class NotificationCostServiceControllerTest {
 
         when(mapper.mapDtoToNotificationDeliveryCost(iun, requestDto)).thenReturn(notificationCosts);
         when(paymentInfoMapper.mapDtoToLegalPaymentInfo(iun, requestDto)).thenReturn(payments);
-        when(notificationCostService.saveNotificationCost(iun, notificationCosts, payments))
+        when(notificationCostService.saveNotificationCost(iun, notificationCosts, payments, CommunicationType.LEGAL))
                 .thenReturn(Mono.empty());
 
         Mono<ResponseEntity<String>> result =
@@ -101,7 +102,7 @@ class NotificationCostServiceControllerTest {
 
         verify(mapper).mapDtoToNotificationDeliveryCost(iun, requestDto);
         verify(paymentInfoMapper).mapDtoToLegalPaymentInfo(iun, requestDto);
-        verify(notificationCostService).saveNotificationCost(iun, notificationCosts, payments);
+        verify(notificationCostService).saveNotificationCost(iun, notificationCosts, payments, CommunicationType.LEGAL);
     }
 
     @Test
@@ -113,7 +114,7 @@ class NotificationCostServiceControllerTest {
 
         when(mapper.mapDtoToNotificationDeliveryCost(TEST_IUN, requestDto)).thenReturn(notificationCosts);
         when(paymentInfoMapper.mapDtoToLegalPaymentInfo(TEST_IUN, requestDto)).thenReturn(payments);
-        when(notificationCostService.saveNotificationCost(TEST_IUN, notificationCosts, payments))
+        when(notificationCostService.saveNotificationCost(TEST_IUN, notificationCosts, payments, CommunicationType.LEGAL))
                 .thenReturn(Mono.error(expected));
 
         StepVerifier.create(controller.initializeNotificationCost(TEST_IUN, Mono.just(requestDto), null))
@@ -122,7 +123,7 @@ class NotificationCostServiceControllerTest {
 
         verify(mapper).mapDtoToNotificationDeliveryCost(eq(TEST_IUN), same(requestDto));
         verify(paymentInfoMapper).mapDtoToLegalPaymentInfo(eq(TEST_IUN), same(requestDto));
-        verify(notificationCostService).saveNotificationCost(TEST_IUN, notificationCosts, payments);
+        verify(notificationCostService).saveNotificationCost(TEST_IUN, notificationCosts, payments, CommunicationType.LEGAL);
     }
 
     @Test
@@ -134,7 +135,7 @@ class NotificationCostServiceControllerTest {
         List<PaymentInfo> payments = List.of(mock(PaymentInfo.class));
 
         when(paymentInfoMapper.mapDtoToInformalPaymentInfo(iun, requestDto)).thenReturn(payments);
-        when(notificationCostService.saveNotificationCost(iun, null, payments))
+        when(notificationCostService.saveNotificationCost(iun, null, payments, CommunicationType.INFORMAL))
                 .thenReturn(Mono.empty());
 
         Mono<ResponseEntity<String>> result =
@@ -149,7 +150,7 @@ class NotificationCostServiceControllerTest {
                 .verifyComplete();
 
         verify(paymentInfoMapper).mapDtoToInformalPaymentInfo(iun, requestDto);
-        verify(notificationCostService).saveNotificationCost(iun, null, payments);
+        verify(notificationCostService).saveNotificationCost(iun, null, payments, CommunicationType.INFORMAL);
     }
 
     @Test
@@ -159,7 +160,7 @@ class NotificationCostServiceControllerTest {
         IllegalStateException expected = new IllegalStateException("enqueue failed");
 
         when(paymentInfoMapper.mapDtoToInformalPaymentInfo(TEST_IUN, requestDto)).thenReturn(payments);
-        when(notificationCostService.saveNotificationCost(TEST_IUN, null, payments))
+        when(notificationCostService.saveNotificationCost(TEST_IUN, null, payments, CommunicationType.INFORMAL))
                 .thenReturn(Mono.error(expected));
 
         StepVerifier.create(controller.initializeInformalNotificationCost(TEST_IUN, Mono.just(requestDto), null))
@@ -167,7 +168,7 @@ class NotificationCostServiceControllerTest {
                 .verify();
 
         verify(paymentInfoMapper).mapDtoToInformalPaymentInfo(eq(TEST_IUN), same(requestDto));
-        verify(notificationCostService).saveNotificationCost(TEST_IUN, null, payments);
+        verify(notificationCostService).saveNotificationCost(TEST_IUN, null, payments, CommunicationType.INFORMAL);
     }
 
     @Test

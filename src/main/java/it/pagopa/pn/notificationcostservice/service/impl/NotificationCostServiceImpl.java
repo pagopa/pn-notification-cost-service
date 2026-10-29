@@ -8,6 +8,7 @@ import it.pagopa.pn.notificationcostservice.middleware.dao.NotificationDeliveryC
 import it.pagopa.pn.notificationcostservice.middleware.dao.PaymentInfoDao;
 import it.pagopa.pn.notificationcostservice.middleware.queue.consumer.event.notificationcost.NotificationCostInitializationEvent;
 import it.pagopa.pn.notificationcostservice.middleware.queue.consumer.event.utils.NotificationCostEventBuilder;
+import it.pagopa.pn.notificationcostservice.model.CommunicationType;
 import it.pagopa.pn.notificationcostservice.model.cost.CalculatedCosts;
 import it.pagopa.pn.notificationcostservice.model.notificationdeliverycost.NotificationDeliveryCost;
 import it.pagopa.pn.notificationcostservice.model.paymentinfo.PaymentInfo;
@@ -49,10 +50,10 @@ public class NotificationCostServiceImpl implements NotificationCostService {
     }
 
     @Override
-    public Mono<Void> saveNotificationCost(String iun, List<NotificationDeliveryCost> notificationCosts, List<PaymentInfo> payments) {
+    public Mono<Void> saveNotificationCost(String iun, List<NotificationDeliveryCost> notificationCosts, List<PaymentInfo> payments, CommunicationType communicationType) {
         log.info("Start to save notification cost for iun: {}", iun);
         return Mono.fromRunnable(() -> {
-                    var event = NotificationCostEventBuilder.buildNotificationCostEvent(iun, notificationCosts, payments);
+                    var event = NotificationCostEventBuilder.buildNotificationCostEvent(iun, notificationCosts, payments, communicationType);
                     notificationCostInitialization.push(event);
                 })
                 .subscribeOn(Schedulers.boundedElastic())

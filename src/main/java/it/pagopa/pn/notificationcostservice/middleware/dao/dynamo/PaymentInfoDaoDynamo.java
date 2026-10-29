@@ -72,10 +72,12 @@ public class PaymentInfoDaoDynamo extends BaseDao implements PaymentInfoDao {
         Map<String, AttributeValue> flatAttributes = new HashMap<>();
         flatAttributes.put(PaymentInfoEntity.COL_IUN, AttributeValue.builder().s(entity.getIun()).build());
         flatAttributes.put(PaymentInfoEntity.COL_REC_INDEX, AttributeValue.builder().n(String.valueOf(entity.getRecIndex())).build());
+        flatAttributes.put(PaymentInfoEntity.COL_COMMUNICATION_TYPE, AttributeValue.builder().s(String.valueOf(entity.getCommunicationType())).build());
 
         if(entity.getApplyCost() != null) {
             flatAttributes.put(PaymentInfoEntity.COL_APPLY_COST, AttributeValue.builder().bool(entity.getApplyCost()).build());
         }
+
 
         return this.updateIfMatchOrNotExists(keyAttributes, flatAttributes, null,null)
                 .then();

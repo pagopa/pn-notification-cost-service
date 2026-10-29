@@ -1,20 +1,24 @@
 package it.pagopa.pn.notificationcostservice.middleware.queue.consumer.handler.notificationcost;
 
 import it.pagopa.pn.api.dto.events.notificationcost.validation.PnNotificationCostValidationEvent;
+import it.pagopa.pn.commons.exceptions.PnInternalException;
 import it.pagopa.pn.notificationcostservice.middleware.dao.PaymentInfoDao;
 import it.pagopa.pn.notificationcostservice.middleware.eventbus.EventBridgeProducer;
 import it.pagopa.pn.notificationcostservice.middleware.queue.consumer.event.notificationcost.NotificationCostInitializationEvent;
+import it.pagopa.pn.notificationcostservice.model.CommunicationType;
 import it.pagopa.pn.notificationcostservice.model.notificationdeliverycost.NotificationDeliveryCost;
 import it.pagopa.pn.notificationcostservice.model.paymentinfo.PaymentInfo;
 import it.pagopa.pn.notificationcostservice.service.NotificationCostUpdaterService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
+import org.springframework.util.CollectionUtils;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
 import java.util.List;
 
+import static it.pagopa.pn.notificationcostservice.exception.PnNotificationCostServiceExceptionCodes.ERROR_CODE_NOTIFICATIONCOSTSERVICE_INTERNAL_SERVER_ERROR;
 import static it.pagopa.pn.notificationcostservice.middleware.eventbus.utils.NotificationCostValidationEventBuilder.buildOkValidationEvent;
 
 @Component
@@ -31,13 +35,14 @@ public class NotificationCostInitializationEventHandler {
         log.info("Handling NotificationCostInitializationEvent for iun={}", payload.getIun());
         List<NotificationDeliveryCost> notificationCosts = payload.getNotificationCosts();
         List<PaymentInfo> payments = payload.getPayments();
+        CommunicationType communicationType = payload.getCommunicationType();
 
         log.info(
                 "Start processing NotificationCostInitializationEvent for iun={}.",
                 payload.getIun()
         );
 
-        return updateNotificationBaseCosts(notificationCosts)
+        return updateNotificationBaseCosts(payload.getIun(), notificationCosts, communicationType)
                 .then(Mono.defer(() -> updatePaymentsInfo(payments)))
                 .then(Mono.defer(() -> sendOutcomeEvent(payload.getIun())))
                 .doOnError(ex ->
@@ -45,17 +50,32 @@ public class NotificationCostInitializationEventHandler {
                 );
     }
 
-    private Mono<Void> updateNotificationBaseCosts(List<NotificationDeliveryCost> notificationCosts) {
-        if (notificationCosts == null || notificationCosts.isEmpty()) {
-            log.info("No notificationCosts to update");
-            return Mono.empty();
+    private boolean isLegalNotification(CommunicationType communicationType) {
+        return communicationType == null || communicationType == CommunicationType.LEGAL;
+    }
+
+    private Mono<Void> updateNotificationBaseCosts(String iun, List<NotificationDeliveryCost> notificationCosts, CommunicationType communicationType) {
+        if (CollectionUtils.isEmpty(notificationCosts)) {
+            return handleMissingNotificationCosts(iun, communicationType);
         }
 
         return Flux.fromIterable(notificationCosts)
                 .flatMap(notificationCostUpdaterService::updateBaseCost)
                 .then()
-                .doOnSuccess(ignored -> log.info("Successfully saved notification costs for iun={}", notificationCosts.getFirst().getIun()))
+                .doOnSuccess(ignored -> log.info("Successfully saved notification costs for iun={}", iun))
                 .doOnError(ex -> log.error("Error saving notification costs", ex));
+    }
+
+    private Mono<Void> handleMissingNotificationCosts(String iun, CommunicationType communicationType) {
+        if (isLegalNotification(communicationType)) {
+            log.error("Missing notificationCosts for legal notification iun={}", iun);
+            return Mono.error(new PnInternalException(
+                    "Missing required data for iun:" + iun,
+                    ERROR_CODE_NOTIFICATIONCOSTSERVICE_INTERNAL_SERVER_ERROR));
+        }
+
+        log.info("Skipping notificationCosts update for iun={}: no costs for informal notification", iun);
+        return Mono.empty();
     }
 
     private Mono<Void> updatePaymentsInfo(List<PaymentInfo> payments) {

@@ -4,6 +4,7 @@ import it.pagopa.pn.api.dto.events.GenericEvent;
 import it.pagopa.pn.api.dto.events.GenericEventHeader;
 import it.pagopa.pn.notificationcostservice.middleware.queue.consumer.event.InternalEvent;
 import it.pagopa.pn.notificationcostservice.middleware.queue.consumer.event.InternalEventType;
+import it.pagopa.pn.notificationcostservice.model.CommunicationType;
 import it.pagopa.pn.notificationcostservice.model.notificationdeliverycost.NotificationDeliveryCost;
 import it.pagopa.pn.notificationcostservice.model.paymentinfo.PaymentInfo;
 import lombok.*;
@@ -29,5 +30,6 @@ public class NotificationCostInitializationEvent implements GenericEvent<Generic
         private List<NotificationDeliveryCost> notificationCosts;
         private List<PaymentInfo> payments;
         private InternalEventType eventType = InternalEventType.NOTIFICATION_COST_INITIALIZATION;
+        private CommunicationType communicationType;
     }
 }

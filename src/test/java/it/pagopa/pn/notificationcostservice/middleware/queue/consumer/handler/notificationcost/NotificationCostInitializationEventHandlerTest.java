@@ -1,10 +1,12 @@
 package it.pagopa.pn.notificationcostservice.middleware.queue.consumer.handler.notificationcost;
 
 import it.pagopa.pn.api.dto.events.notificationcost.validation.PnNotificationCostValidationEvent;
+import it.pagopa.pn.commons.exceptions.PnInternalException;
 import it.pagopa.pn.notificationcostservice.NotificationDeliveryCostTestBuilder;
 import it.pagopa.pn.notificationcostservice.middleware.dao.PaymentInfoDao;
 import it.pagopa.pn.notificationcostservice.middleware.eventbus.EventBridgeProducer;
 import it.pagopa.pn.notificationcostservice.middleware.queue.consumer.event.notificationcost.NotificationCostInitializationEvent;
+import it.pagopa.pn.notificationcostservice.model.CommunicationType;
 import it.pagopa.pn.notificationcostservice.model.notificationdeliverycost.NotificationDeliveryCost;
 import it.pagopa.pn.notificationcostservice.model.paymentinfo.PaymentInfo;
 import it.pagopa.pn.notificationcostservice.service.NotificationCostUpdaterService;
@@ -42,11 +44,28 @@ class NotificationCostInitializationEventHandlerTest {
     @InjectMocks
     private NotificationCostInitializationEventHandler handler;
 
+    @ParameterizedTest
+    @NullAndEmptySource
+    void handleNotificationCostInitializationEvent_shouldErrorWhenNotificationCostsAreNullOrEmpty(List<NotificationDeliveryCost> notificationCosts) {
+        NotificationCostInitializationEvent.Payload payload = NotificationCostInitializationEvent.Payload.builder()
+                .iun(IUN_1)
+                .notificationCosts(notificationCosts)
+                .payments(buildPayments())
+                .build();
+
+        StepVerifier.create(handler.handleNotificationCostInitializationEvent(payload))
+                .expectError(PnInternalException.class)
+                .verify();
+
+        verifyNoInteractions(notificationCostUpdaterService, paymentInfoDao, producer);
+    }
+
+
     @Test
     void handleNotificationCostInitializationEvent_shouldPropagateErrorWhenFirstUpdateBaseCostFails() {
         List<NotificationDeliveryCost> notificationCosts = buildMultipleItemNotificationCosts();
         List<PaymentInfo> payments = buildPayments();
-        NotificationCostInitializationEvent.Payload payload = buildPayload(notificationCosts, payments);
+        NotificationCostInitializationEvent.Payload payload = buildPayload(notificationCosts, payments, CommunicationType.LEGAL);
 
         RuntimeException expectedException = new RuntimeException("save failed");
 
@@ -72,7 +91,7 @@ class NotificationCostInitializationEventHandlerTest {
     void handleNotificationCostInitializationEvent_shouldPropagateErrorWhenSecondUpdateBaseCostFails() {
         List<NotificationDeliveryCost> notificationCosts = buildMultipleItemNotificationCosts();
         List<PaymentInfo> payments = buildPayments();
-        NotificationCostInitializationEvent.Payload payload = buildPayload(notificationCosts, payments);
+        NotificationCostInitializationEvent.Payload payload = buildPayload(notificationCosts, payments, CommunicationType.LEGAL);
 
         RuntimeException expectedException = new RuntimeException("save failed");
 
@@ -100,7 +119,7 @@ class NotificationCostInitializationEventHandlerTest {
     void handleNotificationCostInitializationEvent_shouldPropagateErrorWhenUpdatingPaymentsFails() {
         List<NotificationDeliveryCost> notificationCosts = buildSingleItemNotificationCosts();
         List<PaymentInfo> payments = buildPayments();
-        NotificationCostInitializationEvent.Payload payload = buildPayload(notificationCosts, payments);
+        NotificationCostInitializationEvent.Payload payload = buildPayload(notificationCosts, payments, CommunicationType.LEGAL);
 
         RuntimeException expectedException = new RuntimeException("update failed");
 
@@ -125,7 +144,7 @@ class NotificationCostInitializationEventHandlerTest {
     @NullAndEmptySource
     void handleNotificationCostInitializationEvent_shouldCompleteAndSendOkValidationEventWhenUsingOnlyPayments(List<NotificationDeliveryCost> notificationCosts) {
         List<PaymentInfo> payments = buildPayments();
-        NotificationCostInitializationEvent.Payload payload = buildPayload(notificationCosts, payments);
+        NotificationCostInitializationEvent.Payload payload = buildPayload(notificationCosts, payments, CommunicationType.INFORMAL);
 
         when(paymentInfoDao.updateItemIfNotExistsOrMatch(payments))
                 .thenReturn(Mono.empty());
@@ -154,7 +173,7 @@ class NotificationCostInitializationEventHandlerTest {
     @NullAndEmptySource
     void handleNotificationCostInitializationEvent_shouldCompleteAndSendOkValidationEventWhenUsingOnlyNotificationCosts(List<PaymentInfo> payments) {
         List<NotificationDeliveryCost> notificationCosts = buildSingleItemNotificationCosts();
-        NotificationCostInitializationEvent.Payload payload = buildPayload(notificationCosts, payments);
+        NotificationCostInitializationEvent.Payload payload = buildPayload(notificationCosts, payments, CommunicationType.LEGAL);
 
         when(notificationCostUpdaterService.updateBaseCost(notificationCosts.getFirst()))
                 .thenReturn(Mono.empty());
@@ -183,7 +202,7 @@ class NotificationCostInitializationEventHandlerTest {
     void handleNotificationCostInitializationEvent_shouldCompleteAndSendOkValidationEventWhenUsingBothNotificationCostsAndPayments() {
         List<NotificationDeliveryCost> notificationCosts = buildSingleItemNotificationCosts();
         List<PaymentInfo> payments = buildPayments();
-        NotificationCostInitializationEvent.Payload payload = buildPayload(notificationCosts, payments);
+        NotificationCostInitializationEvent.Payload payload = buildPayload(notificationCosts, payments, CommunicationType.INFORMAL);
 
         when(notificationCostUpdaterService.updateBaseCost(notificationCosts.getFirst()))
                 .thenReturn(Mono.empty());
@@ -215,7 +234,7 @@ class NotificationCostInitializationEventHandlerTest {
     void handleNotificationCostInitializationEvent_shouldPropagateErrorWhenSendingOutcomeEventFails() {
         List<NotificationDeliveryCost> notificationCosts = buildSingleItemNotificationCosts();
         List<PaymentInfo> payments = buildPayments();
-        NotificationCostInitializationEvent.Payload payload = buildPayload(notificationCosts, payments);
+        NotificationCostInitializationEvent.Payload payload = buildPayload(notificationCosts, payments, CommunicationType.LEGAL);
 
         RuntimeException expectedException = new RuntimeException("event bridge failed");
 
@@ -240,12 +259,14 @@ class NotificationCostInitializationEventHandlerTest {
 
     private NotificationCostInitializationEvent.Payload buildPayload(
             List<NotificationDeliveryCost> notificationCosts,
-            List<PaymentInfo> payments
+            List<PaymentInfo> payments,
+            CommunicationType communicationType
     ) {
         return NotificationCostInitializationEvent.Payload.builder()
                 .iun(IUN_1)
                 .notificationCosts(notificationCosts)
                 .payments(payments)
+                .communicationType(communicationType)
                 .build();
     }
 
