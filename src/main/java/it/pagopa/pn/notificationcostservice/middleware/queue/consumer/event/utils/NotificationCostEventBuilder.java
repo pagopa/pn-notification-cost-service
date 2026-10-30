@@ -4,6 +4,7 @@ import it.pagopa.pn.api.dto.events.EventPublisher;
 import it.pagopa.pn.api.dto.events.GenericEventHeader;
 import it.pagopa.pn.notificationcostservice.middleware.queue.consumer.event.InternalEventType;
 import it.pagopa.pn.notificationcostservice.middleware.queue.consumer.event.notificationcost.NotificationCostInitializationEvent;
+import it.pagopa.pn.notificationcostservice.model.CommunicationType;
 import it.pagopa.pn.notificationcostservice.model.notificationdeliverycost.NotificationDeliveryCost;
 import it.pagopa.pn.notificationcostservice.model.paymentinfo.PaymentInfo;
 import lombok.NoArgsConstructor;
@@ -20,13 +21,14 @@ public class NotificationCostEventBuilder {
     private static final int MAX_EVENT_ID_LENGTH = 79;
 
 
-    public static NotificationCostInitializationEvent buildNotificationCostEvent(String iun, List<NotificationDeliveryCost> notificationCosts, List<PaymentInfo> payments) {
+    public static NotificationCostInitializationEvent buildNotificationCostEvent(String iun, List<NotificationDeliveryCost> notificationCosts, List<PaymentInfo> payments, CommunicationType communicationType) {
         return NotificationCostInitializationEvent.builder()
                 .header(buildInternalEventHeader(iun))
                 .payload(NotificationCostInitializationEvent.Payload.builder()
                         .iun(iun)
                         .notificationCosts(notificationCosts)
                         .payments(payments)
+                        .communicationType(communicationType)
                         .eventType(InternalEventType.NOTIFICATION_COST_INITIALIZATION)
                         .build())
                 .build();

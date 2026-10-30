@@ -8,6 +8,7 @@ import it.pagopa.pn.notificationcostservice.exception.PnNotFoundException;
 import it.pagopa.pn.notificationcostservice.middleware.dao.NotificationDeliveryCostDao;
 import it.pagopa.pn.notificationcostservice.middleware.dao.PaymentInfoDao;
 import it.pagopa.pn.notificationcostservice.middleware.queue.consumer.event.notificationcost.NotificationCostInitializationEvent;
+import it.pagopa.pn.notificationcostservice.model.CommunicationType;
 import it.pagopa.pn.notificationcostservice.model.cost.CalculatedCosts;
 import it.pagopa.pn.notificationcostservice.model.notificationdeliverycost.NotificationDeliveryCost;
 import it.pagopa.pn.notificationcostservice.model.paymentinfo.PaymentInfo;
@@ -123,10 +124,11 @@ class NotificationCostServiceImplTest {
     void saveNotificationCost_CompletesAndPushesBuiltEvent() {
         List<NotificationDeliveryCost> notificationCosts = buildNotificationCosts();
         List<PaymentInfo> payments = buildPayments();
+        CommunicationType communicationType = CommunicationType.LEGAL;
         ArgumentCaptor<NotificationCostInitializationEvent> eventCaptor =
                 ArgumentCaptor.forClass(NotificationCostInitializationEvent.class);
 
-        StepVerifier.create(notificationCostService.saveNotificationCost(IUN, notificationCosts, payments))
+        StepVerifier.create(notificationCostService.saveNotificationCost(IUN, notificationCosts, payments, communicationType))
                 .verifyComplete();
 
         verify(notificationCostInitialization).push(eventCaptor.capture());
@@ -138,6 +140,7 @@ class NotificationCostServiceImplTest {
         assertEquals(IUN, event.getPayload().getIun());
         assertEquals(notificationCosts, event.getPayload().getNotificationCosts());
         assertEquals(payments, event.getPayload().getPayments());
+        assertEquals(communicationType, event.getPayload().getCommunicationType());
     }
 
     @Test
@@ -152,7 +155,7 @@ class NotificationCostServiceImplTest {
                 .push(any(NotificationCostInitializationEvent.class));
 
         StepVerifier.withVirtualTime(() ->
-                        notificationCostService.saveNotificationCost(IUN, notificationCosts, payments))
+                        notificationCostService.saveNotificationCost(IUN, notificationCosts, payments, null))
                 .thenAwait(Duration.ofSeconds(10))
                 .verifyComplete();
 
@@ -172,7 +175,7 @@ class NotificationCostServiceImplTest {
                 .push(any(NotificationCostInitializationEvent.class));
 
         StepVerifier.withVirtualTime(() ->
-                        notificationCostService.saveNotificationCost(IUN, notificationCosts, payments))
+                        notificationCostService.saveNotificationCost(IUN, notificationCosts, payments, null))
                 .thenAwait(Duration.ofSeconds(10))
                 .expectErrorMatches(throwable ->
                         throwable instanceof RuntimeException &&
@@ -205,7 +208,7 @@ class NotificationCostServiceImplTest {
 
         when(paymentInfoDao.getPaymentInfoByIuv(iuv)).thenReturn(Mono.just(paymentInfo));
         when(notificationDeliveryCostDao.getNotificationDeliveryCostItem(IUN, REC_INDEX)).thenReturn(Mono.just(notificationDeliveryCost));
-        when(costCalculator.calculateCosts(notificationDeliveryCost, paymentInfo.isApplyCost())).thenReturn(calculatedCosts);
+        when(costCalculator.calculateCosts(notificationDeliveryCost, paymentInfo.getApplyCost())).thenReturn(calculatedCosts);
         when(notificationDeliveryCostMapper.mapToNotificationCostPaymentResponse(notificationDeliveryCost, calculatedCosts)).thenReturn(mappedResponse);
 
         StepVerifier.create(notificationCostService.getNotificationCostPaymentInfo(iuv))
@@ -214,7 +217,7 @@ class NotificationCostServiceImplTest {
 
         verify(paymentInfoDao).getPaymentInfoByIuv(iuv);
         verify(notificationDeliveryCostDao).getNotificationDeliveryCostItem(IUN, REC_INDEX);
-        verify(costCalculator).calculateCosts(notificationDeliveryCost, paymentInfo.isApplyCost());
+        verify(costCalculator).calculateCosts(notificationDeliveryCost, paymentInfo.getApplyCost());
         verify(notificationDeliveryCostMapper).mapToNotificationCostPaymentResponse(notificationDeliveryCost, calculatedCosts);
     }
 

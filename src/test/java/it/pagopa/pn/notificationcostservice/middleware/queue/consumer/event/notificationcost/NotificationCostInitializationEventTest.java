@@ -2,6 +2,7 @@ package it.pagopa.pn.notificationcostservice.middleware.queue.consumer.event.not
 
 import it.pagopa.pn.notificationcostservice.NotificationDeliveryCostTestBuilder;
 import it.pagopa.pn.notificationcostservice.middleware.queue.consumer.event.utils.NotificationCostEventBuilder;
+import it.pagopa.pn.notificationcostservice.model.CommunicationType;
 import it.pagopa.pn.notificationcostservice.model.notificationdeliverycost.NotificationDeliveryCost;
 import it.pagopa.pn.notificationcostservice.model.paymentinfo.PaymentInfo;
 import org.junit.jupiter.api.Test;
@@ -34,7 +35,7 @@ class NotificationCostInitializationEventTest {
         );
 
         NotificationCostInitializationEvent original =
-                NotificationCostEventBuilder.buildNotificationCostEvent("IUN-COPY", notificationCosts, payments);
+                NotificationCostEventBuilder.buildNotificationCostEvent("IUN-COPY", notificationCosts, payments, CommunicationType.LEGAL);
 
         NotificationCostInitializationEvent copy = original.toBuilder().build();
 
@@ -43,5 +44,6 @@ class NotificationCostInitializationEventTest {
         assertEquals(original.hashCode(), copy.hashCode());
         assertEquals(original.getPayload().getNotificationCosts(), copy.getPayload().getNotificationCosts());
         assertEquals(original.getPayload().getPayments(), copy.getPayload().getPayments());
+        assertEquals(original.getPayload().getCommunicationType(), copy.getPayload().getCommunicationType());
     }
 }
