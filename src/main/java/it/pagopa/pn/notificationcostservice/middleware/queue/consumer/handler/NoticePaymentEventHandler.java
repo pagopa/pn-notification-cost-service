@@ -10,8 +10,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 import reactor.core.publisher.Mono;
 
-import java.util.Objects;
-
 @Component
 @Slf4j
 @RequiredArgsConstructor
@@ -21,9 +19,11 @@ public class NoticePaymentEventHandler {
     private final EventBridgeProducer<PnNoticePaymentPaidEvent> producer;
 
     public Mono<Void> handleNoticePaymentEvent(PnNoticePaymentEvent.Payload payload) {
-        log.info("Handling NoticePaymentEvent for iuv={}", payload.getIuv());
+        log.info("Handling PnNoticePaymentEvent with id={} having creditorTaxId={} and noticeCode={}", payload.getPaymentId(), payload.getCreditorTaxId(), payload.getNoticeCode());
 
-        return getPaymentInfo(payload.getCreditorTaxId()+"##"+payload.getNoticeCode())
+        String iuv = payload.getCreditorTaxId()+"##"+payload.getNoticeCode();
+        return getPaymentInfo(iuv)
+                .switchIfEmpty(Mono.fromRunnable(() -> log.info("PaymentInfo not found for iuv={}", iuv)))
                 .flatMap(info -> this.handlePaymentInfo(payload, info))
                 .doOnError(ex ->
                         log.error("Error processing handlePaymentInfo for iuv={}", payload.getCreditorTaxId()+"##"+payload.getNoticeCode(), ex)
@@ -35,16 +35,13 @@ public class NoticePaymentEventHandler {
     }
 
     private Mono<Void> handlePaymentInfo(PnNoticePaymentEvent.Payload payload, PaymentInfo info) {
-        if(Objects.isNull(info)) {
-            log.info("PaymentInfo not found for iuv={}", payload.getCreditorTaxId()+"##"+payload.getNoticeCode());
-            return Mono.empty();
-        }
-        return updatePaymentInfoData(payload, info)
+        log.info("PaymentInfo found for iuv={}, related to iun={} and recIndex={}. Sending PnNoticePaymentPaidEvent", info.getIuv(), info.getIun(), info.getRecIndex());
+        return enrichEventWithNotificationInfo(payload, info)
                 .flatMap(producer::sendEvent)
                 .then();
     }
 
-    private Mono<PnNoticePaymentPaidEvent> updatePaymentInfoData(PnNoticePaymentEvent.Payload payload, PaymentInfo info) {
+    private Mono<PnNoticePaymentPaidEvent> enrichEventWithNotificationInfo(PnNoticePaymentEvent.Payload payload, PaymentInfo info) {
         return Mono.just(PnNoticePaymentPaidEvent.builder()
                 .payload(PnNoticePaymentPaidEvent.Payload.builder()
                 .modelType(payload.getModelType())
@@ -65,7 +62,7 @@ public class NoticePaymentEventHandler {
                 .pagopaPublishedTimestamp(payload.getPagopaPublishedTimestamp())
                 .sendIngestionTimestamp(payload.getSendIngestionTimestamp())
                 .kafkaPartition(payload.getKafkaPartition())
-                .communicationType(info.getCommunicationType())
+                .communicationType(info.getCommunicationType().name())
                 .iun(info.getIun())
                 .recIndex(info.getRecIndex())
                 .build()).build());
