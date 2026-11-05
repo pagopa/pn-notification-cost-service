@@ -18,7 +18,7 @@ public class NoticePaymentEventHandler {
     private final PaymentInfoDao paymentInfoDao;
     private final EventBridgeProducer<PnNoticePaymentPaidEvent> producer;
 
-    public Mono<Void> handleNoticePaymentEvent(PnNoticePaymentEvent.Payload payload) {
+    public Mono<Void> handle(PnNoticePaymentEvent.Payload payload) {
         log.info("Handling PnNoticePaymentEvent with id={} having creditorTaxId={} and noticeCode={}", payload.getPaymentId(), payload.getCreditorTaxId(), payload.getNoticeCode());
 
         String iuv = payload.getCreditorTaxId()+"##"+payload.getNoticeCode();

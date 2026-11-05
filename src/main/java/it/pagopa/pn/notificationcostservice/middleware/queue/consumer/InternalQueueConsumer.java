@@ -19,13 +19,12 @@ public class InternalQueueConsumer {
 
     private final InternalEventsRouter router;
 
-    @SqsListener(value = {"${pn.notification-cost-service.topics.pn-notification-cost-to-update}","${pn.notification-cost-service.topics.payments-to-verify}"})
+    @SqsListener(value = "${pn.notification-cost-service.topics.pn-notification-cost-to-update}")
     public void pnNotificationDeliveryCostEventConsumer(Message<InternalEvent> message) {
         final String processName = "NotificationDeliveryCostEventConsumer";
         log.logStartingProcess(processName);
         setMdc(message);
         try {
-            message.getPayload();
             log.info("Handle pnNotificationDeliveryCostEventConsumer, messageId={}",
                     message.getHeaders().getId());
             MDCUtils.addMDCToContextAndExecute(router.handleEvent(message)).block();

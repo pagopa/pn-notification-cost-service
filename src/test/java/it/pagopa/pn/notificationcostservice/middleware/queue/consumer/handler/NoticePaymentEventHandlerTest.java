@@ -9,7 +9,6 @@ import it.pagopa.pn.notificationcostservice.model.paymentinfo.PaymentInfo;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
-import org.mockito.Mockito;
 import reactor.core.publisher.Mono;
 import reactor.test.StepVerifier;
 
@@ -31,8 +30,8 @@ class NoticePaymentEventHandlerTest {
     @BeforeEach
     @SuppressWarnings("unchecked")
     void setUp() {
-        paymentInfoDao = Mockito.mock(PaymentInfoDao.class);
-        producer = Mockito.mock(EventBridgeProducer.class);
+        paymentInfoDao = mock(PaymentInfoDao.class);
+        producer = mock(EventBridgeProducer.class);
         handler = new NoticePaymentEventHandler(paymentInfoDao, producer);
     }
 
@@ -44,7 +43,7 @@ class NoticePaymentEventHandlerTest {
         when(paymentInfoDao.getPaymentInfoByIuv(EXPECTED_PK)).thenReturn(Mono.just(info));
         when(producer.sendEvent(any(PnNoticePaymentPaidEvent.class))).thenReturn(Mono.empty());
 
-        StepVerifier.create(handler.handleNoticePaymentEvent(input))
+        StepVerifier.create(handler.handle(input))
                 .verifyComplete();
 
         verify(paymentInfoDao).getPaymentInfoByIuv(EXPECTED_PK);
@@ -87,7 +86,7 @@ class NoticePaymentEventHandlerTest {
 
         when(paymentInfoDao.getPaymentInfoByIuv(EXPECTED_PK)).thenReturn(Mono.empty());
 
-        StepVerifier.create(handler.handleNoticePaymentEvent(input))
+        StepVerifier.create(handler.handle(input))
                 .verifyComplete();
 
         verify(paymentInfoDao).getPaymentInfoByIuv(EXPECTED_PK);
@@ -102,7 +101,7 @@ class NoticePaymentEventHandlerTest {
 
         when(paymentInfoDao.getPaymentInfoByIuv(EXPECTED_PK)).thenReturn(Mono.error(error));
 
-        StepVerifier.create(handler.handleNoticePaymentEvent(input))
+        StepVerifier.create(handler.handle(input))
                 .expectErrorMatches(ex -> ex == error)
                 .verify();
 
@@ -118,7 +117,7 @@ class NoticePaymentEventHandlerTest {
         when(paymentInfoDao.getPaymentInfoByIuv(EXPECTED_PK)).thenReturn(Mono.just(info));
         when(producer.sendEvent(any(PnNoticePaymentPaidEvent.class))).thenReturn(Mono.error(error));
 
-        StepVerifier.create(handler.handleNoticePaymentEvent(input))
+        StepVerifier.create(handler.handle(input))
                 .expectErrorMatches(ex -> ex == error)
                 .verify();
 
