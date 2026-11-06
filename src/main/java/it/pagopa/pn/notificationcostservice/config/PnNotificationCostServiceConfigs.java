@@ -37,6 +37,7 @@ public class PnNotificationCostServiceConfigs {
     @Data
     public static class Topics {
         private String pnNotificationCostToUpdate;
+        private String paymentsToVerify;
     }
 
     @Data
@@ -44,6 +45,7 @@ public class PnNotificationCostServiceConfigs {
         private String name;
         private String source;
         private String outcomeEventDetailType;
+        private String noticePaymentPaidDetailType;
     }
 
     @PostConstruct
