@@ -19,11 +19,11 @@ public class NoticePaymentEventHandler {
     private final EventBridgeProducer<PnNoticePaymentPaidEvent> producer;
 
     public Mono<Void> handle(PnNoticePaymentEvent.Payload payload) {
-        log.info("Handling PnNoticePaymentEvent with id={} having creditorTaxId={} and noticeCode={}", payload.getPaymentId(), payload.getCreditorTaxId(), payload.getNoticeCode());
+        log.debug("Handling PnNoticePaymentEvent with id={} having creditorTaxId={} and noticeCode={}", payload.getPaymentId(), payload.getCreditorTaxId(), payload.getNoticeCode());
 
         String iuv = payload.getCreditorTaxId()+"##"+payload.getNoticeCode();
         return getPaymentInfo(iuv)
-                .switchIfEmpty(Mono.fromRunnable(() -> log.info("PaymentInfo not found for iuv={}", iuv)))
+                .switchIfEmpty(Mono.fromRunnable(() -> log.debug("PaymentInfo not found for iuv={}", iuv)))
                 .flatMap(info -> this.handlePaymentInfo(payload, info))
                 .doOnError(ex ->
                         log.error("Error processing handlePaymentInfo for iuv={}", payload.getCreditorTaxId()+"##"+payload.getNoticeCode(), ex)
