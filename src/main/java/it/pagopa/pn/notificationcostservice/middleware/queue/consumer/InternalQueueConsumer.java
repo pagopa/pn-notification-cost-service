@@ -25,7 +25,6 @@ public class InternalQueueConsumer {
         log.logStartingProcess(processName);
         setMdc(message);
         try {
-            message.getPayload();
             log.info("Handle pnNotificationDeliveryCostEventConsumer, messageId={}",
                     message.getHeaders().getId());
             MDCUtils.addMDCToContextAndExecute(router.handleEvent(message)).block();

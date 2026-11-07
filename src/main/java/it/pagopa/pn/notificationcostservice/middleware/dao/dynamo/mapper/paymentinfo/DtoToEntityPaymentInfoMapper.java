@@ -16,7 +16,8 @@ public class DtoToEntityPaymentInfoMapper {
         entity.setIun(dto.getIun());
         entity.setRecIndex(dto.getRecIndex());
         entity.setIuv(dto.getIuv());
-        entity.setApplyCost(dto.isApplyCost());
+        entity.setApplyCost(dto.getApplyCost());
+        entity.setCommunicationType(dto.getCommunicationType());
         return entity;
     }
 }

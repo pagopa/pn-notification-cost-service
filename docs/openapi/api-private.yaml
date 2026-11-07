@@ -123,6 +123,41 @@ paths:
               schema:
                 $ref: '#/components/schemas/Problem'
 
+  "/notification-cost-private/cost/initialize/informal/{iun}":
+    post:
+      operationId: initializeInformalNotificationCost
+      summary: "Initialize notification cost for all recipients"
+      description: " Servizio che inizializza il costo di notificazione per lo IUN indicato di una notifica bonaria per tutti i destinatari della notifica."
+      tags:
+        - NotificationCostRecipient
+      parameters:
+        - $ref: '#/components/parameters/pathInformalIun'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/NewInformalNotificationCostRequest'
+      responses:
+        '202':
+          description: ACK - Richiesta elaborata correttamente
+          content:
+            text/plain:
+              schema:
+                type: string
+        '400':
+          description: Invalid input
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+        '500':
+          description: Internal Server Error
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+
   "/notification-cost-private/cost/{iun}/invalidate":
     put:
       operationId: invalidatePaperCost
@@ -167,6 +202,13 @@ components:
       schema:
         $ref: './remote-refs.yaml#/components/schemas/IUN'
 
+    pathInformalIun:
+      name: iun
+      in: path
+      required: true
+      schema:
+        $ref: './remote-refs.yaml#/components/schemas/InformalIUN'
+
     pathCreditorTaxId:
       name: creditorTaxId
       in: path
@@ -182,16 +224,29 @@ components:
          $ref: './remote-refs.yaml#/components/schemas/noticeCode'
 
   schemas:
-    NewNotificationCostRequest:
+    BaseNotificationCostRequest:
       type: object
+      required:
+        - senderPaId
+        - senderTaxId
+      properties:
+        senderPaId:
+          type: string
+          description: Identificativo (non IPA) della PA mittente che ha eseguito l'onboarding su SelfCare.
+        senderTaxId:
+          type: string
+          description: Codice Fiscale identificativo dell'ente
+
+    NewNotificationCostRequest:
+      allOf:
+        - $ref: '#/components/schemas/BaseNotificationCostRequest'
+        - type: object
       required:
         - costRecipients
         - paFee
         - notificationFeePolicy
         - pagoPaIntMode
         - vat
-        - senderPaId
-        - senderTaxId
       properties:
         paFee:
           type: integer
@@ -204,12 +259,6 @@ components:
           $ref: '#/components/schemas/PagoPaIntMode'
         vat:
           $ref: '#/components/schemas/Vat'
-        senderPaId:
-          type: string
-          description: Identificativo (non IPA) della PA mittente che ha eseguito l'onboarding su SelfCare.
-        senderTaxId:
-          type: string
-          description: Codice Fiscale identificativo dell’ente
         costRecipients:
           type: array
           minItems: 1
@@ -217,7 +266,21 @@ components:
           items:
             $ref: '#/components/schemas/RecipientCostData'
 
-    RecipientCostData:
+    NewInformalNotificationCostRequest:
+      allOf:
+        - $ref: '#/components/schemas/BaseNotificationCostRequest'
+        - type: object
+          required:
+            - costRecipients
+          properties:
+            costRecipients:
+              type: array
+              minItems: 1
+              maxItems: 100
+              items:
+                $ref: '#/components/schemas/InformalRecipientCostData'
+
+    BaseRecipientCostData:
       type: object
       required:
         - recIndex
@@ -230,22 +293,54 @@ components:
         recipientInternalId:
           type: string
           description: ID anonimizzato del destinatario
-        payments:
-          type: array
-          items:
-            $ref: '#/components/schemas/PaymentData'
 
-    PaymentData:
+    RecipientCostData:
+      allOf:
+        - $ref: '#/components/schemas/BaseRecipientCostData'
+        - type: object
+          properties:
+            payments:
+              type: array
+              items:
+                $ref: '#/components/schemas/PaymentData'
+
+    InformalRecipientCostData:
+      allOf:
+        - $ref: '#/components/schemas/BaseRecipientCostData'
+        - type: object
+          required:
+            - payments
+          properties:
+            payments:
+              type: array
+              minItems: 1
+              maxItems: 100
+              items:
+                $ref: '#/components/schemas/InformalPaymentData'
+
+    BasePaymentData:
       type: object
       required:
         - iuv
-        - applyCost
       properties:
         iuv:
           $ref: '#/components/schemas/IUV'
-        applyCost:
-          type: boolean
-          description: Indica se applicare o meno i costi di notificazione
+
+    PaymentData:
+      allOf:
+        - $ref: '#/components/schemas/BasePaymentData'
+        - type: object
+          required:
+            - applyCost
+          properties:
+            applyCost:
+              type: boolean
+              description: Indica se applicare o meno i costi di notificazione
+
+    InformalPaymentData:
+      allOf:
+        - $ref: '#/components/schemas/BasePaymentData'
+
     NotificationCostRecipientResponse:
       title: Notification cost Response for recipient
       description: >-
