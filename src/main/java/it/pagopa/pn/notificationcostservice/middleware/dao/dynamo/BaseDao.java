@@ -60,8 +60,8 @@ public class BaseDao {
             String exactMatch = namePh + " = " + ph;
             String condition = switch (conditional) {
                 case ConditionalAttribute.Exact ignored -> exactMatch;
-                case ConditionalAttribute.TreatMissingAs m ->
-                        m.value().equals(m.assumedWhenMissing())
+                case ConditionalAttribute.TreatMissingAs(var value, var assumedWhenMissing) ->
+                        value.equals(assumedWhenMissing)
                                 ? "(" + exactMatch + " OR attribute_not_exists(" + namePh + "))"
                                 : exactMatch;
             };

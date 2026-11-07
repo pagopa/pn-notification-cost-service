@@ -109,7 +109,7 @@ public class PaymentInfoMapperTest {
         assertThat(result).hasSize(2);
 
         assertThat(result.getFirst().getIun()).isEqualTo("IUN-123");
-        assertThat(result.getFirst().getRecIndex()).isEqualTo(0);
+        assertThat(result.getFirst().getRecIndex()).isZero();
         assertThat(result.getFirst().getIuv()).isEqualTo("IUV-1");
         assertThat(result.getFirst().getApplyCost()).isNull();
         assertThat(result.getFirst().getCommunicationType()).isEqualTo(CommunicationType.INFORMAL);
