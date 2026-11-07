@@ -5,6 +5,8 @@ import it.pagopa.pn.notificationcostservice.middleware.dao.PaymentInfoDao;
 import it.pagopa.pn.notificationcostservice.middleware.dao.dynamo.entity.paymentinfo.PaymentInfoEntity;
 import it.pagopa.pn.notificationcostservice.middleware.dao.dynamo.mapper.paymentinfo.DtoToEntityPaymentInfoMapper;
 import it.pagopa.pn.notificationcostservice.middleware.dao.dynamo.mapper.paymentinfo.EntityToDtoPaymentInfoMapper;
+import it.pagopa.pn.notificationcostservice.middleware.dao.dynamo.utils.ConditionalAttribute;
+import it.pagopa.pn.notificationcostservice.model.CommunicationType;
 import it.pagopa.pn.notificationcostservice.model.paymentinfo.PaymentInfo;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
@@ -23,6 +25,9 @@ import software.amazon.awssdk.services.dynamodb.model.AttributeValue;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+
+import static it.pagopa.pn.notificationcostservice.middleware.dao.dynamo.utils.ConditionalAttribute.exact;
+import static it.pagopa.pn.notificationcostservice.middleware.dao.dynamo.utils.ConditionalAttribute.treatMissingAs;
 
 @Component
 @Slf4j
@@ -69,13 +74,16 @@ public class PaymentInfoDaoDynamo extends BaseDao implements PaymentInfoDao {
                 PaymentInfoEntity.COL_PK, AttributeValue.builder().s(entity.getIuv()).build()
         );
 
-        Map<String, AttributeValue> flatAttributes = new HashMap<>();
-        flatAttributes.put(PaymentInfoEntity.COL_IUN, AttributeValue.builder().s(entity.getIun()).build());
-        flatAttributes.put(PaymentInfoEntity.COL_REC_INDEX, AttributeValue.builder().n(String.valueOf(entity.getRecIndex())).build());
-        flatAttributes.put(PaymentInfoEntity.COL_COMMUNICATION_TYPE, AttributeValue.builder().s(String.valueOf(entity.getCommunicationType())).build());
+        Map<String, ConditionalAttribute> flatAttributes = new HashMap<>();
+        flatAttributes.put(PaymentInfoEntity.COL_IUN, exact(AttributeValue.builder().s(entity.getIun()).build()));
+        flatAttributes.put(PaymentInfoEntity.COL_REC_INDEX, exact(AttributeValue.builder().n(String.valueOf(entity.getRecIndex())).build()));
+        flatAttributes.put(PaymentInfoEntity.COL_COMMUNICATION_TYPE, treatMissingAs(
+                AttributeValue.builder().s(String.valueOf(entity.getCommunicationType())).build(),
+                AttributeValue.builder().s(String.valueOf(CommunicationType.LEGAL)).build()
+        ));
 
         if(entity.getApplyCost() != null) {
-            flatAttributes.put(PaymentInfoEntity.COL_APPLY_COST, AttributeValue.builder().bool(entity.getApplyCost()).build());
+            flatAttributes.put(PaymentInfoEntity.COL_APPLY_COST, exact(AttributeValue.builder().bool(entity.getApplyCost()).build()));
         }
 
 

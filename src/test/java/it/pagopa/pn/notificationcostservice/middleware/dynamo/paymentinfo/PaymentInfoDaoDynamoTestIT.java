@@ -6,10 +6,10 @@ import it.pagopa.pn.notificationcostservice.middleware.dao.dynamo.PaymentInfoDao
 import it.pagopa.pn.notificationcostservice.middleware.dao.dynamo.entity.paymentinfo.PaymentInfoEntity;
 import it.pagopa.pn.notificationcostservice.model.CommunicationType;
 import it.pagopa.pn.notificationcostservice.model.paymentinfo.PaymentInfo;
-import org.junit.jupiter.api.Assertions;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Disabled;
-import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.*;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.Arguments;
+import org.junit.jupiter.params.provider.MethodSource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -22,8 +22,13 @@ import software.amazon.awssdk.enhanced.dynamodb.TableSchema;
 import software.amazon.awssdk.enhanced.dynamodb.model.DeleteItemEnhancedRequest;
 import software.amazon.awssdk.enhanced.dynamodb.model.GetItemEnhancedRequest;
 import software.amazon.awssdk.enhanced.dynamodb.model.PutItemEnhancedRequest;
+import software.amazon.awssdk.services.dynamodb.model.ConditionalCheckFailedException;
 
 import java.util.List;
+import java.util.stream.Stream;
+
+import static it.pagopa.pn.notificationcostservice.model.CommunicationType.INFORMAL;
+import static it.pagopa.pn.notificationcostservice.model.CommunicationType.LEGAL;
 
 @SpringBootTest
 @Import({LocalStackTestConfig.class, MockAWSObjectsTest.class})
@@ -52,7 +57,13 @@ class PaymentInfoDaoDynamoTestIT {
     @Test
     void updateItemIfNotExistsOrMatch_shouldPersistSinglePayment() throws Exception {
         String iuv = "IUV-SINGLE-" + System.nanoTime();
-        PaymentInfo payment = newPaymentInfo(iuv, "IUN-SINGLE", 0, true);
+        PaymentInfo payment = PaymentInfo.builder()
+                .iuv(iuv)
+                .iun("IUN-SINGLE")
+                .recIndex(0)
+                .applyCost(true)
+                .communicationType(LEGAL)
+                .build();
 
         try {
             StepVerifier.create(dao.updateItemIfNotExistsOrMatch(List.of(payment)))
@@ -75,8 +86,19 @@ class PaymentInfoDaoDynamoTestIT {
     void updateItemIfNotExistsOrMatch_shouldSucceedWhenExistingItemMatchesCondition() throws Exception {
         String iuv = "IUV-UPDATE-" + System.nanoTime();
 
-        PaymentInfoEntity existing = newPaymentInfoEntity(iuv);
-        PaymentInfo updated = newPaymentInfo(iuv, "IUN-OLD", 1, true);
+        PaymentInfoEntity existing = PaymentInfoEntity.builder()
+                .iuv(iuv)
+                .iun("IUN-OLD")
+                .recIndex(1)
+                .applyCost(true)
+                .build();
+        PaymentInfo updated = PaymentInfo.builder()
+                .iuv(iuv)
+                .iun("IUN-OLD")
+                .recIndex(1)
+                .applyCost(true)
+                .communicationType(LEGAL)
+                .build();
 
         try {
             putItem(existing);
@@ -102,8 +124,20 @@ class PaymentInfoDaoDynamoTestIT {
         String iuv1 = "IUV-MULTI-1-" + System.nanoTime();
         String iuv2 = "IUV-MULTI-2-" + System.nanoTime();
 
-        PaymentInfo payment1 = newPaymentInfo(iuv1, "IUN-MULTI-1", 0, true);
-        PaymentInfo payment2 = newPaymentInfo(iuv2, "IUN-MULTI-2", 1, false);
+        PaymentInfo payment1 = PaymentInfo.builder()
+                .iuv(iuv1)
+                .iun("IUN-MULTI-1")
+                .recIndex(0)
+                .applyCost(true)
+                .communicationType(LEGAL)
+                .build();
+        PaymentInfo payment2 = PaymentInfo.builder()
+                .iuv(iuv2)
+                .iun("IUN-MULTI-2")
+                .recIndex(1)
+                .applyCost(false)
+                .communicationType(LEGAL)
+                .build();
 
         try {
             StepVerifier.create(dao.updateItemIfNotExistsOrMatch(List.of(payment1, payment2)))
@@ -134,7 +168,13 @@ class PaymentInfoDaoDynamoTestIT {
     void updateItemIfNotExistsOrMatch_shouldPersistPaymentWithoutApplyCost() throws Exception {
         String iuv1 = "IUV-MULTI-1-" + System.nanoTime();
 
-        PaymentInfo payment1 = newPaymentInfo(iuv1, "IUN-MULTI-1", 0, null);
+        PaymentInfo payment1 = PaymentInfo.builder()
+                .iuv(iuv1)
+                .iun("IUN-MULTI-1")
+                .recIndex(0)
+                .applyCost(null)
+                .communicationType(LEGAL)
+                .build();
 
         try {
             StepVerifier.create(dao.updateItemIfNotExistsOrMatch(List.of(payment1)))
@@ -152,6 +192,92 @@ class PaymentInfoDaoDynamoTestIT {
             deleteItem(iuv1);
         }
     }
+
+    /**
+     * Test per verificare la gestione retrocompatibile di aggiornamenti di record già presenti in tabella
+     * che non hanno il campo communicationType valorizzato (perché creati con una versione precedente del servizio).
+     * Quando il campo non è presente, il record deve essere trattato come LEGAL, dunque permettere aggiornamenti solo se il nuovo record ha communicationType LEGAL.
+     */
+    @Nested
+    class UpdateItemTreatMissingAsTests {
+        static Stream<Arguments> compatibleCommunicationTypes() {
+            return Stream.of(
+                    Arguments.of("legacy senza attributo, richiesto LEGAL", null, LEGAL),
+                    Arguments.of("LEGAL su LEGAL", LEGAL, LEGAL),
+                    Arguments.of("INFORMAL su INFORMAL", INFORMAL, INFORMAL));
+        }
+
+        static Stream<Arguments> incompatibleCommunicationTypes() {
+            return Stream.of(
+                    Arguments.of("legacy senza attributo, richiesto INFORMAL", null, INFORMAL),
+                    Arguments.of("LEGAL esistente, richiesto INFORMAL", LEGAL, INFORMAL),
+                    Arguments.of("INFORMAL esistente, richiesto LEGAL", INFORMAL, LEGAL));
+        }
+
+        @ParameterizedTest(name = "{0}")
+        @MethodSource("compatibleCommunicationTypes")
+        void updateItemIfNotExistsOrMatch_shouldSucceed_whenCommunicationTypeIsCompatible(
+                String description, CommunicationType existing, CommunicationType requested) throws Exception {
+            String iuv = "IUV-UPDATE-" + System.nanoTime();
+            PaymentInfoEntity existingItem = givenExistingItem(iuv, existing);
+
+            try {
+                putItem(existingItem);
+                StepVerifier.create(dao.updateItemIfNotExistsOrMatch(List.of(newPaymentInfo(iuv, requested))))
+                        .verifyComplete();
+
+                PaymentInfoEntity persisted = getItem(iuv);
+                Assertions.assertNotNull(persisted);
+                Assertions.assertEquals(existing, persisted.getCommunicationType());
+            } finally {
+                deleteItem(iuv);
+            }
+        }
+
+        @ParameterizedTest(name = "{0}")
+        @MethodSource("incompatibleCommunicationTypes")
+        void updateItemIfNotExistsOrMatch_shouldFail_whenCommunicationTypeIsIncompatible(
+                String description, CommunicationType existing, CommunicationType requested) throws Exception {
+            String iuv = "IUV-UPDATE-" + System.nanoTime();
+            PaymentInfoEntity existingItem = givenExistingItem(iuv, existing);
+
+            putItem(existingItem);
+            StepVerifier.create(dao.updateItemIfNotExistsOrMatch(List.of(newPaymentInfo(iuv, requested))))
+                .verifyError(ConditionalCheckFailedException.class);
+
+            // Verifica che il record esistente non sia stato modificato
+            PaymentInfoEntity persisted = getItem(iuv);
+
+            Assertions.assertNotNull(persisted);
+            Assertions.assertEquals(existingItem.getIun(), persisted.getIun());
+            Assertions.assertEquals(existingItem.getRecIndex(), persisted.getRecIndex());
+            Assertions.assertEquals(existingItem.getApplyCost(), persisted.getApplyCost());
+            Assertions.assertEquals(existingItem.getCommunicationType(), persisted.getCommunicationType());
+        }
+
+        /** Metodo helper per creare un record esistente con un certo communicationType e persisterlo */
+        private PaymentInfoEntity givenExistingItem(String iuv, CommunicationType communicationType) {
+            return PaymentInfoEntity.builder()
+                    .iuv(iuv)
+                    .iun("IUN_OLD")
+                    .recIndex(0)
+                    .applyCost(true)
+                    .communicationType(communicationType)
+                    .build();
+        }
+
+        private PaymentInfo newPaymentInfo(String iuv, CommunicationType requested) {
+            return PaymentInfo.builder()
+                    .iuv(iuv)
+                    .iun("IUN_OLD")
+                    .recIndex(0)
+                    .applyCost(true)
+                    .communicationType(requested)
+                    .build();
+        }
+    }
+
+
 
     private void putItem(PaymentInfoEntity entity) throws Exception {
         PutItemEnhancedRequest<PaymentInfoEntity> request =
@@ -176,24 +302,5 @@ class PaymentInfoDaoDynamoTestIT {
                 .build();
 
         paymentInfoTable.deleteItem(request).get();
-    }
-
-    private static PaymentInfo newPaymentInfo(String iuv, String iun, Integer recIndex, Boolean applyCost) {
-        return PaymentInfo.builder()
-                .iuv(iuv)
-                .iun(iun)
-                .recIndex(recIndex)
-                .applyCost(applyCost)
-                .communicationType(CommunicationType.LEGAL)
-                .build();
-    }
-
-    private static PaymentInfoEntity newPaymentInfoEntity(String iuv) {
-        return PaymentInfoEntity.builder()
-                .iuv(iuv)
-                .iun("IUN-OLD")
-                .recIndex(1)
-                .applyCost(true)
-                .build();
     }
 }
