@@ -1,5 +1,6 @@
 package it.pagopa.pn.notificationcostservice.middleware.dao.dynamo;
 
+import it.pagopa.pn.notificationcostservice.middleware.dao.dynamo.utils.ConditionalAttribute;
 import reactor.core.publisher.Mono;
 import software.amazon.awssdk.enhanced.dynamodb.Key;
 import software.amazon.awssdk.services.dynamodb.DynamoDbAsyncClient;
@@ -32,7 +33,7 @@ public class BaseDao {
      */
     protected Mono<Map<String, AttributeValue>> updateIfMatchOrNotExists(
             Map<String, AttributeValue> keyAttributes,
-            Map<String, AttributeValue> flatAttributes,
+            Map<String, ConditionalAttribute> flatAttributes,
             Map<String, Map<String, AttributeValue>> mapAttributes,
             Map<String, AttributeValue> setOnlyFlatAttributes) {
 
@@ -41,20 +42,30 @@ public class BaseDao {
         List<String> setParts                        = new ArrayList<>();
         List<String> conditionParts                  = new ArrayList<>();
         // Handle null maps
-        Map<String, AttributeValue> flatAttrs = flatAttributes != null ? flatAttributes : Collections.emptyMap();
+        Map<String, ConditionalAttribute> flatAttrs = flatAttributes != null ? flatAttributes : Collections.emptyMap();
         Map<String, Map<String, AttributeValue>> mapAttrs = mapAttributes != null ? mapAttributes : Collections.emptyMap();
         Map<String, AttributeValue> setOnlyFlatAttrs = setOnlyFlatAttributes != null ? setOnlyFlatAttributes : Collections.emptyMap();
 
         // Flat attributes
-        for (Map.Entry<String, AttributeValue> entry : flatAttrs.entrySet()) {
+        for (Map.Entry<String, ConditionalAttribute> entry : flatAttrs.entrySet()) {
             String attr  = entry.getKey();
             String ph    = ":" + attr;
             String namePh = "#" + attr;
+            ConditionalAttribute conditional = entry.getValue();
 
-            expressionValues.put(ph, entry.getValue());
+            expressionValues.put(ph, conditional.value());
             expressionNames.put(namePh, attr);
             setParts.add(namePh + " = " + ph);
-            conditionParts.add(namePh + " = " + ph);
+
+            String exactMatch = namePh + " = " + ph;
+            String condition = switch (conditional) {
+                case ConditionalAttribute.Exact ignored -> exactMatch;
+                case ConditionalAttribute.TreatMissingAs(var value, var assumedWhenMissing) ->
+                        value.equals(assumedWhenMissing)
+                                ? "(" + exactMatch + " OR attribute_not_exists(" + namePh + "))"
+                                : exactMatch;
+            };
+            conditionParts.add(condition);
         }
 
         // Set-only flat attributes: only SET

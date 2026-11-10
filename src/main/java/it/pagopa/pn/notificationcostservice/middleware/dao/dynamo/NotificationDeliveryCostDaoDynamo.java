@@ -6,6 +6,7 @@ import it.pagopa.pn.notificationcostservice.middleware.dao.NotificationDeliveryC
 import it.pagopa.pn.notificationcostservice.middleware.dao.dynamo.entity.notificationdeliverycost.BaseCostEntity;
 import it.pagopa.pn.notificationcostservice.middleware.dao.dynamo.entity.notificationdeliverycost.NotificationDeliveryCostEntity;
 import it.pagopa.pn.notificationcostservice.middleware.dao.dynamo.mapper.notificationdeliverycost.EntityToDtoNotificationDeliveryCostMapper;
+import it.pagopa.pn.notificationcostservice.middleware.dao.dynamo.utils.ConditionalAttribute;
 import it.pagopa.pn.notificationcostservice.model.notificationdeliverycost.NotificationDeliveryCost;
 import it.pagopa.pn.notificationcostservice.model.notificationdeliverycost.NotificationFeePolicy;
 import it.pagopa.pn.notificationcostservice.model.notificationdeliverycost.PagoPaIntMode;
@@ -27,6 +28,7 @@ import static it.pagopa.pn.notificationcostservice.exception.PnNotificationCostS
 import static it.pagopa.pn.notificationcostservice.middleware.dao.dynamo.entity.notificationdeliverycost.BaseCostEntity.COL_PA_FEE;
 import static it.pagopa.pn.notificationcostservice.middleware.dao.dynamo.entity.notificationdeliverycost.BaseCostEntity.COL_SEND_FEE;
 import static it.pagopa.pn.notificationcostservice.middleware.dao.dynamo.entity.notificationdeliverycost.NotificationDeliveryCostEntity.*;
+import static it.pagopa.pn.notificationcostservice.middleware.dao.dynamo.utils.ConditionalAttribute.exact;
 
 @Component
 @Slf4j
@@ -120,13 +122,13 @@ public class NotificationDeliveryCostDaoDynamo extends BaseDao implements Notifi
                 COL_SK, AttributeValue.builder().n(Integer.toString(entity.getRecIndex())).build()
         );
 
-        Map<String, AttributeValue> flatAttributes = Map.of(
-                COL_VAT, AttributeValue.builder().n(String.valueOf(entity.getVat())).build(),
-                COL_NOTIFICATION_FEE_POLICY, AttributeValue.builder().s(entity.getNotificationFeePolicy().name()).build(),
-                COL_PAGO_PA_INT_MODE, AttributeValue.builder().s(entity.getPagoPaIntMode().name()).build(),
-                COL_SENDER_PA_ID, AttributeValue.builder().s(entity.getSenderPaId()).build(),
-                COL_SENDER_TAX_ID, AttributeValue.builder().s(entity.getSenderTaxId()).build(),
-                COL_RECIPIENT_INTERNAL_ID, AttributeValue.builder().s(entity.getRecipientInternalId()).build()
+        Map<String, ConditionalAttribute> flatAttributes = Map.of(
+                COL_VAT, exact(AttributeValue.builder().n(String.valueOf(entity.getVat())).build()),
+                COL_NOTIFICATION_FEE_POLICY, exact(AttributeValue.builder().s(entity.getNotificationFeePolicy().name()).build()),
+                COL_PAGO_PA_INT_MODE, exact(AttributeValue.builder().s(entity.getPagoPaIntMode().name()).build()),
+                COL_SENDER_PA_ID, exact(AttributeValue.builder().s(entity.getSenderPaId()).build()),
+                COL_SENDER_TAX_ID, exact(AttributeValue.builder().s(entity.getSenderTaxId()).build()),
+                COL_RECIPIENT_INTERNAL_ID, exact(AttributeValue.builder().s(entity.getRecipientInternalId()).build())
         );
 
         Map<String, AttributeValue> baseCostFields = new LinkedHashMap<>();

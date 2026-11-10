@@ -1,11 +1,8 @@
 package it.pagopa.pn.notificationcostservice.rest;
 
-import it.pagopa.pn.notification_cost_service.generated.openapi.server.v1.dto.AnalogUpdateCostPhaseDto;
-import it.pagopa.pn.notification_cost_service.generated.openapi.server.v1.dto.NewNotificationCostRequestDto;
-import it.pagopa.pn.notification_cost_service.generated.openapi.server.v1.dto.NotificationCostRecipientResponseDto;
-import it.pagopa.pn.notification_cost_service.generated.openapi.server.v1.dto.NotificationCostPaymentResponseDto;
-import it.pagopa.pn.notification_cost_service.generated.openapi.server.v1.dto.PaperCostToInvalidateDto;
+import it.pagopa.pn.notification_cost_service.generated.openapi.server.v1.dto.*;
 import it.pagopa.pn.notificationcostservice.exception.PnNotFoundException;
+import it.pagopa.pn.notificationcostservice.model.CommunicationType;
 import it.pagopa.pn.notificationcostservice.model.cost.CostUpdatePhaseInt;
 import it.pagopa.pn.notificationcostservice.model.cost.NotificationCostUpdate;
 import it.pagopa.pn.notificationcostservice.model.ValidationStatus;
@@ -88,8 +85,8 @@ class NotificationCostServiceControllerTest {
         List<PaymentInfo> payments = List.of(mock(PaymentInfo.class));
 
         when(mapper.mapDtoToNotificationDeliveryCost(iun, requestDto)).thenReturn(notificationCosts);
-        when(paymentInfoMapper.mapDtoToPaymentInfo(iun, requestDto)).thenReturn(payments);
-        when(notificationCostService.saveNotificationCost(iun, notificationCosts, payments))
+        when(paymentInfoMapper.mapDtoToLegalPaymentInfo(iun, requestDto)).thenReturn(payments);
+        when(notificationCostService.saveNotificationCost(iun, notificationCosts, payments, CommunicationType.LEGAL))
                 .thenReturn(Mono.empty());
 
         Mono<ResponseEntity<String>> result =
@@ -104,8 +101,8 @@ class NotificationCostServiceControllerTest {
                 .verifyComplete();
 
         verify(mapper).mapDtoToNotificationDeliveryCost(iun, requestDto);
-        verify(paymentInfoMapper).mapDtoToPaymentInfo(iun, requestDto);
-        verify(notificationCostService).saveNotificationCost(iun, notificationCosts, payments);
+        verify(paymentInfoMapper).mapDtoToLegalPaymentInfo(iun, requestDto);
+        verify(notificationCostService).saveNotificationCost(iun, notificationCosts, payments, CommunicationType.LEGAL);
     }
 
     @Test
@@ -116,8 +113,8 @@ class NotificationCostServiceControllerTest {
         IllegalStateException expected = new IllegalStateException("enqueue failed");
 
         when(mapper.mapDtoToNotificationDeliveryCost(TEST_IUN, requestDto)).thenReturn(notificationCosts);
-        when(paymentInfoMapper.mapDtoToPaymentInfo(TEST_IUN, requestDto)).thenReturn(payments);
-        when(notificationCostService.saveNotificationCost(TEST_IUN, notificationCosts, payments))
+        when(paymentInfoMapper.mapDtoToLegalPaymentInfo(TEST_IUN, requestDto)).thenReturn(payments);
+        when(notificationCostService.saveNotificationCost(TEST_IUN, notificationCosts, payments, CommunicationType.LEGAL))
                 .thenReturn(Mono.error(expected));
 
         StepVerifier.create(controller.initializeNotificationCost(TEST_IUN, Mono.just(requestDto), null))
@@ -125,8 +122,53 @@ class NotificationCostServiceControllerTest {
                 .verify();
 
         verify(mapper).mapDtoToNotificationDeliveryCost(eq(TEST_IUN), same(requestDto));
-        verify(paymentInfoMapper).mapDtoToPaymentInfo(eq(TEST_IUN), same(requestDto));
-        verify(notificationCostService).saveNotificationCost(TEST_IUN, notificationCosts, payments);
+        verify(paymentInfoMapper).mapDtoToLegalPaymentInfo(eq(TEST_IUN), same(requestDto));
+        verify(notificationCostService).saveNotificationCost(TEST_IUN, notificationCosts, payments, CommunicationType.LEGAL);
+    }
+
+    @Test
+    void initializeInformalNotificationCostTest() {
+        String iun = TEST_IUN;
+        NewInformalNotificationCostRequestDto requestDto = new NewInformalNotificationCostRequestDto();
+        ServerWebExchange exchange = mock(ServerWebExchange.class);
+
+        List<PaymentInfo> payments = List.of(mock(PaymentInfo.class));
+
+        when(paymentInfoMapper.mapDtoToInformalPaymentInfo(iun, requestDto)).thenReturn(payments);
+        when(notificationCostService.saveNotificationCost(iun, null, payments, CommunicationType.INFORMAL))
+                .thenReturn(Mono.empty());
+
+        Mono<ResponseEntity<String>> result =
+                controller.initializeInformalNotificationCost(iun, Mono.just(requestDto), exchange);
+
+        StepVerifier.create(result)
+                .assertNext(response -> {
+                    assertEquals(HttpStatus.ACCEPTED, response.getStatusCode());
+                    assertNotNull(response.getBody());
+                    assertEquals(ValidationStatus.OK.name(), response.getBody());
+                })
+                .verifyComplete();
+
+        verify(paymentInfoMapper).mapDtoToInformalPaymentInfo(iun, requestDto);
+        verify(notificationCostService).saveNotificationCost(iun, null, payments, CommunicationType.INFORMAL);
+    }
+
+    @Test
+    void initializeInformalNotificationCostPropagatesServiceError() {
+        NewInformalNotificationCostRequestDto requestDto = new NewInformalNotificationCostRequestDto();
+        List<PaymentInfo> payments = List.of(mock(PaymentInfo.class));
+        IllegalStateException expected = new IllegalStateException("enqueue failed");
+
+        when(paymentInfoMapper.mapDtoToInformalPaymentInfo(TEST_IUN, requestDto)).thenReturn(payments);
+        when(notificationCostService.saveNotificationCost(TEST_IUN, null, payments, CommunicationType.INFORMAL))
+                .thenReturn(Mono.error(expected));
+
+        StepVerifier.create(controller.initializeInformalNotificationCost(TEST_IUN, Mono.just(requestDto), null))
+                .expectErrorMatches(throwable -> throwable == expected)
+                .verify();
+
+        verify(paymentInfoMapper).mapDtoToInformalPaymentInfo(eq(TEST_IUN), same(requestDto));
+        verify(notificationCostService).saveNotificationCost(TEST_IUN, null, payments, CommunicationType.INFORMAL);
     }
 
     @Test
