@@ -13,6 +13,7 @@ import reactor.core.publisher.Mono;
 import reactor.test.StepVerifier;
 
 import java.time.Instant;
+import java.time.LocalDate;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.*;
@@ -135,7 +136,7 @@ class NoticePaymentEventHandlerTest {
                 .creditorTaxId(CREDITOR_TAX_ID)
                 .creditorCompanyName("creditor-company")
                 .paymentDateTime(Instant.parse("2026-01-01T10:00:00Z"))
-                .dueDate(Instant.parse("2026-01-02T10:00:00Z"))
+                .dueDate(LocalDate.parse("2026-01-02"))
                 .totalNotice(1)
                 .paymentSourceChannel("channel")
                 .amount(100)
