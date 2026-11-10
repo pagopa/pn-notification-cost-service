@@ -214,6 +214,26 @@ Parameters:
     Type: String
     Description: 'Notification cost to update queue URL'
 
+  KafkaBridge2NotificationCostServiceQueueName:
+    Type: String
+    Description: Events from pn-kafka-bridge TO pn-notification-cost-service queue name
+
+  KafkaBridge2NotificationCostServiceQueueURL:
+    Type: String
+    Description: Events from pn-kafka-bridge TO pn-notification-cost-service queue URL
+
+  KafkaBridge2NotificationCostServiceQueueARN:
+    Type: String
+    Description: Events from pn-kafka-bridge TO pn-notification-cost-service queue ARN
+
+  KafkaBridge2NotificationCostServiceQueueAlarmARN:
+    Type: String
+    Description: Events from pn-kafka-bridge TO pn-notification-cost-service alarm ARN
+
+  KafkaBridge2NotificationCostServiceQueueAgeAlarmARN:
+    Type: String
+    Description: Events from pn-kafka-bridge TO pn-notification-cost-service age alarm ARN
+
   MicroserviceBucketBaseKey:
     Type: String
     Default: ''
@@ -323,6 +343,8 @@ Resources:
         ContainerEnvEntry9: 'PN_NOTIFICATIONCOSTSERVICE_EVENTBUS_SOURCE=pn-notification-cost-service'
         ContainerEnvEntry10: 'PN_NOTIFICATIONCOSTSERVICE_EVENTBUS_OUTCOMEEVENTDETAILTYPE=NotificationCostServiceOutcomeEvent'
         ContainerEnvEntry11: !Sub "METRIC_FORMAT_TYPE=${MetricFormatType}"
+        ContainerEnvEntry12: !Sub 'PN_NOTIFICATIONCOSTSERVICE_TOPICS_PAYMENTSTOVERIFY=${KafkaBridge2NotificationCostServiceQueueName}'
+        ContainerEnvEntry13: 'PN_NOTIFICATIONCOSTSERVICE_EVENTBUS_NOTICEPAYMENTPAIDDETAILTYPE=NoticePaymentPaidEvent'
         ApplicativeEnvFileChecksum: !Ref ApplicativeEnvFileChecksum
         JavaToolOptions: !Ref JavaToolOptions
         MappedPaths: '/notification-cost-private/*'
@@ -351,9 +373,14 @@ Resources:
           - ','
           - - !GetAtt NotificationCostServiceMicroservice.Outputs.FatalLogsMetricAlarmArn
             - !Ref PnNotificationCostToUpdateQueueAlarmARN
+            - !Ref KafkaBridge2NotificationCostServiceQueueAlarmARN
+            - !Ref KafkaBridge2NotificationCostServiceQueueAgeAlarmARN
             - !GetAtt CostEventUpdateLambdaAlarms.Outputs.LambdaInvocationErrorLogsMetricAlarm
         LambdaArns: !GetAtt CostEventUpdateLambda.Arn
-        QueueArns: !Ref PnNotificationCostToUpdateQueueARN
+        QueueArns: !Join
+          - ','
+          - - !Ref PnNotificationCostToUpdateQueueARN
+            - !Ref KafkaBridge2NotificationCostServiceQueueARN
         LogGroupsNames: !Join
           - ','
           - - !Sub '/aws/ecs/${ProjectName}-notification-cost-service'
@@ -388,6 +415,7 @@ Resources:
               - sqs:ReceiveMessage
             Resource:
               - !Ref PnNotificationCostToUpdateQueueARN
+              - !Ref KafkaBridge2NotificationCostServiceQueueARN
           - Effect: Allow
             Action:
               - events:PutEvents
