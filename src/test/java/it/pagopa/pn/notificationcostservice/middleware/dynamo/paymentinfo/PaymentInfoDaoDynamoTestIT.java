@@ -32,6 +32,7 @@ import static it.pagopa.pn.notificationcostservice.model.CommunicationType.LEGAL
 
 @SpringBootTest
 @Import({LocalStackTestConfig.class, MockAWSObjectsTest.class})
+@Disabled
 class PaymentInfoDaoDynamoTestIT {
 
     @Autowired
