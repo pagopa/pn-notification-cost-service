@@ -3,6 +3,7 @@ package it.pagopa.pn.notificationcostservice.middleware.queue.utils;
 import it.pagopa.pn.api.dto.events.EventPublisher;
 import it.pagopa.pn.notificationcostservice.NotificationDeliveryCostTestBuilder;
 import it.pagopa.pn.notificationcostservice.middleware.queue.consumer.event.utils.NotificationCostEventBuilder;
+import it.pagopa.pn.notificationcostservice.model.CommunicationType;
 import it.pagopa.pn.notificationcostservice.model.notificationdeliverycost.NotificationDeliveryCost;
 import it.pagopa.pn.notificationcostservice.model.paymentinfo.PaymentInfo;
 import org.junit.jupiter.api.Test;
@@ -37,7 +38,7 @@ class NotificationCostEventBuilderTest {
                         .build()
         );
 
-        var event = NotificationCostEventBuilder.buildNotificationCostEvent(iun, notificationCosts, payments);
+        var event = NotificationCostEventBuilder.buildNotificationCostEvent(iun, notificationCosts, payments, CommunicationType.LEGAL);
 
         assertNotNull(event);
         assertNotNull(event.getHeader());
@@ -52,6 +53,7 @@ class NotificationCostEventBuilderTest {
         assertEquals(iun, event.getPayload().getIun());
         assertEquals(notificationCosts, event.getPayload().getNotificationCosts());
         assertEquals(payments, event.getPayload().getPayments());
+        assertEquals(CommunicationType.LEGAL, event.getPayload().getCommunicationType());
     }
 
     @Test
@@ -63,7 +65,7 @@ class NotificationCostEventBuilderTest {
         );
         List<PaymentInfo> payments = List.of();
 
-        var event = NotificationCostEventBuilder.buildNotificationCostEvent(null, notificationCosts, payments);
+        var event = NotificationCostEventBuilder.buildNotificationCostEvent(null, notificationCosts, payments, null);
 
         assertNotNull(event);
         assertNotNull(event.getHeader());
@@ -71,6 +73,7 @@ class NotificationCostEventBuilderTest {
         assertNull(event.getPayload().getIun());
         assertEquals(notificationCosts, event.getPayload().getNotificationCosts());
         assertEquals(payments, event.getPayload().getPayments());
+        assertNull(event.getPayload().getCommunicationType());
     }
 
     @Test
@@ -78,7 +81,7 @@ class NotificationCostEventBuilderTest {
         String iun = "IUN";
         List<PaymentInfo> payments = List.of();
 
-        var event = NotificationCostEventBuilder.buildNotificationCostEvent(iun, null, payments);
+        var event = NotificationCostEventBuilder.buildNotificationCostEvent(iun, null, payments, null);
 
         assertNotNull(event);
         assertNotNull(event.getHeader());
@@ -86,5 +89,6 @@ class NotificationCostEventBuilderTest {
         assertEquals(iun, event.getPayload().getIun());
         assertNull(event.getPayload().getNotificationCosts());
         assertEquals(payments, event.getPayload().getPayments());
+        assertNull(event.getPayload().getCommunicationType());
     }
 }

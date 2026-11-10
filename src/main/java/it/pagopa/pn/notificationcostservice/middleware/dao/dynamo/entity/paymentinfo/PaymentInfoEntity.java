@@ -1,5 +1,6 @@
 package it.pagopa.pn.notificationcostservice.middleware.dao.dynamo.entity.paymentinfo;
 
+import it.pagopa.pn.notificationcostservice.model.CommunicationType;
 import lombok.*;
 import software.amazon.awssdk.enhanced.dynamodb.mapper.annotations.DynamoDbAttribute;
 import software.amazon.awssdk.enhanced.dynamodb.mapper.annotations.DynamoDbBean;
@@ -16,6 +17,7 @@ public class PaymentInfoEntity {
     public static final String COL_REC_INDEX = "recIndex";
     public static final String COL_APPLY_COST = "applyCost";
     public static final String COL_IUN = "iun";
+    public static final String COL_COMMUNICATION_TYPE = "communicationType";
     public static final String IUN_GSI = "iun_gsi";
 
     @Getter(onMethod=@__({@DynamoDbPartitionKey, @DynamoDbAttribute(COL_PK)}))
@@ -25,8 +27,11 @@ public class PaymentInfoEntity {
     private Integer recIndex;
 
     @Getter(onMethod=@__({@DynamoDbAttribute(COL_APPLY_COST)}))
-    private boolean applyCost;
+    private Boolean applyCost;
 
     @Getter(onMethod=@__({@DynamoDbAttribute(COL_IUN), @DynamoDbSecondaryPartitionKey(indexNames = IUN_GSI)}))
     private String iun;
+
+    @Getter(onMethod=@__({@DynamoDbAttribute(COL_COMMUNICATION_TYPE)}))
+    private CommunicationType communicationType;
 }

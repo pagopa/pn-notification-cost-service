@@ -2,6 +2,7 @@ package it.pagopa.pn.notificationcostservice.middleware.dynamo.paymentinfo.mappe
 
 import it.pagopa.pn.notificationcostservice.middleware.dao.dynamo.entity.paymentinfo.PaymentInfoEntity;
 import it.pagopa.pn.notificationcostservice.middleware.dao.dynamo.mapper.paymentinfo.DtoToEntityPaymentInfoMapper;
+import it.pagopa.pn.notificationcostservice.model.CommunicationType;
 import it.pagopa.pn.notificationcostservice.model.paymentinfo.PaymentInfo;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -24,6 +25,7 @@ class DtoToEntityPaymentInfoMapperTest {
                 .recIndex(1)
                 .iuv("iuv")
                 .applyCost(true)
+                .communicationType(CommunicationType.LEGAL)
                 .build();
 
         PaymentInfoEntity entity = mapper.dtoToEntity(dto);
@@ -32,7 +34,8 @@ class DtoToEntityPaymentInfoMapperTest {
         assertEquals("iun", entity.getIun());
         assertEquals(1, entity.getRecIndex());
         assertEquals("iuv", entity.getIuv());
-        assertTrue(entity.isApplyCost());
+        assertTrue(entity.getApplyCost());
+        assertEquals(CommunicationType.LEGAL, entity.getCommunicationType());
     }
 
     @Test

@@ -126,4 +126,24 @@ class CostCalculatorImplTest {
         assertEquals(22, result.getVat());
         assertEquals(0, result.getPartialCost());
     }
+
+    @Test
+    void calculateCosts_returnZeroWhenApplyCostIsNullAndNotificationFeePolicyIsDeliveryMode() {
+        NotificationDeliveryCost notificationDeliveryCost = NotificationDeliveryCostTestBuilder.builder()
+                .withBaseCost(BaseCost.builder().paFee(100).sendFee(50).build())
+                .withNotificationFeePolicy(NotificationFeePolicy.DELIVERY_MODE)
+                .withVat(22)
+                .withSenderPaId("TEST-SENDER-PA-ID")
+                .withSenderTaxId("TEST-SENDER-TAX-ID")
+                .withLastUpdate(Instant.now())
+                .build();
+
+        var result = calculator.calculateCosts(notificationDeliveryCost, null);
+
+        assertEquals(0, result.getTotalCostWithVat());
+        assertEquals(150, result.getBaseCost());
+        assertEquals(0, result.getAnalogCost());
+        assertEquals(22, result.getVat());
+        assertEquals(0, result.getPartialCost());
+    }
 }
