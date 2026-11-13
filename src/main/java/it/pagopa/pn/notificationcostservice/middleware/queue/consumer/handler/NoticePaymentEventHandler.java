@@ -23,7 +23,7 @@ public class NoticePaymentEventHandler {
 
         String iuv = payload.getCreditorTaxId()+"##"+payload.getNoticeCode();
         return getPaymentInfo(iuv)
-                .switchIfEmpty(Mono.fromRunnable(() -> log.debug("PaymentInfo not found for iuv={}", iuv)))
+                .switchIfEmpty(Mono.fromRunnable(() -> log.info("PaymentInfo not found for iuv={}", iuv)))
                 .flatMap(info -> this.handlePaymentInfo(payload, info))
                 .doOnError(ex ->
                         log.error("Error processing handlePaymentInfo for iuv={}", payload.getCreditorTaxId()+"##"+payload.getNoticeCode(), ex)
