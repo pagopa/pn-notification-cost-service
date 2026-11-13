@@ -608,8 +608,19 @@ Resources:
             Period: !Ref AutoscalingCheckPeriod
             Stat: Average
           ReturnData: False
+        - Id: m4
+          MetricStat:
+            Metric:
+              Dimensions:
+                - Name: QueueName
+                  Value: !Ref "KafkaBridge2NotificationCostServiceQueueName"
+              Namespace: "AWS/SQS"
+              MetricName: "ApproximateNumberOfMessagesVisible"
+            Period: !Ref AutoscalingCheckPeriod
+            Stat: Average
+          ReturnData: False
         - Id: code
-          Expression: !Sub "IF(m3==0, 101, (100*(m1)) / (${ConsumedQueueMessagePerMinute} * m3) )"
+          Expression: !Sub "IF(m3==0, 101, (100*(m1+m4)) / (${ConsumedQueueMessagePerMinute} * m3) )"
           Label: !Sub "${ProjectName}-notification-cost-service-queue-custom-metric"
           ReturnData: False
         - Id: http
