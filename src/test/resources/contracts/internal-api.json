@@ -1,0 +1,43 @@
+{
+  "getNotificationCost": {
+    "path": {"iun": "ABCD-EFGH-ILMN-202411-A-1", "recIndex": "0"}
+  },
+  "getNotificationCostByPayment": {
+    "path": {"creditorTaxId": "77777777777", "noticeCode": "362981250372662822"}
+  },
+  "initializeNotificationCost": {
+    "path": {"iun": "ABCD-EFGH-ILMN-202411-A-1"},
+    "body": {
+      "senderPaId": "contract-test-sender",
+      "senderTaxId": "77777777777",
+      "paFee": 50,
+      "notificationFeePolicy": "DELIVERY_MODE",
+      "pagoPaIntMode": "SYNC",
+      "vat": 22,
+      "costRecipients": [{
+        "recIndex": 0,
+        "recipientInternalId": "contract-test-recipient",
+        "payments": [{"iuv": "77777777777##362981250372662822", "applyCost": true}]
+      }]
+    }
+  },
+  "initializeInformalNotificationCost": {
+    "path": {"iun": "ABCD-EFGH-ILMN-202411-A-A"},
+    "body": {
+      "senderPaId": "contract-test-sender",
+      "senderTaxId": "77777777777",
+      "costRecipients": [{
+        "recIndex": 0,
+        "recipientInternalId": "contract-test-recipient",
+        "payments": [{"iuv": "77777777777##362981250372662822"}]
+      }]
+    }
+  },
+  "invalidatePaperCost": {
+    "path": {"iun": "ABCD-EFGH-ILMN-202411-A-1"},
+    "body": {
+      "recIndex": "RECINDEX_0",
+      "costPhases": ["SEND_ANALOG_DOMICILE_ATTEMPT_0", "SEND_ANALOG_DOMICILE_ATTEMPT_1"]
+    }
+  }
+}

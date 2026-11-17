@@ -110,10 +110,36 @@
 			<scope>test</scope>
 		</dependency>
 
+		<dependency>
+			<groupId>com.atlassian.oai</groupId>
+			<artifactId>swagger-request-validator-core</artifactId>
+			<version>2.46.1</version>
+			<scope>test</scope>
+		</dependency>
+
 	</dependencies>
 
 	<build>
 		<plugins>
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-failsafe-plugin</artifactId>
+				<configuration>
+					<excludes>
+						<exclude>**/*$*</exclude>
+						<exclude>**/MinistackApiContractIT.java</exclude>
+					</excludes>
+				</configuration>
+			</plugin>
+			<plugin>
+				<groupId>org.jacoco</groupId>
+				<artifactId>jacoco-maven-plugin</artifactId>
+				<configuration>
+					<includes>
+						<include>it/pagopa/pn/notificationcostservice/**</include>
+					</includes>
+				</configuration>
+			</plugin>
 			<plugin>
 				<groupId>org.jacoco</groupId>
 				<artifactId>jacoco-maven-plugin</artifactId>
@@ -204,4 +230,36 @@
 			</plugin>			 		 
 		</plugins>
 	</build>
+	<profiles>
+		<profile>
+			<id>api-contract</id>
+			<build>
+				<plugins>
+					<plugin>
+						<groupId>org.apache.maven.plugins</groupId>
+						<artifactId>maven-failsafe-plugin</artifactId>
+						<configuration>
+							<includes combine.self="override">
+								<include>**/MinistackApiContractIT.java</include>
+							</includes>
+							<excludes combine.self="override">
+								<exclude>**/*$*</exclude>
+							</excludes>
+							<failIfNoTests>true</failIfNoTests>
+							<statelessTestsetReporter implementation="org.apache.maven.plugin.surefire.extensions.junit5.JUnit5Xml30StatelessReporter">
+								<usePhrasedTestCaseMethodName>true</usePhrasedTestCaseMethodName>
+							</statelessTestsetReporter>
+							<systemPropertyVariables>
+								<aws.accessKeyId>test</aws.accessKeyId>
+								<aws.secretAccessKey>test</aws.secretAccessKey>
+								<aws.disableEc2Metadata>true</aws.disableEc2Metadata>
+								<aws.maxAttempts>2</aws.maxAttempts>
+								<aws.retryMode>standard</aws.retryMode>
+							</systemPropertyVariables>
+						</configuration>
+					</plugin>
+				</plugins>
+			</build>
+		</profile>
+	</profiles>
 </project>

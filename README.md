@@ -3,6 +3,82 @@
 
 ---
 
+### Test locale del contratto API interno
+
+#### Integrazione HTTP con MiniStack
+
+Prerequisiti: JDK 21, Maven configurato per le dipendenze PagoPA e un runtime
+container attivo con API compatibile Docker (Docker oppure Podman configurato
+per Testcontainers). Non serve un emulatore gia avviato sulla porta 4566.
+
+```sh
+./mvnw -Papi-contract verify
+```
+
+Il profilo esegue i normali test unitari e poi soltanto
+[MinistackApiContractIT](src/test/java/it/pagopa/pn/notificationcostservice/rest/MinistackApiContractIT.java):
+microservizio completo, porta HTTP casuale, SDK AWS e listener reali, nessun mock
+Java. Un container MiniStack 1.5.41 dedicato, fissato al digest multiarch, ospita
+DynamoDB, SQS ed EventBridge. Lo smoke iniziale verifica anche condizioni
+annidate DynamoDB, indice `iun_gsi` e routing EventBridge verso SQS; un problema
+di compatibilita dell'emulatore impedisce l'avvio dei casi HTTP.
+
+Credenziali sintetiche, endpoint locali, risorse e identificativi isolati sono
+impostati dalla suite. Non usare credenziali AWS personali per l'applicazione
+di test. L'eventuale `CODEARTIFACT_AUTH_TOKEN` serve solo a Maven e deve essere
+disponibile nella stessa shell del comando.
+
+La suite copre tutte le operazioni e gli status dichiarati nella
+[specifica interna](docs/openapi/api-private.yaml), i vincoli annidati e i limiti
+di cardinalita/numerici, coercizioni di tipo, path, body malformati e negoziazione
+dei media type. Verifica inoltre rappresentazioni analogiche, somme descritte
+nel contratto e sensibilita del validatore a risposte mutate. I POST sono
+sincronizzati tramite outcome correlati, senza sottrarre messaggi al consumer;
+il `202` resta distinto dal completamento della persistenza.
+
+La [preparazione della specifica](src/test/java/it/pagopa/pn/notificationcostservice/rest/InternalApiSpecification.java)
+normalizza in memoria le catene di alias `$ref` prima di Swagger Parser,
+evitando autoriferimenti introdotti da alias esterni omonimi. Non modifica
+documenti originali, URL/commit remoti o vincoli. Cicli di soli alias e target
+mancanti interrompono esplicitamente la preparazione; gli schemi oggetto
+ricorsivi e i valori di esempio sono preservati.
+I [test di regressione](src/test/java/it/pagopa/pn/notificationcostservice/rest/InternalApiContractCasesTest.java)
+verificano che un `Problem` valido passi e che required, tipi e cardinalita
+errati siano rifiutati per i vincoli effettivi, non per errori di risoluzione.
+
+Un proxy HTTP locale, senza dipendenze aggiuntive, provoca fault selettive su
+`GetItem`, `SendMessage` e `UpdateItem`: il PUT deve fallire durante
+l'aggiornamento, non nel controllo di esistenza. Ogni fault verifica il
+successivo ripristino sulla stessa operazione. Nessun reset globale, sleep
+fisso, accesso ad AWS reale o import dei test LocalStack esistenti.
+
+Report prodotti anche quando il gate rileva difformita:
+
+- [Failsafe](target/failsafe-reports/): esito dei singoli casi e motivazioni;
+- [matrice](target/api-contract/coverage.json): coppie operazione/status
+  esercitate, osservate e conformi allo schema;
+- [osservazioni HTTP](target/api-contract/observations.json): status atteso/reale
+  e diagnostica OpenAPI per scenario;
+- [log MiniStack](target/api-contract/ministack.log).
+
+**Il gate e intenzionalmente rosso se il servizio viola il contratto.**
+Il raggiungimento di uno status non ne dimostra la conformita di body/header,
+ne rende corrette le somme economiche. I report Failsafe includono anche queste
+asserzioni. Non vengono corretti automaticamente OpenAPI o codice di produzione.
+MiniStack non certifica l'equivalenza con AWS; restano esclusi carico,
+idempotenza/concorrenza non specificate e protezioni di gateway.
+
+`./mvnw test` resta indipendente da Docker. Gli altri IT LocalStack non sono
+selezionati dal profilo `api-contract`. Senza questo profilo, anche `./mvnw verify`
+esclude la suite MiniStack; gli altri IT mantengono la selezione standard e
+i propri prerequisiti. Le classi di test vengono comunque compilate e non sono
+incluse nel JAR applicativo. Piano e checklist sono in
+[tasks/plan.md](tasks/plan.md) e [tasks/todo.md](tasks/todo.md).
+Il [report leggibile del contratto](docs/report-contratto-api-interno.md)
+riassume le difformita osservate e i task proposti per risolverle.
+Il [piano dei test TDD](docs/piano-test-contratto-api-tdd.md) descrive scenari,
+oracoli e criteri Red-Green-Refactor per verificarne il rientro.
+
 ### Consumer
 
 Il consumer ascolta la coda SQS `pn-notification-cost-to-update` e gestisce gli eventi `NOTIFICATION_COST_INITIALIZATION`.
